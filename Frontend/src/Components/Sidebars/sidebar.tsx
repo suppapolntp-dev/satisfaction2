@@ -3,7 +3,6 @@
 import React, { useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-// นิยามโครงสร้างข้อมูลของเมนู
 interface MenuItem {
   title: string;
   path: string;
@@ -11,8 +10,15 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { title: "Dashboard", path: "/dashboard", icon: "dashboard" },
-  { title: "Brand Management", path: "/brand", icon: "business" },
+  { title: "Dashboard",          path: "/dashboard",      icon: "dashboard" },
+  { title: "Brand Management",   path: "/brand",          icon: "branding_watermark" },
+  { title: "Branch Management",  path: "/branch",         icon: "storefront" },
+  { title: "User Management",    path: "/usermanagement", icon: "manage_accounts" },
+  { title: "Event Management",   path: "/event",          icon: "event" },
+  { title: "Notifications",      path: "/notifications",  icon: "notifications" },
+  { title: "Roles & Permissions",path: "/roles",          icon: "admin_panel_settings" },
+  { title: "Data Access",        path: "/dataaccess",     icon: "lock_person" },
+  { title: "Audit Log",          path: "/audit",          icon: "gavel" },
 ];
 
 export default function Sidebar() {
@@ -21,7 +27,6 @@ export default function Sidebar() {
   const [isPending, startTransition] = useTransition();
 
   const handleNavigation = (path: string) => {
-    // ใช้ startTransition ควบคู่เพื่อช่วยให้ UI ฝั่งแอดมินลื่นไหลยิ่งขึ้นเวลาสลับเพจ
     startTransition(() => {
       router.push(path);
     });
@@ -45,7 +50,6 @@ export default function Sidebar() {
       {/* Navigation Menus */}
       <nav className="flex-1 overflow-y-auto px-3 space-y-1 custom-scrollbar">
         {MENU_ITEMS.map((item) => {
-          // ตรวจสอบว่าเมนูนี้คือหน้าปัจจุบันที่ยูสเซอร์เปิดอยู่หรือไม่
           const isActive = pathname === item.path;
 
           return (
@@ -91,8 +95,12 @@ export default function Sidebar() {
           <span className="material-symbols-outlined text-[18px]">description</span>
           Documentation
         </button>
-        
-        <button className="w-full mt-4 bg-neutral-800 text-neutral-300 hover:bg-rose-950/40 hover:text-rose-400 py-2 rounded-xl text-xs font-bold transition-all border border-neutral-800 active:scale-95 flex justify-center items-center gap-2">
+
+        <button
+          type="button"
+          className="w-full mt-4 bg-neutral-800 text-neutral-300 hover:bg-rose-950/40 hover:text-rose-400 py-2 rounded-xl text-xs font-bold transition-all border border-neutral-800 active:scale-95 flex justify-center items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">logout</span>
           Logout
         </button>
       </div>
