@@ -1,247 +1,315 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import SearchInput from "@/Components/Inputs/SearchInput";
-import NotificationInboxList, { SystemNotificationItem } from "@/Components/Lists/NotificationInboxList";
-
-// ชุดข้อมูลจำลองเกี่ยวกับแจ้งเตือนตู้คีออสสนามบิน (Descriptive Mock Data)
-const MOCK_AIRPORT_NOTIFICATIONS: SystemNotificationItem[] = [
-  {
-    notificationId: "ALRT-2026-1001",
-    notificationTitle: "High Unsatisfied Rate at T1 Gate 3",
-    notificationType: "Alert",
-    notificationTimeText: "10 mins ago",
-    notificationDescription: "Passport Control Kiosk at Terminal 1 Gate 3 has received 5 consecutive unsatisfied feedback entries within the last 15 minutes. Immediate floor inspection is highly recommended.",
-    isNotificationRead: false,
-    targetBranchName: "T1 Gate 3 (Passport Control)",
-    targetBranchCode: "KIOSK-T1-G3",
-    notificationPriority: "High"
-  },
-  {
-    notificationId: "ALRT-2026-1002",
-    notificationTitle: "Kiosk Offline Warning - Baggage Claim C",
-    notificationType: "System",
-    notificationTimeText: "45 mins ago",
-    notificationDescription: "Baggage Claim Zone C Kiosk has lost network heartbeat connection for over 20 minutes. Please check the power supply and local router configuration.",
-    isNotificationRead: false,
-    targetBranchName: "Baggage Claim Zone C",
-    targetBranchCode: "KIOSK-T2-BC",
-    notificationPriority: "Medium"
-  },
-  {
-    notificationId: "FEED-2026-1003",
-    notificationTitle: "New Feedback Text Received - Arrival Exit A",
-    notificationType: "Feedback",
-    notificationTimeText: "2 hours ago",
-    notificationDescription: "A passenger submitted a text feedback at Terminal 2 Arrival Hall Exit A stating: 'The screen touch responsiveness is slightly delayed but overall clean UI.'",
-    isNotificationRead: true,
-    targetBranchName: "T2 Arrival Hall Exit A",
-    targetBranchCode: "KIOSK-T2-EXA",
-    notificationPriority: "Low"
-  }
-];
+import NotificationInboxList from "@/Components/Lists/NotificationInboxList";
+import { SystemNotificationItem } from "@/Types/notification";
+import { notificationService } from "@/Services/notificationService";
 
 export default function NotificationTriageScreen() {
-  const [notificationList, setNotificationList] = useState<SystemNotificationItem[]>(MOCK_AIRPORT_NOTIFICATIONS);
-
-  // States สำหรับระเบียบควบคุมฟิลเตอร์คัดกรองข้อมูลหน้าร้าน
+  const [notificationsList, setNotificationsList] = useState<SystemNotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchNotificationQuery, setSearchNotificationQuery] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
-  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>("ALRT-2026-1001");
+  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
 
-  // ตรรกะพื้นฐานสำหรับค้นหาและคัดกรองข้อมูล (Junior แกะอ่านเข้าใจง่าย)
-  const filteredNotifications = useMemo(() => {
-    return notificationList.filter((individualNotification) => {
-      const matchesSearch = individualNotification.notificationTitle
-        .toLowerCase()
-        .includes(searchNotificationQuery.toLowerCase());
+  // Load from notificationService on mount
+  useEffect(() => {
+    async function fetchNotificationsData() {
+      try {
+        setIsLoading(true);
+        const data = await notificationService.getNotifications();
+        setNotificationsList(data || []);
+        if (data && data.length > 0) {
+          setSelectedNotificationId(data[0].notificationId);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchNotificationsData();
+  }, []);
+
+  // ข้อมูลสถิติ KPI การแจ้งเตือน
+  const notificationStatsData: StatItem[] = useMemo(() => {
+    const total = notificationsList.length;
+    const highCount = notificationsList.filter((n) => n.notificationPriority === "High").length;
+    const unresolvedCount = notificationsList.filter((n) => !n.isNotificationRead).length;
+
+    const hasData = total > 0;
+
+    return [
+      {
+        label: "Total Alerts",
+        value: hasData ? `${total}` : "-",
+        change: "",
+        isUp: true,
+        icon: "notifications_active",
+        color: "text-blue-600",
+      },
+      {
+        label: "High Priority",
+        value: hasData ? `${highCount} Spikes` : "-",
+        change: "",
+        isUp: false,
+        icon: "error",
+        color: "text-rose-600",
+      },
+      {
+        label: "Unresolved Queue",
+        value: hasData ? `${unresolvedCount} Pending` : "-",
+        change: "",
+        isUp: false,
+        icon: "pending_actions",
+        color: "text-amber-600",
+      },
+      {
+        label: "Resolved Today",
+        value: hasData ? "0 Cases" : "-",
+        change: "",
+        isUp: true,
+        icon: "check_circle",
+        color: "text-emerald-600",
+      },
+    ];
+  }, [notificationsList]);
+
+  // กรองรายการแจ้งเตือน
+  const filteredNotificationsList = useMemo(() => {
+    return notificationsList.filter((notificationItem) => {
+      const matchesSearch = 
+        notificationItem.notificationTitle.toLowerCase().includes(searchNotificationQuery.toLowerCase()) ||
+        notificationItem.targetBranchName.toLowerCase().includes(searchNotificationQuery.toLowerCase());
 
       const matchesType =
         selectedTypeFilter === "All Types" ||
-        individualNotification.notificationType === selectedTypeFilter;
+        notificationItem.notificationType === selectedTypeFilter;
 
       return matchesSearch && matchesType;
     });
-  }, [notificationList, searchNotificationQuery, selectedTypeFilter]);
+  }, [notificationsList, searchNotificationQuery, selectedTypeFilter]);
 
-  // ค้นหาวัตถุแจ้งเตือนปัจจุบันที่ผู้ใช้จิ้มเลือกดูรายละเอียดฝั่งขวา
-  const activeSelectedNotification = useMemo(() => {
-    return notificationList.find(
-      (individualNotification) => individualNotification.notificationId === selectedNotificationId
+  // ค้นหาการแจ้งเตือนที่กำลังเปิดดูอยู่
+  const activeNotification = useMemo(() => {
+    return notificationsList.find(
+      (notificationItem) => notificationItem.notificationId === selectedNotificationId
     ) || null;
-  }, [notificationList, selectedNotificationId]);
+  }, [notificationsList, selectedNotificationId]);
+
+  const unreadCount = useMemo(() => {
+    return notificationsList.filter((item) => !item.isNotificationRead).length;
+  }, [notificationsList]);
+
+  // สั่งให้อ่านทั้งหมด
+  const handleMarkAllAsRead = async () => {
+    await notificationService.markAllAsRead();
+    setNotificationsList((prevList) =>
+      prevList.map((item) => ({ ...item, isNotificationRead: true }))
+    );
+  };
+
+  const handleMarkCurrentAsRead = async () => {
+    if (!selectedNotificationId) return;
+    await notificationService.markAsRead(selectedNotificationId);
+    setNotificationsList((prevList) =>
+      prevList.map((item) =>
+        item.notificationId === selectedNotificationId ? { ...item, isNotificationRead: true } : item
+      )
+    );
+  };
 
   return (
-    <main className="flex-1 overflow-hidden w-full flex flex-col bg-[var(--surface-variant)] text-[var(--on-surface)] antialiased">
-      <div className="max-w-7xl w-full mx-auto px-6 pt-6 pb-4 flex flex-col gap-4 h-full">
-        
-        {/* 🗺️ SECTION 1: PAGE HEADER */}
-        <div className="flex items-end justify-between border-b border-[var(--outline-variant)] pb-4 shrink-0">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h2 className="text-2xl font-bold text-[var(--on-surface)]">Triage View</h2>
-              <span className="bg-[var(--error)] text-[var(--on-error)] px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center justify-center h-6">
-                {notificationList.filter(item => !item.isNotificationRead).length} Unread
+    <div className="space-y-6">
+      
+      {/* ─── 1. PAGE HEADER SECTION ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Notification & Alert Triage
+            </h1>
+            {unreadCount > 0 && (
+              <span className="bg-rose-500 text-white px-2.5 py-0.5 rounded-full text-xs font-bold shadow-xs">
+                {unreadCount} Unread
               </span>
-            </div>
-            <p className="text-sm text-[var(--on-surface-variant)]">
-              Quickly review and action incoming alerts from terminal kiosks.
-            </p>
-          </div>
-        </div>
-
-        {/* 🗂️ SECTION 2: ACTIONS & FILTER BAR */}
-        <div className="flex items-center justify-between bg-[var(--surface)] p-2 rounded-lg border border-[var(--outline-variant)] shadow-sm shrink-0">
-          <div className="flex items-center gap-3 w-full max-w-lg">
-            
-            {/* เรียกเสียบใช้งาน SearchInput คอมโพเนนต์กลางของทีม */}
-            <SearchInput
-              value={searchNotificationQuery}
-              onChange={setSearchNotificationQuery}
-              placeholder="Search notifications..."
-            />
-
-            {/* กล่องเลือกประเภทคัดกรอง ผูกตามคลาสสากลของโปรเจกต์ */}
-            <div className="relative w-48">
-              <select
-                value={selectedTypeFilter}
-                onChange={(event) => setSelectedTypeFilter(event.target.value)}
-                className="w-full pl-3 pr-8 py-1.5 bg-[var(--surface)] border border-[var(--outline-variant)] rounded text-sm text-[var(--on-surface)] focus:ring-2 focus:ring-[var(--primary-container)] focus:outline-none appearance-none cursor-pointer font-medium"
-              >
-                <option value="All Types">All Types</option>
-                <option value="Alert">Alerts</option>
-                <option value="Feedback">Feedback</option>
-                <option value="System">System</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] text-[18px] pointer-events-none">
-                expand_more
-              </span>
-            </div>
-          </div>
-          
-          <button
-            type="button"
-            onClick={() => console.log("Mark all notifications as read")}
-            className="px-4 py-1.5 text-xs font-semibold text-[var(--primary-container)] border border-[var(--outline-variant)] hover:bg-[var(--surface-variant)] transition-colors rounded"
-          >
-            Mark all as read
-          </button>
-        </div>
-
-        {/* 🛠️ SECTION 3: UNIFIED SINGLE CARD BOARD (รวมแผงซ้ายขวาในกระดานเดียวเด็ดขาดด้วย Grid 12 ช่อง) */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-12 bg-[var(--surface)] rounded-xl border border-[var(--outline-variant)] shadow-sm min-h-0 overflow-hidden mb-4 divide-y md:divide-y-0 md:divide-x divide-[var(--outline-variant)]">
-          
-          {/* บล็อกฝั่งซ้าย: Sidebar รายชื่อแจ้งเตือน ( col-span-4 แคบกระชับได้สัดส่วน ) */}
-          <div className="col-span-1 md:col-span-4 lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
-            <div className="p-3 border-b border-[var(--outline-variant)] bg-[var(--surface-variant)] text-sm text-[var(--on-surface-variant)] font-bold shrink-0">
-              Inbox List
-            </div>
-            
-            {/* เรียกคอมโพเนนต์ลูกที่เราสกัดแยกไว้ส่งต่อ Props ปลอดภัย ไร้ Error */}
-            <NotificationInboxList
-              notifications={filteredNotifications}
-              activeNotificationId={selectedNotificationId}
-              onSelectNotification={setSelectedNotificationId}
-            />
-          </div>
-
-          {/* บล็อกฝั่งขวา: แผงเนื้อหารายละเอียดเจาะลึก ( col-span-8 แผ่กว้างเต็มกระดานอย่างโปรโปรแกรมเมอร์ ) */}
-          <div className="col-span-1 md:col-span-8 lg:col-span-9 flex flex-col min-h-0 overflow-hidden">
-            {activeSelectedNotification ? (
-              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                {/* แผงปุ่มมินิมอลควบคุมหัวตาราง */}
-                <div className="p-3 border-b border-[var(--outline-variant)] bg-[var(--surface-variant)] flex justify-end gap-2 shrink-0">
-                  <button
-                    type="button"
-                    className="p-1.5 rounded text-[var(--on-surface-variant)] hover:text-[var(--primary-container)] hover:bg-[var(--secondary-container)] transition-colors"
-                    title="Mark as Read"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">mark_email_read</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="p-1.5 rounded text-[var(--on-surface-variant)] hover:text-[var(--error)] hover:bg-[var(--error-container)] transition-colors"
-                    title="Delete"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">delete</span>
-                  </button>
-                </div>
-
-                {/* เนื้อความดีไซน์บอร์ดจำลองสถานการณ์ตู้ Kiosk */}
-                <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
-                  <div className="max-w-3xl">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 rounded-full bg-[var(--error-container)] text-[var(--error)] flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-[24px]">warning</span>
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-[var(--on-surface)] mb-1">
-                          {activeSelectedNotification.notificationTitle}
-                        </h3>
-                        <p className="text-xs text-[var(--on-surface-variant)]">
-                          Alert triggered {activeSelectedNotification.notificationTimeText}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-[var(--surface-variant)] rounded-lg p-6 mb-8 border border-[var(--outline-variant)]">
-                      <h4 className="text-base font-bold text-[var(--on-surface)] mb-3">Description</h4>
-                      <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed">
-                        {activeSelectedNotification.notificationDescription}
-                      </p>
-                    </div>
-
-                    <div className="mb-8">
-                      <h4 className="text-base font-bold text-[var(--on-surface)] mb-4">Recommended Actions</h4>
-                      <div className="flex gap-4">
-                        <button
-                          type="button"
-                          className="flex items-center gap-2 px-5 py-2.5 bg-[var(--primary-container)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm active:scale-95 touch-manipulation"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">insert_chart</span>
-                          View Kiosk Report
-                        </button>
-                        <button
-                          type="button"
-                          className="flex items-center gap-2 px-5 py-2.5 border border-[var(--outline)] text-[var(--on-surface)] bg-[var(--surface)] rounded-lg text-sm font-semibold hover:bg-[var(--surface-variant)] transition-colors active:scale-95 touch-manipulation"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">person</span>
-                          Contact Station Staff
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-base font-bold text-[var(--on-surface)] mb-4">Metadata System</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--surface-variant)] p-4 rounded-lg border border-[var(--outline-variant)] text-sm text-[var(--on-surface-variant)]">
-                        <div>
-                          <span className="font-semibold text-[var(--on-surface)]">Source:</span> CSAT Core Engine
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[var(--on-surface)]">Priority:</span>{" "}
-                          <span className="text-[var(--error)] font-bold">{activeSelectedNotification.notificationPriority}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[var(--on-surface)]">ID Log:</span> {activeSelectedNotification.notificationId}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[var(--on-surface)]">Location:</span> {activeSelectedNotification.targetBranchName} ({activeSelectedNotification.targetBranchCode})
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-[var(--on-surface-variant)] opacity-60 p-8">
-                <span className="material-symbols-outlined text-4xl mb-2">wysiwyg</span>
-                <p className="text-sm">Select a notification from the inbox list to view details.</p>
-              </div>
             )}
           </div>
-
+          <p className="text-xs text-slate-500 mt-1">
+            ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk และข้อเสนอแนะความพึงพอใจ
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleMarkAllAsRead}
+          className="btn-secondary self-start sm:self-auto"
+        >
+          <span className="material-symbols-outlined text-[16px]">done_all</span>
+          Mark All as Read
+        </button>
       </div>
-    </main>
+
+      {/* ─── 2. STATS OVERVIEW SECTION ─── */}
+      <StatsGrid data={notificationStatsData} />
+
+      {/* ─── 3. SEARCH & FILTER CONTROLS ─── */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <SearchInput
+            value={searchNotificationQuery}
+            onChange={setSearchNotificationQuery}
+            placeholder="ค้นหาการแจ้งเตือน หรือชื่อสาขา..."
+          />
+
+          <div className="relative">
+            <select
+              value={selectedTypeFilter}
+              onChange={(selectEvent) => setSelectedTypeFilter(selectEvent.target.value)}
+              className="input-select pr-8"
+            >
+              <option value="All Types">ทุกประเภท (All Types)</option>
+              <option value="Alert">แจ้งเตือนเร่งด่วน (Alerts Only)</option>
+              <option value="Feedback">ข้อเสนอแนะลูกค้า (Customer Feedback)</option>
+              <option value="System">ระบบและฮาร์ดแวร์ (System & Hardware)</option>
+            </select>
+          </div>
+        </div>
+
+        <span className="text-xs text-slate-400 font-medium select-none">
+          แสดง {filteredNotificationsList.length} รายการ
+        </span>
+      </div>
+
+      {/* ─── 4. SPLIT-PANE TRIAGE BOARD ─── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[550px]">
+        
+        {/* Left Side: Inbox List (4 Cols) */}
+        <div className="lg:col-span-4 border-r border-slate-200 flex flex-col min-h-0">
+          <div className="p-3.5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+              Inbox Queue
+            </span>
+            <span className="text-[11px] text-slate-400 font-medium">
+              {filteredNotificationsList.length} รายการ
+            </span>
+          </div>
+
+          <NotificationInboxList
+            notifications={filteredNotificationsList}
+            activeNotificationId={selectedNotificationId}
+            onSelectNotification={setSelectedNotificationId}
+          />
+        </div>
+
+        {/* Right Side: Detail & Action Panel (8 Cols) */}
+        <div className="lg:col-span-8 flex flex-col bg-white">
+          {activeNotification ? (
+            <div className="flex-1 flex flex-col">
+              
+              {/* Header Bar */}
+              <div className="p-4 border-b border-slate-100 bg-slate-50/40 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeNotification.notificationPriority === "High"
+                      ? "bg-rose-50 text-rose-700 border border-rose-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}>
+                    Priority: {activeNotification.notificationPriority}
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">
+                    ID: {activeNotification.notificationId}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleMarkCurrentAsRead}
+                    title="Mark as Read"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">mark_email_read</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotificationsList((prev) => prev.filter((item) => item.notificationId !== activeNotification.notificationId));
+                      setSelectedNotificationId(null);
+                    }}
+                    title="Dismiss Notification"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Detail Content Body */}
+              <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+                
+                {/* Title & Timestamp */}
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
+                    <span className="material-symbols-outlined text-[22px]">warning</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 leading-tight">
+                      {activeNotification.notificationTitle}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      เวลา {activeNotification.notificationTimeText} ที่ <span className="font-semibold text-slate-700">{activeNotification.targetBranchName}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Description Card */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-5">
+                  <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    Diagnostic Analysis & Summary
+                  </h3>
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    {activeNotification.notificationDescription}
+                  </p>
+                </div>
+
+                {/* Recommended Next Steps */}
+                <div>
+                  <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">
+                    Recommended Triage Actions
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => alert(`ตรวจสอบรายงานเรียลไทม์ของ ${activeNotification.targetBranchCode}`)}
+                      className="btn-primary"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">monitoring</span>
+                      ตรวจสอบสถานะสาขา
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMarkCurrentAsRead}
+                      className="btn-secondary"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">check</span>
+                      ทำเครื่องหมายว่าตรวจสอบแล้ว
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-12 text-xs text-slate-400">
+              เลือกรายการแจ้งเตือนด้านซ้ายเพื่อดูรายละเอียด
+            </div>
+          )}
+        </div>
+
+      </div>
+
+    </div>
   );
 }

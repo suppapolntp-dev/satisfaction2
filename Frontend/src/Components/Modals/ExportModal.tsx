@@ -1,154 +1,227 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // 1. ดึงฟังก์ชัน Portal ของ React มาใช้งาน
+import { createPortal } from "react-dom";
 
+// ==========================================================================
+// ─── 1. INTERFACES (Props สำหรับควบคุมหน้าต่าง Export Modal)
+// ==========================================================================
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// ==========================================================================
+// ─── 2. MAIN EXPORT MODAL COMPONENT
+// ==========================================================================
 export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
-  // 2. สร้างสเตตัสเช็กการ Hydration ของ Next.js ฝั่ง Client
-  const [mounted, setMounted] = useState(false);
+  // สเตตัสเช็ก Client-side Hydration เพื่อความปลอดภัยบน Next.js
+  const [isComponentMounted, setIsComponentMounted] = useState<boolean>(false);
+
+  // สเตตัสเก็บค่าตัวเลือกฟอร์มส่งออกรายงาน
+  const [selectedFileFormat, setSelectedFileFormat] = useState<"excel" | "pdf">("excel");
+  const [filterStartDate, setFilterStartDate] = useState<string>("2026-08-01");
+  const [filterEndDate, setFilterEndDate] = useState<string>("2026-08-27");
+  const [selectedCompanyFilter, setSelectedCompanyFilter] = useState<string>("All Companies");
+  const [selectedBrandFilter, setSelectedBrandFilter] = useState<string>("All Brands");
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>("All Branches");
 
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+    setIsComponentMounted(true);
+    return () => setIsComponentMounted(false);
   }, []);
 
-  // debug: log render state
-  console.log("ExportModal state", { isOpen, mounted });
+  if (!isOpen || !isComponentMounted) {
+    return null;
+  }
 
-  const [format, setFormat] = useState<"excel" | "pdf">("excel");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // ฟังก์ชันจำลองการ Export ข้อมูล
+  const handleFormSubmit = (formSubmitEvent: React.FormEvent<HTMLFormElement>) => {
+    formSubmitEvent.preventDefault();
 
-  // เงื่อนไข: ถ้าไม่ได้สั่งเปิด หรือระบบฝั่ง Client ยังโหลดไม่เสร็จ ห้ามเรนเดอร์เด็ดขาด
-  if (!isOpen || !mounted) return null;
+    const exportPayload = {
+      format: selectedFileFormat,
+      startDate: filterStartDate,
+      endDate: filterEndDate,
+      company: selectedCompanyFilter,
+      brand: selectedBrandFilter,
+      branch: selectedBranchFilter,
+    };
 
-  // 3. ใช้ createPortal ครอบโครงสร้างทั้งหมด แล้วสั่งส่งตัวไปแปะที่ document.body
+    console.log("Generating and exporting CSAT Analytics report:", exportPayload);
+    alert(`กำลังดาวน์โหลดรายงานสรุปคะแนน CSAT ในรูปแบบ ${selectedFileFormat.toUpperCase()}...`);
+    onClose();
+  };
+
   return createPortal(
-    <div className="modal-overlay p-4">
-      {/* ม่านฉากหลังโปร่งแสง คลิกพื้นที่ว่างรอบๆ เพื่อสั่งปิดหน้าต่าง */}
-      <div className="modal-close-layer" onClick={onClose} />
+    <div className="modal-overlay animate-pop-in">
+      {/* ชั้นเลเยอร์ Backdrop ปิดเมื่อคลิกนอกกล่อง */}
+      <div className="modal-close-layer cursor-default" onClick={onClose} />
 
-      {/* กล่องเนื้อหาหลัก (ถอดคลาสแอนิเมชันดิบที่ยังไม่ได้ลงทะเบียนออกชั่วคราว เพื่อเทสเลเยอร์) */}
-      <div className="modal-panel max-h-[90vh] z-10 flex flex-col">
+      {/* กล่อง Modal Panel หลัก */}
+      <div className="modal-panel">
         
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 flex justify-between items-center bg-slate-50/50 dark:bg-neutral-900/50">
-          <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Export Report</h2>
-          <button
+        {/* ─── MODAL HEADER ─── */}
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h2 className="text-base font-bold text-slate-800">Export Analytics Report</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Generate CSAT reports and raw survey data.</p>
+          </div>
+          <button 
             type="button"
             onClick={onClose}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100"
+            className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-full transition-colors outline-none cursor-pointer"
           >
-            <span className="material-symbols-outlined block text-[22px] pointer-events-none">close</span>
+            <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          {/* Format Selection */}
-          <div className="space-y-2.5">
-            <label className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block">
-              Select Format
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setFormat("excel")}
-                className={`p-4 rounded-xl border-2 text-left flex items-center gap-4 transition-all outline-none ${
-                  format === "excel"
-                    ? "border-blue-900 bg-blue-50/40 dark:border-blue-500 dark:bg-blue-950/20"
-                    : "border-slate-200 hover:border-slate-300 dark:border-neutral-800 dark:hover:border-neutral-700"
-                }`}
-              >
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center ${
-                  format === "excel" ? "bg-blue-100 text-blue-900 dark:bg-blue-900/50 dark:text-blue-300" : "bg-slate-100 text-neutral-500 dark:bg-neutral-800"
-                }`}>
-                  <span className="material-symbols-outlined text-[22px] pointer-events-none">table_chart</span>
-                </div>
-                <div>
-                  <div className="font-bold text-neutral-800 dark:text-neutral-200 text-sm">Excel File</div>
-                  <div className="text-xs text-neutral-400">Raw Data (.xlsx)</div>
-                </div>
-              </button>
+        {/* ─── MODAL BODY & FORM ─── */}
+        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="p-6 space-y-5 overflow-y-auto max-h-[65vh] custom-scrollbar">
+            
+            {/* เลือกรูปแบบไฟล์ (File Format Selection) */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                Select Format
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                {/* Excel Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedFileFormat("excel")}
+                  className={`p-4 rounded-xl text-left flex items-center gap-3 transition-all border-2 outline-none cursor-pointer ${
+                    selectedFileFormat === "excel"
+                      ? "border-blue-900 bg-blue-50/60 text-blue-900 shadow-xs" 
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                    selectedFileFormat === "excel" ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-500"
+                  }`}>
+                    <span className="material-symbols-outlined text-[20px]">table_chart</span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs">Excel File</div>
+                    <div className="text-[11px] text-slate-500">Raw Survey Data (.xlsx)</div>
+                  </div>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setFormat("pdf")}
-                className={`p-4 rounded-xl border-2 text-left flex items-center gap-4 transition-all outline-none ${
-                  format === "pdf"
-                    ? "border-blue-900 bg-blue-50/40 dark:border-blue-500 dark:bg-blue-950/20"
-                    : "border-slate-200 hover:border-slate-300 dark:border-neutral-800 dark:hover:border-neutral-700"
-                }`}
-              >
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center ${
-                  format === "pdf" ? "bg-blue-100 text-blue-900 dark:bg-blue-900/50 dark:text-blue-300" : "bg-slate-100 text-neutral-500 dark:bg-neutral-800"
-                }`}>
-                  <span className="material-symbols-outlined text-[22px] pointer-events-none">picture_as_pdf</span>
-                </div>
-                <div>
-                  <div className="font-bold text-neutral-800 dark:text-neutral-200 text-sm">PDF Document</div>
-                  <div className="text-xs text-neutral-400">Dashboard Summary</div>
-                </div>
-              </button>
-            </div>
-          </div>
+                {/* PDF Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedFileFormat("pdf")}
+                  className={`p-4 rounded-xl text-left flex items-center gap-3 transition-all border-2 outline-none cursor-pointer ${
+                    selectedFileFormat === "pdf"
+                      ? "border-blue-900 bg-blue-50/60 text-blue-900 shadow-xs" 
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                    selectedFileFormat === "pdf" ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-500"
+                  }`}>
+                    <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs">PDF Document</div>
+                    <div className="text-[11px] text-slate-500">Executive Summary (.pdf)</div>
+                  </div>
+                </button>
 
-          {/* Date Range */}
-          <div className="space-y-2.5">
-            <label className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block">
-              Date Range
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">Start Date</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="border border-slate-200 dark:border-neutral-800 rounded-lg py-2 px-3 bg-slate-50 dark:bg-neutral-800/50 text-sm text-neutral-800 dark:text-neutral-200 outline-none"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">End Date</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="border border-slate-200 dark:border-neutral-800 rounded-lg py-2 px-3 bg-slate-50 dark:bg-neutral-800/50 text-sm text-neutral-800 dark:text-neutral-200 outline-none"
-                />
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Modal Footer */}
-        <div className="modal-footer">
-          <button
-            type="button"
-            onClick={onClose}
-            className="modal-button-secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              console.log("Form Export Submitted!");
-              onClose();
-            }}
-            className="modal-button-primary flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[18px] pointer-events-none">download</span>
-            Export Report
-          </button>
-        </div>
+            {/* กำหนดช่วงเวลา (Date Range) */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                Date Range
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-slate-600">Start Date</span>
+                  <input 
+                    type="date"
+                    value={filterStartDate}
+                    onChange={(inputChangeEvent) => setFilterStartDate(inputChangeEvent.target.value)}
+                    className="input-select w-full"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-slate-600">End Date</span>
+                  <input 
+                    type="date"
+                    value={filterEndDate}
+                    onChange={(inputChangeEvent) => setFilterEndDate(inputChangeEvent.target.value)}
+                    className="input-select w-full"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ตัวกรองหน่วยงาน (Organizational Scope) */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                Data Scope
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <select 
+                  value={selectedCompanyFilter}
+                  onChange={(selectChangeEvent) => setSelectedCompanyFilter(selectChangeEvent.target.value)}
+                  className="input-select w-full"
+                >
+                  <option value="All Companies">All Companies</option>
+                  <option value="Global Retail Inc.">Global Retail Inc.</option>
+                  <option value="TechCorp Solutions">TechCorp Solutions</option>
+                </select>
+
+                <select 
+                  value={selectedBrandFilter}
+                  onChange={(selectChangeEvent) => setSelectedBrandFilter(selectChangeEvent.target.value)}
+                  className="input-select w-full"
+                >
+                  <option value="All Brands">All Brands</option>
+                  <option value="Luxe Retail">Luxe Retail</option>
+                  <option value="Apex Retail">Apex Retail</option>
+                </select>
+
+                <select 
+                  value={selectedBranchFilter}
+                  onChange={(selectChangeEvent) => setSelectedBranchFilter(selectChangeEvent.target.value)}
+                  className="input-select w-full"
+                >
+                  <option value="All Branches">All Branches</option>
+                  <option value="T1 Gate 3">T1 Gate 3</option>
+                  <option value="T2 Arrival Hall">T2 Arrival Hall</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ─── MODAL FOOTER ─── */}
+          <div className="modal-footer">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="modal-button-secondary"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="modal-button-primary"
+            >
+              <span className="material-symbols-outlined text-[16px]">download</span>
+              Download Report
+            </button>
+          </div>
+        </form>
+
       </div>
     </div>,
-    document.body // จุดปลายทางในการส่งตัวโค้ดออกไปวาง (ต่อท้ายแท็ก body ชั้นนอกสุด)
+    document.body
   );
 }

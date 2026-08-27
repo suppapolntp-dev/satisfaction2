@@ -1,95 +1,176 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import React, { useState, useEffect } from "react";
 import { ThankModal } from "../Modals/ThankModal";
+import { 
+  SatisfactionConfig, 
+  DEFAULT_SATISFACTION_CONFIG, 
+  getStoredSatisfactionConfig 
+} from "@/Lib/satisfactionSettings";
 
-// ==========================================
-// CONFIG / CONSTANTS
-// ==========================================
-const SENTIMENT_COLORS = {
+// ==========================================================================
+// ─── 1. CONFIG & SENTIMENT DEFINITIONS (ภาพขีดมินิมอล ปรับขนาดได้จากระบบ)
+// ==========================================================================
+
+export type SentimentLevel = "sad" | "neutral" | "happy";
+
+interface SentimentStyleConfig {
+  level: SentimentLevel;
+  label: string;
+  materialIcon: string;
+  themeColor: string;
+  hoverBg: string;
+  glowClass: string;
+  textColor: string;
+  borderColor: string;
+}
+
+const SENTIMENT_STYLES: Record<SentimentLevel, SentimentStyleConfig> = {
   sad: {
-    color: "#ff6b6b",
-    hoverBg: "rgba(255,107,107,0.08)",
-    icon: "sentiment_very_dissatisfied",
-    label: "ไม่พอใจ",
+    level: "sad",
+    label: "แย่",
+    materialIcon: "sentiment_dissatisfied",
+    themeColor: "#dc3545",
+    hoverBg: "#fff5f5",
+    glowClass: "hover:shadow-[0_0_35px_rgba(220,53,69,0.35)] active:shadow-[0_0_50px_rgba(220,53,69,0.55)]",
+    textColor: "text-[#dc3545]",
+    borderColor: "border-[#dc3545]/30 hover:border-[#dc3545] active:border-[#dc3545]",
   },
   neutral: {
-    color: "#f0ad4e",
-    hoverBg: "rgba(240,173,78,0.08)",
-    icon: "sentiment_neutral",
-    label: "เฉยๆ",
+    level: "neutral",
+    label: "ปานกลาง",
+    materialIcon: "sentiment_neutral",
+    themeColor: "#ffc107",
+    hoverBg: "#fffdf0",
+    glowClass: "hover:shadow-[0_0_35px_rgba(255,193,7,0.4)] active:shadow-[0_0_50px_rgba(255,193,7,0.6)]",
+    textColor: "text-[#d97706]",
+    borderColor: "border-[#ffc107]/40 hover:border-[#ffc107] active:border-[#ffc107]",
   },
   happy: {
-    color: "#51cf66",
-    hoverBg: "rgba(81,207,102,0.08)",
-    icon: "sentiment_very_satisfied",
-    label: "พึงพอใจมาก",
+    level: "happy",
+    label: "ดี",
+    materialIcon: "sentiment_satisfied",
+    themeColor: "#10b981",
+    hoverBg: "#f0fdf4",
+    glowClass: "hover:shadow-[0_0_35px_rgba(16,185,129,0.35)] active:shadow-[0_0_50px_rgba(16,185,129,0.55)]",
+    textColor: "text-[#10b981]",
+    borderColor: "border-[#10b981]/30 hover:border-[#10b981] active:border-[#10b981]",
   },
-} as const;
+};
 
-type SentimentType = keyof typeof SENTIMENT_COLORS;
+const SENTIMENT_KEYS: SentimentLevel[] = ["sad", "neutral", "happy"];
 
-// ==========================================
-// COMPONENT
-// ==========================================
+// ==========================================================================
+// ─── 2. MAIN SATISFACTION BUTTON COMPONENT
+// ==========================================================================
+
 export function BtnSatisfaction() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<SentimentType | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [satisfactionConfig, setSatisfactionConfig] = useState<SatisfactionConfig>(DEFAULT_SATISFACTION_CONFIG);
+  const [isThankModalOpen, setIsThankModalOpen] = useState<boolean>(false);
+  const [selectedSentiment, setSelectedSentiment] = useState<SentimentLevel | null>(null);
+  const [isProcessingVote, setIsProcessingVote] = useState<boolean>(false);
+  const [hoveredLevel, setHoveredLevel] = useState<SentimentLevel | null>(null);
 
-  const handleClick = (value: SentimentType) => {
-    if (isProcessing) return;
-    
-    setIsProcessing(true);
-    setSelected(value);
+  // ดึงค่าการตั้งค่าจาก LocalStorage และรับการอัปเดตแบบเรียลไทม์
+  useEffect(() => {
+    const loadConfig = () => {
+      setSatisfactionConfig(getStoredSatisfactionConfig());
+    };
 
-    // จำลองการบันทึกข้อมูลคะแนนความพึงพอใจ
+    loadConfig();
+
+    const handleSettingsUpdated = () => loadConfig();
+    window.addEventListener("csat_satisfaction_settings_updated", handleSettingsUpdated);
+
+    return () => {
+      window.removeEventListener("csat_satisfaction_settings_updated", handleSettingsUpdated);
+    };
+  }, []);
+
+  // ฟังก์ชันเมื่อผู้ใช้แตะปุ่มประเมิน
+  const handleVoteClick = async (level: SentimentLevel) => {
+
+    setIsProcessingVote(true);
+    setSelectedSentiment(level);
+
+    // ส่งคะแนนไปยัง Backend / API Layer
     setTimeout(() => {
-      setIsOpen(true);
-      setSelected(null);
-      
-      setTimeout(() => {
-        setIsOpen(false);
-        setIsProcessing(false);
-      }, 3500);
-    }, 1500);
+      setIsThankModalOpen(true);
+    }, 250);
   };
+
+  const handleCloseModal = () => {
+    setIsThankModalOpen(false);
+    setSelectedSentiment(null);
+    setIsProcessingVote(false);
+  };
+
+  const dynamicEmojiSize = Number(satisfactionConfig.emojiSize) || 160;
+  const dynamicFontSize = Number(satisfactionConfig.labelFontSize) || 20;
+  const dynamicGridWidth = Number(satisfactionConfig.gridMaxWidth) || 900;
 
   return (
     <>
-      {/* 1. หน้าจอหลัก: ปุ่มประเมินความพึงพอใจสำหรับตู้ Kiosk */}
+      {/* ─── Grid 3 ปุ่มกดความพึงพอใจสัดส่วนลงตัว (ความกว้างกำหนดได้จากระบบ) ─── */}
       <div
-        className="grid grid-cols-3 gap-4 md:gap-8 w-full max-w-4xl px-4 mb-12 mx-auto"
-        style={{ pointerEvents: isProcessing ? "none" : "auto" }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8 w-full px-4 mx-auto"
+        style={{ 
+          maxWidth: `${dynamicGridWidth}px`,
+          pointerEvents: isProcessingVote ? "none" : "auto" 
+        }}
       >
-        {(Object.keys(SENTIMENT_COLORS) as SentimentType[]).map((type) => {
-          const isSelected = selected === type;
-          const config = SENTIMENT_COLORS[type];
-
-          // แยกสไตล์ของปุ่มออกเป็นชุดตัวแปร เพื่อให้อ่านแท็กปุ่มด้านล่างได้ง่ายขึ้น
-          const baseButtonClass = "w-full flex flex-col items-center justify-center gap-4 p-6 md:p-10 rounded-3xl border-4 bg-white text-neutral-400 select-none cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm group touch-manipulation";
-          const activeClass = "scale-108 text-white border-[var(--sentiment-color)] bg-[var(--sentiment-color)] shadow-xl z-50";
-          const hoverClass = "border-slate-100 md:hover:-translate-y-1 md:hover:bg-[var(--sentiment-hover-bg)] md:hover:text-[var(--sentiment-color)] md:hover:border-[var(--sentiment-color)] active:-translate-y-1 active:bg-[var(--sentiment-hover-bg)] active:text-[var(--sentiment-color)] active:border-[var(--sentiment-color)] focus-visible:-translate-y-1 focus-visible:bg-[var(--sentiment-hover-bg)] focus-visible:text-[var(--sentiment-color)] focus-visible:border-[var(--sentiment-color)]";
+        {SENTIMENT_KEYS.map((level) => {
+          const config = SENTIMENT_STYLES[level];
+          const isSelected = selectedSentiment === level;
+          const isHovered = hoveredLevel === level;
 
           return (
-            <div key={type} className="w-full">
+            <div key={level} className="w-full flex justify-center">
               <button
                 type="button"
-                onClick={() => handleClick(type)}
-                className={`${baseButtonClass} ${isSelected ? activeClass : hoverClass}`}
+                onClick={() => handleVoteClick(level)}
+                onMouseEnter={() => setHoveredLevel(level)}
+                onMouseLeave={() => setHoveredLevel(null)}
+                className={`w-full flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 rounded-3xl border-3 bg-white select-none cursor-pointer transition-all duration-300 group touch-manipulation relative overflow-hidden ${
+                  config.borderColor
+                } ${config.glowClass} ${
+                  isSelected
+                    ? "scale-95 ring-4 shadow-2xl"
+                    : isHovered
+                    ? "-translate-y-2 scale-102"
+                    : "hover:-translate-y-1.5"
+                }`}
                 style={{
-                  "--sentiment-color": config.color,
-                  "--sentiment-hover-bg": config.hoverBg,
+                  backgroundColor: isSelected || isHovered ? config.hoverBg : "#ffffff",
                   WebkitTapHighlightColor: "transparent",
-                } as React.CSSProperties}
+                }}
               >
-                {/* ไอคอนอีโมจิ */}
-                <span className="material-symbols-outlined pointer-events-none text-7xl md:text-8xl lg:text-9xl group-hover:text-inherit group-active:text-inherit group-focus-visible:text-inherit leading-none mb-2">
-                  {config.icon}
-                </span>
+                {/* ไอคอนภาพขีดเส้น Material Minimalist Icon ปรับขนาดตรงตามพิกเซล (ค่าตั้งต้น 160px) */}
+                <div className="mb-4 pointer-events-none flex items-center justify-center flex-1">
+                  <span
+                    className={`material-symbols-outlined transition-all duration-300 leading-none block select-none ${
+                      isSelected || isHovered ? config.textColor : "text-neutral-400 group-hover:" + config.textColor
+                    }`}
+                    style={{
+                      fontSize: `${dynamicEmojiSize}px`,
+                      fontVariationSettings: "'FILL' 0, 'wght' 250, 'GRAD' 0, 'opsz' 48",
+                      color: isSelected || isHovered ? config.themeColor : undefined,
+                    }}
+                  >
+                    {config.materialIcon}
+                  </span>
+                </div>
 
-                {/* ข้อความกำกับภาษาไทย */}
-                <span className="font-bold pointer-events-none text-sm md:text-base lg:text-lg group-hover:text-inherit group-active:text-inherit group-focus-visible:text-inherit text-neutral-500">
+                {/* ข้อความกำกับ: แย่ / ปานกลาง / ดี ขนาดตรงตามพิกเซล (ค่าตั้งต้น 20px) */}
+                <span
+                  className={`font-bold tracking-tight transition-colors duration-300 select-none ${
+                    isSelected || isHovered ? config.textColor : "text-neutral-600"
+                  }`}
+                  style={{
+                    fontSize: `${dynamicFontSize}px`,
+                    color: isSelected || isHovered ? config.themeColor : undefined,
+                  }}
+                >
                   {config.label}
                 </span>
               </button>
@@ -98,7 +179,18 @@ export function BtnSatisfaction() {
         })}
       </div>
 
-      {isOpen && <ThankModal isOpen={isOpen} />}
+      {/* ─── Thank You Modal (ส่งค่าทั้งหมดจาก System Settings) ─── */}
+      <ThankModal
+        isOpen={isThankModalOpen}
+        onClose={handleCloseModal}
+        thankYouMessageTh={satisfactionConfig.thankYouMessageTh}
+        thankYouMessageEn={satisfactionConfig.thankYouMessageEn}
+        autoResetSeconds={satisfactionConfig.autoResetSeconds}
+        modalMaxWidth={satisfactionConfig.modalMaxWidth}
+        thankYouIconSize={satisfactionConfig.thankYouIconSize}
+        thankYouFontSizeTh={satisfactionConfig.thankYouFontSizeTh}
+        thankYouFontSizeEn={satisfactionConfig.thankYouFontSizeEn}
+      />
     </>
   );
 }

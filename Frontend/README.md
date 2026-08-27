@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📊 Enterprise CSAT Customer Satisfaction & Multi-Tier Analytics Platform
 
-## Getting Started
+ระบบประเมินความพึงพอใจลูกค้าแบบ Kiosk Touchscreen และศูนย์บริหารจัดการข้อมูลองค์กรระดับ Enterprise สำหรับเครือข่ายธุรกิจร้านอาหารและสนามบิน (เช่น **CRG - Central Restaurants Group**)
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🏢 สถาปัตยกรรมลำดับชั้นองค์กร (5-Tier Organizational Hierarchy)
+
+```
+👑 1. Super Admin (ผู้ดูแลระบบสูงสุด)
+    └── เห็นข้อมูลและสถิติ CSAT ของทุกแบรนด์ทั้งองค์กร
+ └── 🍗 2. Brand Owner (เจ้าของแบรนด์ เช่น KFC, Mister Donut, Auntie Anne's)
+      └── ดูภาพรวมของแบรนด์ และเปรียบเทียบผลงานระดับ "ภาค" (เช่น ภาคเหนือ vs ภาคใต้)
+      └── 📍 3. Regional Manager (RM - ผู้จัดการระดับภาค)
+           └── เปรียบเทียบผลคะแนน CSAT ระดับ "จังหวัด" ในภาคของตนเอง (เช่น เชียงใหม่ vs พิษณุโลก)
+           └── 🏙️ 4. Area Manager (AM - ผู้จัดการระดับเขต/จังหวัด)
+                └── เปรียบเทียบผลคะแนน CSAT ระดับ "สาขา" ในจังหวัดที่รับผิดชอบ
+                └── 🏪 5. Branch Staff / Kiosk Inspector (เจ้าหน้าที่สาขา)
+                     └── ดูสถานะตู้ Kiosk และผลคะแนนประเมินรายชั่วโมงของสาขาตนเอง
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ⚡ วิธีการติดตั้งและรันโปรเจกต์ (Getting Started)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# ติดตั้ง Dependencies
+npm install
 
-## Learn More
+# รัน Development Server
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# ทดสอบ Production Build
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+เปิดบราวเซอร์ที่ [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⌨️ คีย์ลัดในระบบ (Global Keyboard Shortcuts)
+- **<kbd>Ctrl</kbd> + <kbd>K</kbd>** (หรือ **<kbd>⌘</kbd> + <kbd>K</kbd>** บน Mac): โฟกัสช่อง **Global Search** บน Navbar จากหน้าใดก็ได้ เพื่อค้นหาหน้าจอ, สาขา หรือการตั้งค่าทันที

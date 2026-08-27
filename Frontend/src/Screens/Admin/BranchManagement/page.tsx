@@ -1,228 +1,336 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
 import SearchInput from "@/Components/Inputs/SearchInput";
 import SelectInput from "@/Components/Inputs/SelectInput";
-
-// 1. นิยามโครงสร้างข้อมูลหลักของสาขา
-interface BranchModel {
-  id: string;
-  code: string;
-  name: string;
-  brand: string;
-  company: string;
-  status: "Active" | "Inactive";
-  satisfaction: number | null;
-}
+import BranchModal from "@/Components/Modals/BranchModal";
+import { BranchModel } from "@/Types/branch";
+import { branchService } from "@/Services/branchService";
+import { brandService } from "@/Services/brandService";
+import { searchBranches } from "@/Lib/search/searchEngine";
 
 export default function BranchManagementScreen() {
-  const [branches] = useState<BranchModel[]>([]);
+  const [branchesList, setBranchesList] = useState<BranchModel[]>([]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Controlled States สำหรับฟิลเตอร์คัดกรองข้อมูล
+  // Controlled Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState("All Parent Companies");
   const [selectedBrand, setSelectedBrand] = useState("All Brands");
+  const [selectedRegion, setSelectedRegion] = useState("All Regions");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
 
-  // ข้อมูลสถิติสำหรับส่งต่อให้ StatsGrid ส่วนกลาง
-  const statsData: StatItem[] = useMemo(() => [
-    { label: "Total Branches", value: "1,204", change: "+12", isUp: true, icon: "storefront", color: "text-blue-600" },
-    { label: "Active Branches", value: "1,150", change: "95.5% operational", isUp: true, icon: "check_circle", color: "text-emerald-500" },
-    { label: "Average Satisfaction", value: "88.7%", change: "1.2% vs last quarter", isUp: true, icon: "sentiment_satisfied", color: "text-purple-600" },
-    { label: "High-Performing", value: "42", change: "Branches > 95% CSAT", isUp: true, icon: "star", color: "text-amber-500" }
-  ], []);
+  // Modal States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<BranchModel | null>(null);
 
-  // ตัวเลือกออปชันสำหรับกล่องคอมโพเนนต์ SelectInput (ไม่ตั้งชื่อมักง่าย)
-  const companyOptions = [
-    { value: "All Parent Companies", label: "All Parent Companies" },
-    { value: "Acme Corp", label: "Acme Corp" },
-    { value: "Global Retail Inc", label: "Global Retail Inc" }
-  ];
-
-  const brandOptions = [
-    { value: "All Brands", label: "All Brands" },
-    { value: "Apex Retail", label: "Apex Retail" },
-    { value: "Global Travels", label: "Global Travels" },
-    { value: "Lux Boutique", label: "Lux Boutique" }
-  ];
-
-  const statusOptions = [
-    { value: "All Statuses", label: "All Statuses" },
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" }
-  ];
-
-  // 2. กำหนดโครงสร้างคอลัมน์ (ถอดคอลัมน์ Actions แมนนวลออกเพื่อให้ตารางกลางควบคุมเอง)
-  const columns: TableColumn<BranchModel>[] = [
-    { key: "code", label: "Branch Code", sortable: true },
-    { key: "name", label: "Branch Name", sortable: true },
-    { 
-      key: "brand", 
-      label: "Brand", 
-      render: (branch) => (
-        <a href="#" className="text-blue-900 hover:underline font-medium dark:text-blue-400">
-          {branch.brand}
-        </a>
-      )
-    },
-    { 
-      key: "company", 
-      label: "Parent Company", 
-      render: (branch) => <span className="text-neutral-600 dark:text-neutral-400">{branch.company}</span> 
-    },
-    { 
-      key: "status", 
-      label: "Status", 
-      render: (branch) => (
-        <span 
-          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border select-none ${
-            branch.status === "Active" 
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
-              : "bg-rose-50 text-rose-600 border-rose-200"
-          }`}
-        >
-          {branch.status}
-        </span>
-      )
-    },
-    { 
-      key: "satisfaction", 
-      label: "Satisfaction", 
-      sortable: true, 
-      render: (branch) => branch.satisfaction ? (
-        <span className={`block text-right font-medium ${branch.satisfaction < 75 ? "text-rose-600 font-bold" : "text-neutral-700 dark:text-neutral-300"}`}>
-          {branch.satisfaction}%
-        </span>
-      ) : <span className="block text-right text-neutral-400">--</span>
+  // Load from services on mount
+  useEffect(() => {
+    async function fetchInitialData() {
+      try {
+        setIsLoading(true);
+        const [branches, brands] = await Promise.all([
+          branchService.getBranches(),
+          brandService.getBrands(),
+        ]);
+        setBranchesList(branches || []);
+        setAvailableBrands(brands ? brands.map((b) => b.brandName) : []);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    fetchInitialData();
+  }, []);
+
+  // KPI Stats
+  const statsOverviewData: StatItem[] = useMemo(() => {
+    const total = branchesList.length;
+    const activeLocations = branchesList.filter((b) => b.status === "Active").length;
+    const dualBrandCount = branchesList.filter((b) => (b.brands && b.brands.length > 1) || b.brand.includes("+")).length;
+    const totalVotes = branchesList.reduce((acc, b) => acc + (b.totalVotes || 0), 0);
+
+    const hasData = total > 0;
+
+    return [
+      {
+        label: "Total Branches (สาขาทั้งหมด)",
+        value: hasData ? `${total} สาขา` : "-",
+        change: "",
+        isUp: true,
+        icon: "storefront",
+        color: "text-blue-600",
+      },
+      {
+        label: "Dual-Brand Co-Locations",
+        value: hasData ? `${dualBrandCount} สาขา` : "-",
+        change: "",
+        isUp: true,
+        icon: "join_inner",
+        color: "text-purple-600",
+      },
+      {
+        label: "Active Branches (เปิดบริการ)",
+        value: hasData ? `${activeLocations} สาขา` : "-",
+        change: "",
+        isUp: true,
+        icon: "check_circle",
+        color: "text-emerald-600",
+      },
+      {
+        label: "Total Customer Votes",
+        value: hasData ? `${totalVotes.toLocaleString()} โหวต` : "-",
+        change: "",
+        isUp: true,
+        icon: "poll",
+        color: "text-amber-600",
+      },
+    ];
+  }, [branchesList]);
+
+  // Modal Handlers
+  const handleOpenCreateModal = () => {
+    setEditingBranch(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (branch: BranchModel) => {
+    setEditingBranch(branch);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveBranch = async (branchData: {
+    code: string;
+    name: string;
+    brand: string;
+    brands: string[];
+    region: string;
+    province: string;
+    kioskCount: number;
+    status: "Active" | "Inactive";
+  }) => {
+    if (editingBranch) {
+      const updated = await branchService.updateBranch(editingBranch.id, branchData);
+      setBranchesList((prev) =>
+        prev.map((b) => (b.id === editingBranch.id ? updated : b))
+      );
+    } else {
+      const created = await branchService.createBranch({
+        ...branchData,
+        satisfaction: 0,
+        totalVotes: 0,
+      });
+      setBranchesList((prev) => [created, ...prev]);
+    }
+    setIsModalOpen(false);
+  };
+
+  // Table Columns
+  const branchTableColumns: TableColumn<BranchModel>[] = [
+    {
+      key: "code",
+      label: "Branch Code",
+      sortable: true,
+      render: (b) => (
+        <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
+          {b.code}
+        </span>
+      ),
+    },
+    {
+      key: "name",
+      label: "Branch Name & Brands (สาขา & แบรนด์)",
+      sortable: true,
+      render: (b) => {
+        const brands = b.brands && b.brands.length > 0 ? b.brands : [b.brand];
+
+        return (
+          <div>
+            <div className="text-body font-bold text-slate-900">
+              {b.name}
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {brands.map((brandName, idx) => (
+                <span key={idx} className="text-sub border border-slate-200 px-1.5 py-0.5 rounded bg-slate-50">
+                  {brandName}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "region",
+      label: "Area / Province (ภาค & จังหวัด)",
+      sortable: true,
+      render: (b) => (
+        <div>
+          <span className="text-body font-semibold text-slate-800">{b.region}</span>
+          <span className="text-sub block font-medium">จ. {b.province}</span>
+        </div>
+      ),
+    },
+    {
+      key: "kioskCount",
+      label: "Kiosks",
+      sortable: true,
+      render: (b) => (
+        <span className="inline-flex items-center gap-1 text-body font-bold text-slate-700">
+          <span className="material-symbols-outlined text-sm text-blue-900">tablet_mac</span>
+          {b.kioskCount} ตู้
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (b) => (
+        <span className={b.status === "Active" ? "badge-active" : "badge-inactive"}>
+          <span className={`w-1.5 h-1.5 rounded-full ${b.status === "Active" ? "bg-emerald-600" : "bg-slate-400"}`} />
+          {b.status}
+        </span>
+      ),
+    },
   ];
 
-  // ชุดเมนูคำสั่งท้ายแถวตาราง
-  const tableActions: TableAction<BranchModel>[] = [
-    { label: "Edit Branch", icon: "edit", onClick: (branch) => alert(`แก้ไขข้อมูลสาขา: ${branch.code}`) },
-    { label: "View CSAT History", icon: "history", onClick: (branch) => console.log("Viewing metrics for:", branch.code) },
-    { label: "Deactivate", icon: "block", variant: "danger", onClick: (branch) => console.log("Deactivating branch:", branch.id) },
+  // Actions
+  const branchTableActions: TableAction<BranchModel>[] = [
+    {
+      label: "Edit Branch",
+      icon: "edit",
+      onClick: (b) => handleOpenEditModal(b),
+    },
+    {
+      label: "Delete Branch",
+      icon: "delete",
+      variant: "danger",
+      onClick: async (b) => {
+        if (confirm(`คุณต้องการลบสาขา "${b.name}" หรือไม่?`)) {
+          await branchService.deleteBranch(b.id);
+          setBranchesList((prev) => prev.filter((item) => item.id !== b.id));
+        }
+      },
+    },
   ];
 
-  // ระบบตัวกรองข้อมูลฝั่ง Client-side
+  // Filtering using modular search algorithm
   const filteredBranches = useMemo(() => {
-    return branches.filter((branch) => {
-      const matchesSearch =
-        branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        branch.code.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCompany = selectedCompany === "All Parent Companies" || branch.company === selectedCompany;
-      const matchesBrand = selectedBrand === "All Brands" || branch.brand === selectedBrand;
-      const matchesStatus = selectedStatus === "All Statuses" || branch.status === selectedStatus;
-      
-      return matchesSearch && matchesCompany && matchesBrand && matchesStatus;
-    });
-  }, [branches, searchQuery, selectedCompany, selectedBrand, selectedStatus]);
+    let result = searchBranches(searchQuery, branchesList);
+
+    if (selectedBrand !== "All Brands") {
+      result = result.filter((b) => b.brand.includes(selectedBrand) || (b.brands && b.brands.includes(selectedBrand)));
+    }
+    if (selectedRegion !== "All Regions") {
+      result = result.filter((b) => b.region === selectedRegion);
+    }
+    if (selectedStatus !== "All Statuses") {
+      result = result.filter((b) => b.status === selectedStatus);
+    }
+
+    return result;
+  }, [branchesList, searchQuery, selectedBrand, selectedRegion, selectedStatus]);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <div className="space-y-6">
       
-      {/* PAGE HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-slate-200 bg-white gap-4">
+      {/* ─── 1. PAGE HEADER SECTION ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
-          <h1 className="text-xl font-bold text-neutral-800 tracking-tight">Branch Management</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Manage physical and logical locations across your brand portfolio.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-blue-900 text-3xl">storefront</span>
+            Branch & Co-Location Store Management
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            จัดการข้อมูลสาขาในเครือ CRG รองรับสาขา Dual-Brand (เช่น Mister Donut + Arigato ในสาขาเดียวกัน)
+          </p>
         </div>
-        <button 
+
+        <button
           type="button"
-          onClick={() => console.log("Open Add Branch Form modal")}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 outline-none touch-manipulation"
+          onClick={handleOpenCreateModal}
+          className="btn-primary text-xs shadow-xs"
         >
-          <span className="material-symbols-outlined text-[16px] select-none pointer-events-none">add</span> 
-          Add Branch
+          <span className="material-symbols-outlined text-[18px]">add_location_alt</span>
+          + เพิ่มสาขาใหม่
         </button>
       </div>
 
-      {/* MAIN CONTENT CONTAINER */}
-      <div className="flex-1 p-6 flex flex-col gap-6 max-w-[1440px] w-full mx-auto overflow-y-auto">
-        
-        {/* STATS OVERVIEW GRID */}
-        <StatsGrid data={statsData}>
-          <div className="bg-blue-900 text-white rounded-2xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
-            <div className="flex justify-between items-start z-10">
-              <span className="text-xs font-bold text-blue-200 uppercase tracking-wider">Avg. Satisfaction</span>
-              <span className="material-symbols-outlined text-blue-300 text-[20px] select-none pointer-events-none">sentiment_satisfied</span>
-            </div>
-            <div className="mt-2 z-10">
-              <div className="text-3xl font-extrabold tracking-tight">88.7%</div>
-              <p className="text-[11px] text-blue-200 mt-1 flex items-center gap-1">
-                <span className="font-semibold text-emerald-400">↑ +1.2%</span> vs last quarter
-              </p>
-            </div>
-            <span className="material-symbols-outlined absolute right-[-10px] bottom-[-15px] text-blue-800/40 text-8xl pointer-events-none select-none">star_rate</span>
-          </div>
-        </StatsGrid>
+      {/* ─── 2. STATS OVERVIEW SECTION ─── */}
+      <StatsGrid data={statsOverviewData} />
 
-        {/* DATA TABLE WRAPPER */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-          
-          {/* TABLE FILTERS BAR (สวมคอมโพเนนต์ย่อยส่วนกลางทั้งหมด ครบเซ็ต) */}
-          <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <SearchInput 
-              value={searchQuery} 
-              onChange={setSearchQuery} 
-              placeholder="Search branch name or code..." 
-            />
-            
-            <div className="flex items-center gap-2 w-full sm:w-auto self-end sm:self-auto">
-              <SelectInput 
-                value={selectedCompany} 
-                onChange={setSelectedCompany} 
-                options={companyOptions} 
-              />
-
-              <SelectInput 
-                value={selectedBrand} 
-                onChange={setSelectedBrand} 
-                options={brandOptions} 
-              />
-
-              <SelectInput 
-                value={selectedStatus} 
-                onChange={setSelectedStatus} 
-                options={statusOptions} 
-              />
-              
-              <button type="button" aria-label="More filters" className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-neutral-500 flex items-center justify-center outline-none">
-                <span className="material-symbols-outlined text-[18px] select-none pointer-events-none">filter_list</span>
-              </button>
-            </div>
-          </div>
-
-          {/* GENERATED DATA TABLE WITH BUILT-IN SORT & DROPDOWN */}
-          <DataTable 
-            columns={columns} 
-            data={filteredBranches} 
-            actions={tableActions} 
-            emptyMessage="ไม่พบข้อมูลสาขาที่ตรงกับเงื่อนไขการค้นหา"
+      {/* ─── 3. SEARCH & FILTERS ─── */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="w-full md:w-80">
+          <SearchInput
+            placeholder="ค้นหาชื่อสาขา, รหัสสาขา, แบรนด์ หรือจังหวัด..."
+            value={searchQuery}
+            onChange={setSearchQuery}
           />
+        </div>
 
-          {/* TABLE PAGINATION FOOTER */}
-          <div className="p-4 border-t border-slate-100 bg-white flex items-center justify-between text-neutral-500 text-xs font-medium select-none">
-            <div>Showing 1 to {filteredBranches.length} of {filteredBranches.length} branches</div>
-            <div className="flex items-center gap-1">
-              <button type="button" className="p-1 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-40 cursor-not-allowed" disabled>
-                <span className="material-symbols-outlined text-[16px] flex items-center justify-center">chevron_left</span>
-              </button>
-              <button type="button" className="px-2.5 py-1 border border-blue-950 bg-blue-50 text-blue-900 rounded-md font-bold">1</button>
-              <button type="button" className="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors">2</button>
-              <button type="button" className="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors">3</button>
-              <span className="px-1 text-neutral-400">...</span>
-              <button type="button" className="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors">24</button>
-              <button type="button" className="p-1 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">
-                <span className="material-symbols-outlined text-[16px] flex items-center justify-center">chevron_right</span>
-              </button>
-            </div>
+        <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
+          <div className="w-full sm:w-44">
+            <SelectInput
+              value={selectedBrand}
+              onChange={setSelectedBrand}
+              options={[
+                { value: "All Brands", label: "ทุกแบรนด์ (All Brands)" },
+                ...availableBrands.map((brandName) => ({
+                  value: brandName,
+                  label: brandName,
+                })),
+              ]}
+            />
           </div>
 
+          <div className="w-full sm:w-44">
+            <SelectInput
+              value={selectedRegion}
+              onChange={setSelectedRegion}
+              options={[
+                { value: "All Regions", label: "ทุกภาค (All Regions)" },
+                { value: "ภาคเหนือ", label: "ภาคเหนือ" },
+                { value: "ภาคตะวันออก", label: "ภาคตะวันออก" },
+                { value: "กรุงเทพฯ และปริมณฑล", label: "กรุงเทพฯ และปริมณฑล" },
+                { value: "ภาคใต้", label: "ภาคใต้" },
+                { value: "ภาคตะวันออกเฉียงเหนือ", label: "ภาคตะวันออกเฉียงเหนือ" },
+              ]}
+            />
+          </div>
+
+          <div className="w-full sm:w-40">
+            <SelectInput
+              value={selectedStatus}
+              onChange={setSelectedStatus}
+              options={[
+                { value: "All Statuses", label: "ทุกสถานะ" },
+                { value: "Active", label: "Active (เปิดบริการ)" },
+                { value: "Inactive", label: "Inactive (ปิดปรับปรุง)" },
+              ]}
+            />
+          </div>
         </div>
       </div>
+
+      {/* ─── 4. DATA TABLE ─── */}
+      <DataTable
+        columns={branchTableColumns}
+        data={filteredBranches}
+        actions={branchTableActions}
+        emptyMessage="ยังไม่มีข้อมูลสาขาในระบบ"
+      />
+
+      {/* ─── 5. ADD / EDIT BRANCH MODAL ─── */}
+      <BranchModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        editingBranch={editingBranch}
+        masterBrands={availableBrands}
+        onSave={handleSaveBranch}
+      />
+
     </div>
   );
 }

@@ -1,47 +1,60 @@
 ﻿@import "tailwindcss";
 
+/* ==========================================================================
+   🎨 C4 DESIGN SYSTEM: DESIGN TOKENS (CSS VARIABLES)
+   ใช้สำหรับควบคุมโทนสีและระยะห่างของระบบ Admin และ Kiosk ให้เป็นมาตรฐานเดียวกัน
+   ========================================================================== */
 :root {
-  --primary: #1f2937;
-  --primary-container: #4f46e5;
-  --on-primary: #ffffff;
+  /* โทนสีหลักของระบบองค์กร (Corporate Slate & Navy) */
+  --primary: #0f172a;               /* Slate 900: ข้อความหลักและ Header สำคัญ */
+  --primary-container: #1e3a8a;     /* Blue 900: สีปุ่มกดหลัก แถบนำทาง และไอคอนหลัก */
+  --primary-hover: #172554;         /* Blue 950: สีเมื่อ Hover ปุ่มหลัก */
+  --on-primary: #ffffff;            /* สีข้อความบนพื้นหลังสีหลัก */
   --on-primary-container: #ffffff;
 
-  --secondary: #6366f1;
-  --secondary-container: #e0e7ff;
-  --on-secondary: #ffffff;
+  /* สี Accent / ไฮไลต์ (Modern Indigo) */
+  --accent: #4f46e5;                /* Indigo 600 */
+  --accent-light: #e0e7ff;          /* Indigo 100 */
 
-  --tertiary: #8b5cf6;
-  --tertiary-container: #ede9fe;
+  /* สีสถานะระบบ (Feedback & Status Tokens) */
+  --success: #16a34a;               /* Green 600 */
+  --success-bg: #f0fdf4;            /* Green 50 */
+  --success-border: #bbf7d0;        /* Green 200 */
 
-  --error: #dc2626;
-  --error-container: #fee2e2;
+  --warning: #d97706;               /* Amber 600 */
+  --warning-bg: #fffbeb;            /* Amber 50 */
+  --warning-border: #fde68a;        /* Amber 200 */
+
+  --error: #dc2626;                 /* Red 600 */
+  --error-bg: #fef2f2;              /* Red 50 */
+  --error-border: #fecaca;          /* Red 200 */
   --on-error: #ffffff;
 
-  --surface: #ffffff;
-  --surface-variant: #f3f4f6;
-  --on-surface: #1f2937;
-  --on-surface-variant: #6b7280;
+  /* สีพื้นผิวและพื้นหลัง (Surfaces & Backgrounds) */
+  --background: #f8fafc;            /* Slate 50: พื้นหลังแผงควบคุมหลัก */
+  --surface: #ffffff;               /* สีพื้นหลังการ์ด ตาราง และโมดอล */
+  --surface-variant: #f1f5f9;       /* Slate 100: พื้นหลังตารางย่อย แถบฟิลเตอร์ */
+  --on-surface: #0f172a;            /* Slate 900: ข้อความบนพื้นผิว */
+  --on-surface-variant: #64748b;    /* Slate 500: ข้อความรอง คำอธิบาย Subtitle */
 
-  --outline: #d1d5db;
-  --outline-variant: #e5e7eb;
+  /* เส้นขอบ (Borders & Dividers) */
+  --outline: #cbd5e1;               /* Slate 300: เส้นขอบปุ่มหรืออินพุตทั่วไป */
+  --outline-variant: #e2e8f0;       /* Slate 200: เส้นคั่นตารางและขอบการ์ด */
 
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 0.75rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  /* ความโค้งมน (Border Radius) */
+  --radius-sm: 0.5rem;              /* 8px */
+  --radius-md: 0.75rem;             /* 12px */
+  --radius-lg: 1rem;                /* 16px */
+  --radius-xl: 1.5rem;              /* 24px */
 }
 
 @layer base {
   html, body {
     max-width: 100vw;
     overflow-x: hidden;
-    @apply bg-white text-gray-900 antialiased transition-colors duration-300;
+    background-color: var(--background);
+    color: var(--on-surface);
+    @apply antialiased transition-colors duration-200;
   }
 
   * {
@@ -59,6 +72,8 @@
     font-family: "Material Symbols Outlined";
     font-size: inherit;
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
+    user-select: none;
+    pointer-events: none;
   }
 
   input[type="password"]::-webkit-credentials-auto-fill-button,
@@ -66,92 +81,134 @@
     display: none;
   }
 }
-
+  
 @layer components {
+  /* ==========================================================================
+     🏢 3-LEVEL ENTERPRISE TYPOGRAPHY SYSTEM (มาตรฐานระดับตัวอักษร 3 ระดับทั่วทั้งระบบ)
+     1. .text-heading : หัวข้อ (Section Heading, Card Title, Table Title, Modal Title)
+     2. .text-body    : เนื้อหา (Primary Body, Table Content, Form Field Values, Descriptions)
+     3. .text-sub     : เนื้อหาย่อย (Secondary Notes, Metadata, Timestamps, Captions, Muted Subtext)
+     ========================================================================== */
+  .text-heading {
+    @apply text-sm font-bold text-slate-900 tracking-tight;
+  }
+
+  .text-body {
+    @apply text-xs font-normal text-slate-700 leading-normal;
+  }
+
+  .text-sub {
+    @apply text-[10px] sm:text-[11px] font-normal text-slate-400 leading-snug;
+  }
+
   /* ─── Cards & Surfaces ─── */
   .card {
-    @apply bg-white border border-[var(--outline-variant)] rounded-[var(--radius-lg)] shadow-sm;
+    @apply bg-white border border-slate-200/80 rounded-2xl shadow-xs transition-shadow duration-200;
   }
 
   .card-header {
-    @apply p-[var(--spacing-lg)] border-b border-[var(--outline-variant)] bg-[var(--surface-variant)] flex justify-between items-center;
+    @apply p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center;
   }
 
   .card-body {
-    @apply p-[var(--spacing-lg)];
+    @apply p-6;
   }
 
   /* ─── Buttons ─── */
   .btn,
   .btn-primary,
   .btn-secondary,
-  .btn-ghost {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] text-sm font-semibold transition-all duration-150 outline-none;
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 outline-none select-none cursor-pointer active:scale-95 touch-manipulation;
   }
 
   .btn-primary {
-    @apply bg-[var(--primary-container)] text-white hover:opacity-90 active:scale-95;
+    @apply bg-blue-900 hover:bg-blue-950 text-white shadow-xs;
   }
 
   .btn-secondary {
-    @apply bg-white text-[var(--on-surface-variant)] border border-[var(--outline-variant)] hover:bg-[var(--surface-variant)];
+    @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-xs;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-[var(--primary-container)] hover:underline;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-blue-900 hover:bg-slate-100 transition-colors outline-none cursor-pointer select-none;
+  }
+
+  .btn-danger {
+    @apply bg-rose-600 hover:bg-rose-700 text-white shadow-xs;
   }
 
   /* ─── Tables ─── */
-  .table-row {
-    @apply hover:bg-[var(--surface-variant)] transition-colors cursor-pointer;
+  .table-container {
+    @apply w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-xs;
   }
 
   .table-header {
-    @apply bg-[var(--surface-variant)] p-4 text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)];
+    @apply bg-slate-50/80 p-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 select-none;
+  }
+
+  .table-row {
+    @apply hover:bg-slate-50/70 transition-colors duration-150 border-b border-slate-100;
   }
 
   .table-cell {
-    @apply p-4 border-b border-[var(--outline-variant)];
+    @apply p-3.5 text-xs text-slate-700;
   }
 
-  /* ─── Status Badge ─── */
+  /* ─── Status Badges ─── */
   .badge-live {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 select-none;
   }
 
   .badge-live::before {
     content: "";
-    @apply w-2 h-2 bg-green-600 rounded-full animate-pulse;
+    @apply w-1.5 h-1.5 bg-emerald-600 rounded-full animate-pulse;
   }
 
   .badge-upcoming {
-    @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 select-none;
   }
 
   .badge-completed {
-    @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 select-none;
   }
 
-  /* ─── Form Elements ─── */
+  .badge-active {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 select-none;
+  }
+
+  .badge-inactive {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 select-none;
+  }
+
+  .badge-critical {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 select-none;
+  }
+
+  /* ─── Form Inputs ─── */
   .input-select {
-    @apply border border-[var(--outline-variant)] rounded-[var(--radius-sm)] bg-white px-3 py-2 text-sm focus:ring-1 focus:ring-[var(--primary-container)] outline-none cursor-pointer;
+    @apply border border-slate-200 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 outline-none cursor-pointer transition-all;
+  }
+
+  .input-text {
+    @apply border border-slate-200 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 outline-none transition-all placeholder:text-slate-400;
   }
 
   /* ─── Calendar ─── */
   .calendar-grid {
-    @apply grid grid-cols-7 gap-px bg-[var(--outline-variant)];
+    @apply grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200;
   }
 
   .calendar-day {
-    @apply p-2 min-h-20 flex flex-col justify-between text-xs;
+    @apply p-2 min-h-20 flex flex-col justify-between text-xs transition-colors;
   }
 
   .calendar-day-current {
-    @apply bg-white;
+    @apply bg-white hover:bg-slate-50/50;
   }
 
   .calendar-day-other {
-    @apply bg-[var(--surface-variant)] text-[var(--on-surface-variant)];
+    @apply bg-slate-50/70 text-slate-400;
   }
 
   .calendar-event {
@@ -159,7 +216,7 @@
   }
 
   .calendar-event-green {
-    @apply bg-green-50 text-green-800 border-green-200;
+    @apply bg-emerald-50 text-emerald-800 border-emerald-200;
   }
 
   .calendar-event-blue {
@@ -167,65 +224,48 @@
   }
 
   .calendar-event-gray {
-    @apply bg-gray-100 text-gray-800 border-gray-200;
+    @apply bg-slate-100 text-slate-800 border-slate-200;
   }
 
   /* ─── Modals ─── */
-
-  /* Overlay backdrop — ครอบหน้าจอ แต่ pointer-events: none เมื่อ modal ปิด */
   .modal-overlay {
-    @apply fixed inset-0 z-[100] bg-neutral-900/40 backdrop-blur-sm
-           flex items-center justify-center p-4;
+    @apply fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4;
   }
 
-  /* Layer โปร่งใสสำหรับ click outside เพื่อปิด modal */
   .modal-close-layer {
     @apply absolute inset-0;
   }
 
-  /* กล่อง modal หลัก */
   .modal-panel {
-    @apply relative z-10 bg-white w-full max-w-2xl rounded-2xl shadow-xl
-           flex flex-col max-h-[90vh] overflow-hidden
-           border border-slate-200;
+    @apply relative z-10 bg-white w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200;
   }
 
-  /* modal ขนาดเล็ก เช่น ThankModal */
   .modal-panel-sm {
     @apply max-w-sm p-8 items-center text-center;
   }
 
-  /* Footer ปุ่ม action ท้าย modal */
   .modal-footer {
-    @apply px-6 py-4 border-t border-slate-100 flex justify-end gap-2.5
-           bg-slate-50/50 shrink-0;
+    @apply px-6 py-4 border-t border-slate-100 flex justify-end gap-2.5 bg-slate-50/50 shrink-0;
   }
 
-  /* ปุ่มหลักใน modal */
   .modal-button-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2
-           bg-blue-900 hover:bg-blue-950 text-white
-           rounded-lg text-xs font-semibold
-           transition-colors outline-none active:scale-95;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-lg text-xs font-semibold transition-colors outline-none active:scale-95 cursor-pointer select-none;
   }
 
-  /* ปุ่มรองใน modal */
   .modal-button-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2
-           border border-slate-200 bg-white hover:bg-slate-50
-           text-neutral-700 rounded-lg text-xs font-semibold
-           transition-colors outline-none;
+    @apply inline-flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors outline-none cursor-pointer select-none;
   }
 
-  /* custom scrollbar สำหรับ modal body */
+  /* ─── Custom Scrollbar ─── */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
+    height: 5px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full;
+    @apply bg-slate-200 rounded-full hover:bg-slate-300;
   }
 }
 
@@ -238,17 +278,12 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-
-  .text-primary { @apply text-[var(--primary)]; }
-  .text-primary-container { @apply text-[var(--primary-container)]; }
-  .text-on-surface { @apply text-[var(--on-surface)]; }
-  .text-on-surface-variant { @apply text-[var(--on-surface-variant)]; }
 }
 
 @keyframes popIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-4px);
+    transform: scale(0.97) translateY(-4px);
   }
   to {
     opacity: 1;
@@ -257,5 +292,5 @@
 }
 
 .animate-pop-in {
-  animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

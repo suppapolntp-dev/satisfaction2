@@ -1,231 +1,421 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
 import SearchInput from "@/Components/Inputs/SearchInput";
 import SelectInput, { SelectOption } from "@/Components/Inputs/SelectInput";
+import { searchUsers } from "@/Lib/search/searchEngine";
 import CreateUserModal from "@/Components/Modals/CreateUserModal";
+import EditUserModal from "@/Components/Modals/EditUserModal";
+import UserImportExportModal from "@/Components/Modals/UserImportExportModal";
+import { UserModel, EditableUserModel, ImportedUserModel } from "@/Types/user";
+import { userService } from "@/Services/userService";
+import { brandService } from "@/Services/brandService";
+import { branchService } from "@/Services/branchService";
 
-interface UserModel {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  brand: string;
-  branch: string;
-  role: "Administrator" | "Manager" | "Agent" | "Read Only";
-  status: "Active" | "Inactive";
-  createdDate: string;
-}
-
+// ==========================================================================
+// ─── MAIN USER MANAGEMENT COMPONENT
+// ==========================================================================
 export default function UserManagementScreen() {
-  const [userList] = useState<UserModel[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState("All Roles");
-  const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [usersList, setUsersList] = useState<UserModel[]>([]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchUserQuery, setSearchUserQuery] = useState("");
+  const [selectedTierFilter, setSelectedTierFilter] = useState("All Tiers");
+  const [selectedBrandFilter, setSelectedBrandFilter] = useState("All Brands");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("All Status");
+  
+  // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<UserModel | null>(null);
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
 
-  // ข้อมูลตัวเลือกสำหรับฟิลเตอร์ Dropdown
-  const roleFilterOptions: SelectOption[] = [
-    { value: "All Roles", label: "All Roles" },
-    { value: "Administrator", label: "Administrator" },
-    { value: "Manager", label: "Manager" },
-    { value: "Agent", label: "Agent" },
-    { value: "Read Only", label: "Read Only" },
+  // Load from services on mount
+  useEffect(() => {
+    async function fetchInitialData() {
+      try {
+        setIsLoading(true);
+        const [users, brands, branches] = await Promise.all([
+          userService.getUsers(),
+          brandService.getBrands(),
+          branchService.getBranches(),
+        ]);
+        setUsersList(users || []);
+        setAvailableBrands(brands ? brands.map((b) => b.brandName) : []);
+        setAvailableBranches(branches ? branches.map((b) => b.name) : []);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchInitialData();
+  }, []);
+
+  // Dynamic KPI Stats
+  const userStatsOverviewData: StatItem[] = useMemo(() => {
+    const total = usersList.length;
+    const activeCount = usersList.filter((u) => u.status === "Active").length;
+    const multiBrandCount = usersList.filter((u) => (u.assignedBrands && u.assignedBrands.length > 1) || u.brand.includes(",")).length;
+    const licenseSeats = Math.max(0, 2000 - total);
+
+    const hasData = total > 0;
+
+    return [
+      {
+        label: "Total Users (ผู้ใช้งานรวม)",
+        value: hasData ? `${total.toLocaleString()} บัญชี` : "-",
+        change: "",
+        isUp: true,
+        icon: "group",
+        color: "text-blue-600",
+      },
+      {
+        label: "Active Accounts (เปิดใช้งาน)",
+        value: hasData ? `${activeCount.toLocaleString()} ใช้งาน` : "-",
+        change: "",
+        isUp: true,
+        icon: "how_to_reg",
+        color: "text-emerald-600",
+      },
+      {
+        label: "Multi-Brand Users",
+        value: hasData ? `${multiBrandCount} บัญชี` : "-",
+        change: "",
+        isUp: true,
+        icon: "store",
+        color: "text-purple-600",
+      },
+      {
+        label: "License Quota",
+        value: hasData ? `${licenseSeats.toLocaleString()} ที่นั่ง` : "-",
+        change: "",
+        isUp: true,
+        icon: "verified_user",
+        color: "text-amber-600",
+      },
+    ];
+  }, [usersList]);
+
+  // Filters
+  const tierFilterOptions: SelectOption[] = [
+    { value: "All Tiers", label: "ทุกระดับขอบเขต (All Tiers)" },
+    { value: "Super Admin", label: "Super Administrator" },
+    { value: "Brand Owner", label: "Brand Manager / Owner" },
+    { value: "Regional Manager (RM)", label: "Regional Manager (RM)" },
+    { value: "Area Manager (AM)", label: "Area Manager (AM)" },
+    { value: "Branch Staff", label: "Branch Officer / Staff" },
+    { value: "Custom Scope", label: "Custom Scope" },
   ];
+
+  const brandFilterOptions: SelectOption[] = useMemo(() => [
+    { value: "All Brands", label: "All Brands (ทุกแบรนด์)" },
+    ...availableBrands.map((b) => ({ value: b, label: b })),
+  ], [availableBrands]);
 
   const statusFilterOptions: SelectOption[] = [
-    { value: "All Status", label: "All Status" },
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
+    { value: "All Status", label: "All Statuses (ทุกสถานะ)" },
+    { value: "Active", label: "Active (เปิดใช้งาน)" },
+    { value: "Inactive", label: "Inactive (ปิดใช้งาน)" },
   ];
 
-  // โครงสร้างคอลัมน์แสดงผลในตารางกลาง
-  const tableColumns: TableColumn<UserModel>[] = [
-    { key: "id", label: "User ID", sortable: true },
+  // Callback เมื่อสร้างผู้ใช้เดี่ยวเสร็จ
+  const handleUserCreated = async (newUserProfile: any) => {
+    const created = await userService.createUser(newUserProfile);
+    setUsersList((prev) => [created, ...prev]);
+  };
+
+  // Callback เมื่อแก้ไขข้อมูลผู้ใช้เสร็จ
+  const handleUserUpdated = async (updatedUserProfile: EditableUserModel) => {
+    const updated = await userService.updateUser(updatedUserProfile.id, updatedUserProfile);
+    setUsersList((prev) =>
+      prev.map((u) => (u.id === updated.id ? updated : u))
+    );
+  };
+
+  // Callback เมื่อ Bulk Import สำเร็จ
+  const handleBulkImportSuccess = async (importedUsers: ImportedUserModel[]) => {
+    const formattedUsers: UserModel[] = importedUsers.map((u) => ({
+      ...u,
+      tierLevel: "Area Manager (AM)",
+      assignedBrands: [u.brand],
+      assignedRegions: [u.region || "-"],
+      assignedProvinces: [u.province || "-"],
+      assignedBranches: [u.branch],
+    }));
+    setUsersList((prev) => [...formattedUsers, ...prev]);
+  };
+
+  const handleOpenEditModal = (user: UserModel) => {
+    setSelectedUserForEdit(user);
+    setIsEditModalOpen(true);
+  };
+
+  // Table Columns
+  const userTableColumns: TableColumn<UserModel>[] = [
+    { 
+      key: "id", 
+      label: "User ID & Scope", 
+      sortable: true,
+      render: (u) => (
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 w-fit">
+            {u.id}
+          </span>
+          <span className="text-sub font-bold text-slate-700">
+            {u.tierLevel || "User"}
+          </span>
+        </div>
+      )
+    },
     {
       key: "firstName",
-      label: "Full Name",
+      label: "Full Name & Email",
       sortable: true,
-      render: (individualUser) => {
-        const nameInitial = `${individualUser.firstName[0]}${individualUser.lastName[0]}`.toUpperCase();
+      render: (u) => {
+        const nameInitials = `${u.firstName[0] ?? ""}${u.lastName[0] ?? ""}`.toUpperCase();
         return (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-900 flex items-center justify-center font-bold text-xs shadow-sm">
-              {nameInitial}
+            <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-xs shadow-xs select-none">
+              {nameInitials}
             </div>
-            <span className="font-semibold text-neutral-800">{individualUser.firstName} {individualUser.lastName}</span>
+            <div>
+              <div className="text-body font-bold text-slate-900">{u.firstName} {u.lastName}</div>
+              <div className="text-sub font-mono">{u.email}</div>
+            </div>
           </div>
         );
       },
     },
     {
-      key: "email",
-      label: "Contact",
-      render: (individualUser) => (
-        <div className="text-xs">
-          <div className="text-neutral-700 font-medium">{individualUser.phone}</div>
-          <div className="text-neutral-400 mt-0.5">{individualUser.email}</div>
-        </div>
-      ),
-    },
-    {
       key: "brand",
-      label: "Brand / Branch",
-      render: (individualUser) => (
-        <div className="text-xs">
-          <div className="text-neutral-800 font-medium">{individualUser.brand}</div>
-          <div className="text-neutral-400 mt-0.5">{individualUser.branch}</div>
-        </div>
-      ),
+      label: "Assigned Scopes (แบรนด์ & สาขาที่ดูแล)",
+      render: (u) => {
+        const brandsList = u.assignedBrands && u.assignedBrands.length > 0 ? u.assignedBrands : u.brand ? u.brand.split(", ") : [];
+        const branchesList = u.assignedBranches && u.assignedBranches.length > 0 ? u.assignedBranches : u.branch ? [u.branch] : [];
+
+        return (
+          <div className="space-y-1 max-w-xs">
+            <div className="flex flex-wrap gap-1 items-center">
+              <span className="font-bold text-slate-800 text-xs">แบรนด์:</span>
+              {brandsList.length === 0 ? (
+                <span className="text-sub text-slate-400">-</span>
+              ) : (
+                brandsList.map((b, i) => (
+                  <span key={i} className="text-sub font-normal">
+                    {b}{i < brandsList.length - 1 ? "," : ""}
+                  </span>
+                ))
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1 items-center">
+              <span className="font-bold text-slate-800 text-xs">สาขา:</span>
+              {branchesList.length === 0 ? (
+                <span className="text-sub text-slate-400">-</span>
+              ) : (
+                branchesList.map((br, i) => (
+                  <span key={i} className="text-sub font-normal truncate max-w-[200px]">
+                    {br}{i < branchesList.length - 1 ? "," : ""}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: "role",
       label: "Role",
-      render: (individualUser) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200 select-none">
-          {individualUser.role}
+      render: (u) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
+          {u.role}
         </span>
       ),
     },
     {
       key: "status",
       label: "Status",
-      render: (individualUser) => (
-        <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold select-none border ${
-            individualUser.status === "Active"
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-rose-50 text-rose-600 border-rose-200"
-          }`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${individualUser.status === "Active" ? "bg-emerald-600" : "bg-rose-500"}`}></span>
-          {individualUser.status}
-        </span>
-      ),
+      render: (u) => {
+        const isUserActive = u.status === "Active";
+        return (
+          <span className={isUserActive ? "badge-active" : "badge-inactive"}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isUserActive ? "bg-emerald-600" : "bg-slate-400"}`}></span>
+            {u.status}
+          </span>
+        );
+      },
     },
-    { key: "createdDate", label: "Created Date", sortable: true },
+    { key: "createdDate", label: "Created Date", sortable: true }
   ];
 
-  // ฟังก์ชันคำสั่งท้ายแถวเมื่อกดปุ่มสามจุดในตาราง
-  const rowActionMenu: TableAction<UserModel>[] = [
-    { label: "Edit Profile", icon: "edit", onClick: (selectedUser) => alert(`Edit profile: ${selectedUser.firstName}`) },
-    { label: "Reset Password", icon: "key", onClick: (selectedUser) => console.log("Reset key for:", selectedUser.id) },
-    { label: "Delete Account", icon: "delete", variant: "danger", onClick: (selectedUser) => console.log("Delete account:", selectedUser.id) },
+  // Actions
+  const userTableActions: TableAction<UserModel>[] = [
+    { 
+      label: "Edit User", 
+      icon: "edit", 
+      onClick: (selectedUser) => handleOpenEditModal(selectedUser) 
+    },
+    { 
+      label: "Toggle Status", 
+      icon: "toggle_on", 
+      onClick: (selectedUser) => {
+        const nextStatus = selectedUser.status === "Active" ? "Inactive" : "Active";
+        setUsersList((prev) =>
+          prev.map((u) => (u.id === selectedUser.id ? { ...u, status: nextStatus } : u))
+        );
+      } 
+    },
+    {
+      label: "Delete User",
+      icon: "delete",
+      variant: "danger",
+      onClick: async (u) => {
+        if (confirm(`คุณต้องการลบผู้ใช้ "${u.firstName} ${u.lastName}" หรือไม่?`)) {
+          await userService.deleteUser(u.id);
+          setUsersList((prev) => prev.filter((item) => item.id !== u.id));
+        }
+      },
+    },
   ];
 
-  // ตรรกะคัดกรองข้อมูลผู้ใช้หลังบ้าน
-  const filteredUserList = useMemo(() => {
-    return userList.filter((individualUser) => {
-      const isSearchMatched =
-        individualUser.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        individualUser.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        individualUser.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        individualUser.id.toLowerCase().includes(searchQuery.toLowerCase());
-      const isRoleMatched = selectedRole === "All Roles" || individualUser.role === selectedRole;
-      const isStatusMatched = selectedStatus === "All Status" || individualUser.status === selectedStatus;
-      
-      return isSearchMatched && isRoleMatched && isStatusMatched;
-    });
-  }, [userList, searchQuery, selectedRole, selectedStatus]);
+  // Filtering using modular search algorithm
+  const filteredUsersList = useMemo(() => {
+    let result = searchUsers(searchUserQuery, usersList);
+
+    if (selectedTierFilter !== "All Tiers") {
+      result = result.filter((u) => u.tierLevel === selectedTierFilter);
+    }
+    if (selectedBrandFilter !== "All Brands") {
+      result = result.filter(
+        (u) =>
+          u.brand.includes(selectedBrandFilter) ||
+          (u.assignedBrands && u.assignedBrands.includes(selectedBrandFilter)) ||
+          u.brand.includes("ทุกแบรนด์")
+      );
+    }
+    if (selectedStatusFilter !== "All Status") {
+      result = result.filter((u) => u.status === selectedStatusFilter);
+    }
+
+    return result;
+  }, [usersList, searchUserQuery, selectedTierFilter, selectedBrandFilter, selectedStatusFilter]);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <div className="space-y-6">
       
-      {/* PAGE HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-slate-200 bg-white gap-4">
+      {/* ─── 1. PAGE HEADER SECTION ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
-          <h1 className="text-sm font-bold text-neutral-800 tracking-tight">User Management</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Manage system access, roles, and user profiles.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-blue-900 text-3xl">manage_accounts</span>
+            User & Multi-Scope Management
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            จัดการบัญชีผู้ใช้งาน สิทธิ์ Multi-Brand, Multi-Branch และการนำเข้า-ส่งออกไฟล์
+          </p>
         </div>
-        <div className="flex items-center gap-2.5">
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-neutral-700 rounded-lg text-xs font-semibold shadow-sm transition-colors outline-none"
+            onClick={() => setIsImportExportModalOpen(true)}
+            className="btn-secondary text-xs shadow-xs"
           >
-            <span className="material-symbols-outlined text-[16px] select-none">download</span>
-            Export
+            <span className="material-symbols-outlined text-[18px]">swap_vert</span>
+            Import / Export (JSON, XLSX, CSV, XML)
           </button>
+
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 outline-none"
+            className="btn-primary text-xs shadow-xs"
           >
-            <span className="material-symbols-outlined text-[16px] select-none">add</span>
-            Add User
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            + Create User
           </button>
         </div>
       </div>
 
-      {/* MAIN CONTENT CONTAINER */}
-      <div className="flex-1 p-6 flex flex-col gap-6 max-w-[1440px] w-full mx-auto overflow-y-auto">
-        
-        {/* DATA TABLE WRAPPER */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-          
-          {/* TABLE FILTERS BAR */}
-          <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search users, IDs, emails..."
-            />
-            
-            <div className="flex items-center gap-3 w-full lg:w-auto self-end lg:self-auto">
-              <SelectInput
-                label="Role:"
-                value={selectedRole}
-                onChange={setSelectedRole}
-                options={roleFilterOptions}
-              />
+      {/* ─── 2. STATS OVERVIEW SECTION ─── */}
+      <StatsGrid data={userStatsOverviewData} />
 
-              <SelectInput
-                label="Status:"
-                value={selectedStatus}
-                onChange={setSelectedStatus}
-                options={statusFilterOptions}
-              />
-
-              <button type="button" className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-neutral-500 flex items-center justify-center outline-none">
-                <span className="material-symbols-outlined text-[18px] select-none">filter_list</span>
-              </button>
-            </div>
-          </div>
-
-          {/* DYNAMIC SORTING DATA TABLE */}
-          <DataTable
-            columns={tableColumns}
-            data={filteredUserList}
-            actions={rowActionMenu}
-            emptyMessage="ไม่พบข้อมูลรายชื่อผู้ใช้งานระบบที่ตรงกับเงื่อนไข"
+      {/* ─── 3. SEARCH & FILTER TOOLBAR ─── */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="w-full md:w-80">
+          <SearchInput
+            placeholder="ค้นหาชื่อ, อีเมล, แบรนด์ หรือสาขา..."
+            value={searchUserQuery}
+            onChange={setSearchUserQuery}
           />
+        </div>
 
-          {/* TABLE PAGINATION FOOTER */}
-          <div className="p-4 border-t border-slate-100 bg-white flex items-center justify-between text-neutral-500 text-xs font-medium select-none">
-            <div>Showing 1 to {filteredUserList.length} of {filteredUserList.length} results</div>
-            <div className="flex items-center gap-1">
-              <button type="button" className="p-1 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-40 cursor-not-allowed" disabled>
-                <span className="material-symbols-outlined text-[16px] flex items-center justify-center">chevron_left</span>
-              </button>
-              <button type="button" className="px-2.5 py-1 border border-blue-950 bg-blue-50 text-blue-900 rounded-md font-bold">1</button>
-              <button type="button" className="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors">2</button>
-              <button type="button" className="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors">3</button>
-              <span className="px-1 text-neutral-400">...</span>
-              <button type="button" className="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors">12</button>
-              <button type="button" className="p-1 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">
-                <span className="material-symbols-outlined text-[16px] flex items-center justify-center">chevron_right</span>
-              </button>
-            </div>
+        <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
+          <div className="w-full sm:w-44">
+            <SelectInput
+              value={selectedTierFilter}
+              onChange={setSelectedTierFilter}
+              options={tierFilterOptions}
+            />
           </div>
 
+          <div className="w-full sm:w-40">
+            <SelectInput
+              value={selectedBrandFilter}
+              onChange={setSelectedBrandFilter}
+              options={brandFilterOptions}
+            />
+          </div>
+
+          <div className="w-full sm:w-36">
+            <SelectInput
+              value={selectedStatusFilter}
+              onChange={setSelectedStatusFilter}
+              options={statusFilterOptions}
+            />
+          </div>
         </div>
       </div>
 
-      {/* CREATE USER POPUP MODAL COMPONENT */}
-      <CreateUserModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
+      {/* ─── 4. USERS DATA TABLE ─── */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+        <DataTable
+          columns={userTableColumns}
+          data={filteredUsersList}
+          actions={userTableActions}
+          emptyMessage="ยังไม่มีข้อมูลผู้ใช้งานในระบบ"
+        />
+      </div>
+
+      {/* ─── 5. MODALS INTEGRATION ─── */}
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        availableBrands={availableBrands}
+        availableBranches={availableBranches}
+        onUserCreated={handleUserCreated}
+      />
+
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedUserForEdit(null);
+        }}
+        user={selectedUserForEdit}
+        availableBrands={availableBrands}
+        availableBranches={availableBranches}
+        onUserUpdated={handleUserUpdated}
+      />
+
+      <UserImportExportModal
+        isOpen={isImportExportModalOpen}
+        onClose={() => setIsImportExportModalOpen(false)}
+        currentUsers={usersList}
+        availableBrands={availableBrands}
+        onImportSuccess={handleBulkImportSuccess}
       />
 
     </div>

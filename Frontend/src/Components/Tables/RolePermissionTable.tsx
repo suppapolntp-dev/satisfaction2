@@ -1,66 +1,66 @@
 "use client";
 
 import React from "react";
+import { PermissionRow, PermissionKey } from "@/Types/role";
 
-export interface PermissionRow {
-  module: string;
-  view: boolean;
-  create: boolean;
-  update: boolean;
-  delete: boolean;
-  export: boolean;
-}
-
-export type PermissionKey = keyof Omit<PermissionRow, "module">;
+export type { PermissionRow, PermissionKey };
 
 interface RolePermissionTableProps {
   permissionData: PermissionRow[];
-  onPermissionChange: (moduleName: string, field: PermissionKey) => void;
+  onPermissionChange: (moduleName: string, permissionField: PermissionKey) => void;
 }
 
-const PERMISSION_FIELDS: PermissionKey[] = ["view", "create", "update", "delete", "export"];
+const PERMISSION_FIELD_KEYS: PermissionKey[] = ["view", "create", "update", "delete", "export"];
 
+// ==========================================================================
+// ─── 2. MAIN ROLE PERMISSION TABLE COMPONENT
+// ==========================================================================
 export default function RolePermissionTable({
   permissionData,
   onPermissionChange,
 }: RolePermissionTableProps) {
   if (permissionData.length === 0) {
     return (
-      <div className="p-12 text-center text-sm text-[var(--on-surface-variant)] bg-[var(--surface-container-low)]/50 rounded-xl border border-dashed border-[var(--outline-variant)]">
+      <div className="p-12 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
         No permissions configured for this role
       </div>
     );
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-[var(--outline-variant)] bg-white shadow-sm">
-      <table className="w-full border-collapse text-left text-sm">
+    <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
+      <table className="w-full border-collapse text-left text-xs">
+        {/* ─── TABLE HEADER ─── */}
         <thead>
-          <tr className="border-b border-[var(--outline-variant)] bg-[var(--surface-variant)]/40 text-[var(--on-surface-variant)] font-semibold text-xs uppercase tracking-wider">
-            <th className="p-4 pl-6">Module / Feature</th>
-            {PERMISSION_FIELDS.map((field) => (
-              <th key={field} className="p-4 text-center font-bold">
-                {field}
+          <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-bold text-[11px] uppercase tracking-wider select-none">
+            <th className="p-3.5 pl-5">Module / Feature</th>
+            {PERMISSION_FIELD_KEYS.map((permissionKey) => (
+              <th key={permissionKey} className="p-3.5 text-center font-bold">
+                {permissionKey}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-[var(--outline-variant)] text-[var(--on-surface)]">
-          {permissionData.map((singleRow) => (
+
+        {/* ─── TABLE BODY ─── */}
+        <tbody className="divide-y divide-slate-100 text-slate-700">
+          {permissionData.map((singlePermissionRow) => (
             <tr 
-              key={singleRow.module} 
-              className="hover:bg-[var(--primary-container)]/[0.02] transition-colors duration-150"
+              key={singlePermissionRow.module} 
+              className="hover:bg-slate-50/70 transition-colors"
             >
-              <td className="p-4 pl-6 font-medium text-gray-800">{singleRow.module}</td>
-              {PERMISSION_FIELDS.map((field) => (
-                <td key={field} className="p-4 text-center">
+              <td className="p-3.5 pl-5 font-semibold text-slate-800">
+                {singlePermissionRow.module}
+              </td>
+              {PERMISSION_FIELD_KEYS.map((permissionKey) => (
+                <td key={permissionKey} className="p-3.5 text-center">
                   <div className="flex items-center justify-center">
                     <input
                       type="checkbox"
-                      checked={singleRow[field]}
-                      onChange={() => onPermissionChange(singleRow.module, field)}
-                      aria-label={`${field} ${singleRow.module}`}
-                      className="w-4 h-4 rounded border-[var(--outline)] text-[var(--primary-container)] focus:ring-[var(--primary-container)] focus:ring-offset-0 cursor-pointer accent-[var(--primary-container)] transition-all shadow-sm hover:scale-105"
+                      checked={singlePermissionRow[permissionKey]}
+                      onChange={() => onPermissionChange(singlePermissionRow.module, permissionKey)}
+                      aria-label={`${permissionKey} permission for ${singlePermissionRow.module}`}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-900 focus:ring-blue-900/20 cursor-pointer accent-blue-900 transition-all hover:scale-110"
                     />
                   </div>
                 </td>

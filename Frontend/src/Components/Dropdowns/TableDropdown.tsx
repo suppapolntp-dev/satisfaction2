@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
-// นิยามโครงสร้างออปชันคำสั่งภายในเมนู Dropdown
+// ==========================================================================
+// ─── 1. INTERFACES (นิยามโครงสร้างออปชันเมนูคำสั่ง)
+// ==========================================================================
 export interface DropdownActionItem {
   label: string;
   icon: string;
@@ -14,67 +16,73 @@ interface TableDropdownProps {
   actions: DropdownActionItem[];
 }
 
+// ==========================================================================
+// ─── 2. MAIN COMPONENT
+// ==========================================================================
 export default function TableDropdown({ actions }: TableDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownContainerRef = useRef<HTMLDivElement>(null);
 
-  // ตรวจจับการจิ้มนิ้วสัมผัสหรือคลิกภายนอกกล่อง เพื่อสั่งหุบเมนูอัตโนมัติ (iPad Friendly)
+  // ตรวจจับการคลิกนอกกล่องเพื่อปิดเมนูอัตโนมัติ (Click Outside Handler)
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+    function handleDocumentClick(event: MouseEvent) {
+      if (
+        dropdownContainerRef.current &&
+        !dropdownContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
       }
     }
     
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleDocumentClick);
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleDocumentClick);
     };
-  }, [isOpen]);
+  }, [isDropdownOpen]);
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
-      {/* ปุ่ม Trigger สามจุดจุดชนวนการเปิด */}
+    <div className="relative inline-block text-left" ref={dropdownContainerRef}>
+      {/* ปุ่มกดจุด 3 จุด (Trigger Button) */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center justify-center p-1.5 text-neutral-500 hover:text-blue-900 hover:bg-slate-100 rounded-lg transition-all outline-none touch-manipulation active:scale-95"
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-blue-900 hover:bg-slate-100 rounded-lg transition-all outline-none touch-manipulation active:scale-95 cursor-pointer"
         aria-haspopup="true"
-        aria-expanded={isOpen}
+        aria-expanded={isDropdownOpen}
       >
-        <span className="material-symbols-outlined text-[20px] select-none pointer-events-none">
+        <span className="material-symbols-outlined text-[18px]">
           more_vert
         </span>
       </button>
 
-      {/* กล่องแสดงรายการคำสั่ง (Actions List) */}
-      {isOpen && (
+      {/* กล่องเมนูคำสั่งย่อย (Pop-in Menu Panel) */}
+      {isDropdownOpen && (
         <div 
-          className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-pop-in"
+          className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden animate-pop-in"
           style={{ transformOrigin: "top right" }}
         >
           <div className="py-1 flex flex-col" role="menu">
-            {actions.map((action, idx) => (
+            {actions.map((actionItem, actionIndex) => (
               <button
-                key={idx}
+                key={actionIndex}
                 type="button"
                 role="menuitem"
                 onClick={() => {
-                  action.onClick();
-                  setIsOpen(false); // ปิด Dropdown ทันทีเมื่อประมวลผลเสร็จ
+                  actionItem.onClick();
+                  setIsDropdownOpen(false);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-left transition-colors outline-none touch-manipulation ${
-                  action.variant === "danger"
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-left transition-colors outline-none cursor-pointer ${
+                  actionItem.variant === "danger"
                     ? "text-rose-600 hover:bg-rose-50"
-                    : "text-neutral-700 hover:bg-slate-50 hover:text-blue-900"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-blue-900"
                 }`}
               >
-                <span className="material-symbols-outlined text-[16px] select-none pointer-events-none">
-                  {action.icon}
+                <span className="material-symbols-outlined text-[16px]">
+                  {actionItem.icon}
                 </span>
-                {action.label}
+                <span>{actionItem.label}</span>
               </button>
             ))}
           </div>

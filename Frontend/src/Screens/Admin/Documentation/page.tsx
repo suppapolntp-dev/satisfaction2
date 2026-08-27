@@ -2,187 +2,217 @@
 
 import React, { useState } from "react";
 
-// ─── 1. นิยามโครงสร้างข้อมูลสารบัญแบบเต็มคำ (Interfaces) ───
+// ==========================================================================
+// ─── 1. INTERFACES (นิยามโครงสร้างสารบัญเอกสาร API)
+// ==========================================================================
 interface DocumentTopicItem {
-    anchorId: string;
-    topicTitle: string;
+  anchorId: string;
+  topicTitle: string;
 }
 
+const DOCUMENT_TOPICS: DocumentTopicItem[] = [
+  { anchorId: "overview", topicTitle: "API Overview" },
+  { anchorId: "prerequisites", topicTitle: "Prerequisites & Tokens" },
+  { anchorId: "generating-token", topicTitle: "Generating Access Token" },
+  { anchorId: "handling-response", topicTitle: "Handling Response & Errors" },
+  { anchorId: "feedback-payload", topicTitle: "Kiosk Sentiment Payload" },
+];
+
+// ==========================================================================
+// ─── 2. MAIN DOCUMENTATION SCREEN COMPONENT
+// ==========================================================================
 export default function DocumentationScreen() {
-    // ชุดข้อมูลจำลองรายการสารบัญประจำบทความ (Table of Contents)
-    const DOCUMENT_TOPICS: DocumentTopicItem[] = [
-        { anchorId: "prerequisites", topicTitle: "Prerequisites" },
-        { anchorId: "generating-token", topicTitle: "Generating an Access Token" },
-        { anchorId: "handling-response", topicTitle: "Handling the Response" },
-    ];
+  const [activeAnchorId, setActiveAnchorId] = useState<string>("generating-token");
+  const [isCopied, setIsCopied] = useState(false);
 
-    // สเตตัสในการจำลองสถานะ Active ของหัวข้อสารบัญที่เปิดอ่านอยู่
-    const [activeAnchorId, setActiveAnchorId] = useState<string>("generating-token");
+  // ฟังก์ชันคัดลอก cURL Request
+  const handleCopyClipboardClick = () => {
+    const curlCode = `curl -X POST https://api.csat-enterprise.com/oauth/token \\
+  -H "Content-Type: application/x-www-form-urlencoded" \\
+  -d "grant_type=client_credentials" \\
+  -d "client_id=YOUR_CLIENT_ID" \\
+  -d "client_secret=YOUR_CLIENT_SECRET"`;
 
-    // ฟังก์ชันจำลองการกดคัดลอกข้อความ cURL (Junior-Friendly)
-    const handleCopyClipboardClick = () => {
-        console.log("cURL Request text targeted and copied to clipboard successfully.");
-    };
+    navigator.clipboard.writeText(curlCode);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
-    return (
-        <div className="w-full flex flex-col xl:flex-row gap-margin-page">
-            {/* ─── Center Content Area (ส่วนบทความหลัก) ─── */}
-            <article className="flex-1 min-w-0 max-w-3xl">
-                {/* Breadcrumbs เส้นทางนำทางส่วนบน */}
-                <nav aria-label="Breadcrumb" className="flex text-body-md text-[var(--on-surface-variant)] mb-stack-lg">
-                    <ol className="inline-flex items-center space-x-2">
-                        <li className="inline-flex items-center">
-                            <a href="#" className="hover:text-[var(--primary)] transition-colors">Documentation</a>
-                        </li>
-                        <li className="flex items-center">
-                            <span className="material-symbols-outlined text-sm mx-1">chevron_right</span>
-                            <a href="#" className="hover:text-[var(--primary)] transition-colors">Getting Started</a>
-                        </li>
-                        <li aria-current="page" className="flex items-center">
-                            <span className="material-symbols-outlined text-sm mx-1">chevron_right</span>
-                            <span className="text-[var(--on-surface)] font-medium">Authentication Flow</span>
-                        </li>
-                    </ol>
-                </nav>
+  return (
+    <div className="space-y-6">
+      
+      {/* ─── 1. PAGE HEADER SECTION ─── */}
+      <div className="pb-4 border-b border-slate-200/80">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          API Documentation & Integration Guide
+        </h1>
+        <p className="text-xs text-slate-500 mt-1">
+          OAuth 2.0 authentication flows, sentiment feedback endpoints, and client credential setup.
+        </p>
+      </div>
 
-                {/* ส่วนหัวของบทความ */}
-                <header className="mb-10">
-                    <h1 className="font-headline-lg text-headline-lg text-[var(--on-surface)] font-semibold mb-4">
-                        Authentication Flow
-                    </h1>
-                    <div className="flex items-center gap-4 text-body-md text-[var(--on-surface-variant)] pb-6 border-b border-[var(--outline-variant)]">
-                        <div className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">calendar_today</span>
-                            <span>Last updated: Oct 24, 2023</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">schedule</span>
-                            <span>5 min read</span>
-                        </div>
-                    </div>
-                </header>
+      {/* ─── 2. TWO-COLUMN LAYOUT (ARTICLE + ON-THIS-PAGE SIDEBAR) ─── */}
+      <div className="flex flex-col xl:flex-row gap-8 items-start">
+        
+        {/* Main Article Content Container */}
+        <article className="flex-1 min-w-0 bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8 space-y-8">
+          
+          {/* Section: Overview */}
+          <section id="overview" className="space-y-3">
+            <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <span className="w-2 h-4 bg-blue-900 rounded-full inline-block"></span>
+              API Overview & Architecture
+            </h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              The CSAT Enterprise Admin API provides high-throughput, low-latency REST endpoints for 
+              receiving sentiment votes from touchscreen Kiosks, managing multi-tenant branch scopes, 
+              and retrieving real-time analytics data. All server-to-server communications require OAuth 2.0 with JWT tokens.
+            </p>
+          </section>
 
-                {/* เนื้อหารายละเอียดบทความหลัก */}
-                <div className="text-body-lg text-[var(--on-surface)] space-y-6">
-                    <p className="leading-relaxed">
-                        The CSAT Admin API uses OAuth 2.0 with JWT (JSON Web Tokens) for secure authentication and authorization.
-                        This guide explains how to implement the server-to-server authentication flow required to integrate your
-                        application with our enterprise platform.
-                    </p>
+          {/* Section: Prerequisites */}
+          <section id="prerequisites" className="space-y-3">
+            <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <span className="w-2 h-4 bg-blue-900 rounded-full inline-block"></span>
+              Prerequisites & Client Credentials
+            </h2>
+            <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600">
+              <li>
+                An active <code className="bg-slate-100 text-rose-600 px-1.5 py-0.5 rounded font-mono font-bold">client_id</code> and <code className="bg-slate-100 text-rose-600 px-1.5 py-0.5 rounded font-mono font-bold">client_secret</code> provisioned from the Admin Console.
+              </li>
+              <li>
+                Appropriate role permissions granted in the <span className="font-semibold text-slate-800">Role Management</span> section.
+              </li>
+              <li>
+                TLS 1.3 encryption enabled for all HTTP requests.
+              </li>
+            </ul>
 
-                    {/* หัวข้อที่ 1: Prerequisites */}
-                    <h2 id="prerequisites" className="font-headline-md text-headline-md font-semibold text-[var(--on-surface)] mt-10 mb-4">
-                        Prerequisites
-                    </h2>
-                    <ul className="list-disc pl-5 space-y-2 mb-6">
-                        <li>
-                            An active <code className="bg-[var(--surface-container-low)] text-[var(--error)] px-1 py-0.5 rounded text-sm font-mono">client_id</code> and <code className="bg-[var(--surface-container-low)] text-[var(--error)] px-1 py-0.5 rounded text-sm font-mono">client_secret</code> from the Admin Console.
-                        </li>
-                        <li>
-                            Appropriate role permissions granted in the Role Management section.
-                        </li>
-                    </ul>
+            {/* Note Callout Box */}
+            <div className="bg-blue-50/80 border-l-4 border-blue-900 p-4 rounded-r-xl flex items-start gap-3 mt-4">
+              <span className="material-symbols-outlined text-blue-900 text-[20px] shrink-0 mt-0.5">info</span>
+              <div className="text-xs text-slate-700 leading-relaxed">
+                <strong className="text-blue-950 font-bold">Security Note:</strong> Access tokens expire after 60 minutes. Clients should implement automated token refresh logic using the refresh endpoint to maintain uninterrupted polling.
+              </div>
+            </div>
+          </section>
 
-                    {/* กล่องข้อความแจ้งเตือนสีน้ำเงินพรีเมียม */}
-                    <div className="bg-[var(--surface-container-low)] border-l-4 border-[var(--primary)] p-4 rounded-r-lg my-6 flex gap-3">
-                        <span className="material-symbols-outlined text-[var(--primary)] shrink-0">info</span>
-                        <div className="text-body-md text-[var(--on-surface-variant)]">
-                            <strong>Note:</strong> Tokens expire after 60 minutes. You must implement token refresh logic to maintain an active session without user interruption.
-                        </div>
-                    </div>
+          {/* Section: Generating Access Token */}
+          <section id="generating-token" className="space-y-3">
+            <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <span className="w-2 h-4 bg-blue-900 rounded-full inline-block"></span>
+              Generating an Access Token
+            </h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Send an authenticated POST request to the token authorization gateway encoded as <code className="bg-slate-100 text-blue-900 px-1.5 py-0.5 rounded font-mono">application/x-www-form-urlencoded</code>:
+            </p>
 
-                    {/* หัวข้อที่ 2: Generating an Access Token */}
-                    <h2 id="generating-token" className="font-headline-md text-headline-md font-semibold text-[var(--on-surface)] mt-10 mb-4">
-                        Generating an Access Token
-                    </h2>
-                    <p className="leading-relaxed mb-4">
-                        To obtain a token, make a POST request to the token endpoint with your credentials. The request must be encoded as <code className="bg-[var(--surface-container-low)] text-[var(--error)] px-1 py-0.5 rounded text-sm font-mono">application/x-www-form-urlencoded</code>.
-                    </p>
-
-                    {/* บล็อกจำลองโค้ดโปรแกรม (Code Block Container) */}
-                    <div className="bg-[var(--surface-container)] border border-[var(--outline-variant)] rounded-lg overflow-hidden my-6">
-                        <div className="bg-[var(--surface-container-highest)] px-4 py-2 border-b border-[var(--outline-variant)] flex justify-between items-center text-sm">
-                            <span className="font-mono text-[var(--on-surface-variant)]">cURL Request</span>
-                            <button
-                                type="button"
-                                onClick={handleCopyClipboardClick}
-                                className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] flex items-center gap-1 transition-colors outline-none"
-                            >
-                                <span className="material-symbols-outlined text-sm">content_copy</span>
-                                <span>Copy</span>
-                            </button>
-                        </div>
-                        <pre className="p-4 overflow-x-auto text-sm font-mono text-[var(--on-surface)] bg-[var(--surface-container)] m-0 leading-6">
-                            {`curl -X POST https://api.csat-enterprise.com/oauth/token \\
+            {/* cURL Code Block Container */}
+            <div className="rounded-xl border border-slate-800 overflow-hidden shadow-xs">
+              <div className="bg-slate-950 px-4 py-2 border-b border-slate-800 flex justify-between items-center text-xs">
+                <span className="font-mono text-slate-400 font-bold">cURL Request Payload</span>
+                <button
+                  type="button"
+                  onClick={handleCopyClipboardClick}
+                  className="text-slate-300 hover:text-white flex items-center gap-1 transition-colors outline-none cursor-pointer text-xs font-semibold"
+                >
+                  <span className="material-symbols-outlined text-[16px]">
+                    {isCopied ? "check" : "content_copy"}
+                  </span>
+                  <span>{isCopied ? "Copied!" : "Copy Code"}</span>
+                </button>
+              </div>
+              <pre className="p-4 overflow-x-auto text-xs font-mono text-slate-200 bg-slate-900 m-0 leading-6">
+{`curl -X POST https://api.csat-enterprise.com/oauth/token \\
   -H "Content-Type: application/x-www-form-urlencoded" \\
   -d "grant_type=client_credentials" \\
   -d "client_id=YOUR_CLIENT_ID" \\
   -d "client_secret=YOUR_CLIENT_SECRET"`}
-                        </pre>
-                    </div>
+              </pre>
+            </div>
+          </section>
 
-                    {/* หัวข้อที่ 3: Handling the Response */}
-                    <h2 id="handling-response" className="font-headline-md text-headline-md font-semibold text-[var(--on-surface)] mt-10 mb-4">
-                        Handling the Response
-                    </h2>
-                    <p className="leading-relaxed mb-4">
-                        A successful request returns a JSON response containing the <code className="bg-[var(--surface-container-low)] text-[var(--error)] px-1 py-0.5 rounded text-sm font-mono">access_token</code>. You must include this token in the Authorization header of subsequent API calls.
-                    </p>
+          {/* Section: Handling Response */}
+          <section id="handling-response" className="space-y-3">
+            <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <span className="w-2 h-4 bg-blue-900 rounded-full inline-block"></span>
+              Handling Token Response
+            </h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              A successful token exchange returns a JSON payload containing the <code className="bg-slate-100 text-blue-900 px-1.5 py-0.5 rounded font-mono">access_token</code>. Attach this bearer token in the HTTP Authorization header:
+            </p>
 
-                    <div className="w-full h-48 bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-lg flex flex-col items-center justify-center text-center p-4">
-                        <span className="material-symbols-outlined text-3xl text-[var(--outline)] mb-2">schema</span>
-                        <p className="text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider">Authentication Flow Diagram Placeholder</p>
-                        <p className="text-xs text-[var(--outline)] mt-1">OAuth 2.0 Flow Core Blueprint</p>
-                    </div>
-                </div>
+            <div className="bg-slate-900 p-4 rounded-xl font-mono text-xs text-emerald-400 leading-relaxed">
+{`{
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "scope": "csat:read csat:write branch:access"
+}`}
+            </div>
+          </section>
 
-                {/* ฟอร์มตัวประเมินประโยชน์หน้าคู่มือ (Feedback Widget) */}
-                <div className="mt-16 pt-8 border-t border-[var(--outline-variant)]">
-                    <div className="bg-[var(--surface-container-low)] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div>
-                            <h4 className="font-headline-md text-body-lg font-semibold text-[var(--on-surface)]">Was this page helpful?</h4>
-                            <p className="text-body-md text-[var(--on-surface-variant)] mt-1">Your feedback helps us improve our documentation.</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button type="button" className="flex items-center gap-2 px-4 py-2 border border-[var(--outline-variant)] rounded-lg text-[var(--on-surface)] hover:bg-[var(--surface-container)] hover:border-[var(--outline)] transition-colors bg-[var(--surface-container-lowest)] active:scale-95 outline-none">
-                                <span className="material-symbols-outlined text-[var(--primary)]">thumb_up</span>
-                                <span className="font-medium">Yes</span>
-                            </button>
-                            <button type="button" className="flex items-center gap-2 px-4 py-2 border border-[var(--outline-variant)] rounded-lg text-[var(--on-surface)] hover:bg-[var(--surface-container)] hover:border-[var(--outline)] transition-colors bg-[var(--surface-container-lowest)] active:scale-95 outline-none">
-                                <span className="material-symbols-outlined text-[var(--on-surface-variant)]">thumb_down</span>
-                                <span className="font-medium">No</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </article>
+          {/* Feedback Form Widget */}
+          <div className="pt-6 border-t border-slate-100">
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="text-xs font-bold text-slate-800">Was this documentation helpful?</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Your input helps our developer experience team improve documentation.</p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  type="button" 
+                  onClick={() => alert("ขอบคุณสำหรับการให้คะแนนความพึงพอใจ!")}
+                  className="btn-secondary text-xs"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-emerald-600">thumb_up</span>
+                  Yes
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => alert("ขอบคุณสำหรับข้อเสนอแนะ เราจะปรับปรุงเอกสารให้ดียิ่งขึ้น")}
+                  className="btn-secondary text-xs"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-slate-400">thumb_down</span>
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
 
-            {/* ─── Right Sidebar Area (สารบัญเจาะลึกประจำเพจ) ─── */}
-            <aside className="w-full xl:w-64 flex-shrink-0 hidden xl:block">
-                <div className="pl-4 border-l border-[var(--outline-variant)] sticky top-24">
-                    <h4 className="font-label-md text-label-md font-semibold text-[var(--on-surface)] uppercase tracking-wider mb-4">
-                        On this page
-                    </h4>
-                    <nav className="space-y-2 text-body-md">
-                        {DOCUMENT_TOPICS.map((topic) => {
-                            const isItemActive = topic.anchorId === activeAnchorId;
-                            return (
-                                <a
-                                    key={topic.anchorId}
-                                    href={`#${topic.anchorId}`}
-                                    onClick={() => setActiveAnchorId(topic.anchorId)}
-                                    className={`block py-1 pl-3 -ml-px border-l-2 transition-all ${isItemActive
-                                            ? "border-[var(--primary)] text-[var(--primary)] font-medium"
-                                            : "border-transparent text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-                                        }`}
-                                >
-                                    {topic.topicTitle}
-                                </a>
-                            );
-                        })}
-                    </nav>
-                </div>
-            </aside>
-        </div>
-    );
+        </article>
+
+        {/* Right Sticky Table of Contents (On this page) */}
+        <aside className="w-full xl:w-64 shrink-0 hidden xl:block sticky top-24">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+              On this page
+            </h4>
+            <nav className="space-y-1 text-xs">
+              {DOCUMENT_TOPICS.map((topicItem) => {
+                const isTopicActive = topicItem.anchorId === activeAnchorId;
+
+                return (
+                  <a
+                    key={topicItem.anchorId}
+                    href={`#${topicItem.anchorId}`}
+                    onClick={() => setActiveAnchorId(topicItem.anchorId)}
+                    className={`block py-1.5 px-2.5 rounded-lg transition-colors font-medium ${
+                      isTopicActive
+                        ? "bg-blue-50 text-blue-900 font-bold"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                  >
+                    {topicItem.topicTitle}
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
+
+      </div>
+
+    </div>
+  );
 }
