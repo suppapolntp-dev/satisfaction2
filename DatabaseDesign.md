@@ -1,235 +1,306 @@
-# 📊 Enterprise CSAT Platform - Database Design & Backend Integration (.NET / PostgreSQL)
+# 📊 Enterprise CSAT Platform — Database Design (PostgreSQL)
 
-เอกสารการออกแบบฐานข้อมูลเชิงสัมพันธ์ (**PostgreSQL**) และสถาปัตยกรรมเชื่อมต่อระบบหลังบ้านด้วย **C# ASP.NET Core (.NET 10) / Entity Framework Core (Npgsql)** สำหรับระบบประเมินความพึงพอใจลูกค้าและวิเคราะห์ข้อมูลหลายระดับชั้นองค์กร (**5-Tier Organizational Hierarchy**)
+ออกแบบจากโครงสร้าง `Types/*.ts` และ `Services/*.ts` ในโปรเจกต์ Frontend (Next.js) ทั้งหมด
+เป้าหมาย: รองรับ 5-Tier Hierarchy (Super Admin → Brand Owner → Regional Manager → Area Manager → Branch Staff),
+ขยายต่อได้โดยไม่ต้องรื้อโครงสร้างเดิม (เพิ่ม module/role/category ใหม่ได้โดยไม่ ALTER TABLE)
 
----
-
-## 📑 สารบัญ (Table of Contents)
-1. [สถาปัตยกรรมและการจัดโครงสร้างข้อมูล (Hierarchy Overview)](#1-สถาปัตยกรรมและการจัดโครงสร้างข้อมูล-hierarchy-overview)
-2. [แผนภาพความสัมพันธ์ของข้อมูล (Entity Relationship Diagram - ERD)](#2-แผนภาพความสัมพันธ์ของข้อมูล-entity-relationship-diagram---erd)
-3. [พจนานุกรมข้อมูล (PostgreSQL Data Dictionary)](#3-พจนานุกรมข้อมูล-postgresql-data-dictionary)
-4. [สคริปต์สร้างฐานข้อมูล (PostgreSQL DDL Scripts)](#4-สคริปต์สร้างฐานข้อมูล-postgresql-ddl-scripts)
-5. [การเชื่อมต่อและโครงสร้าง C# .NET Backend (EF Core & Npgsql)](#5-การเชื่อมต่อและโครงสร้าง-c-net-backend-ef-core--npgsql)
-6. [การกำหนดสิทธิ์ 5-Tier Data Access & Query Optimization](#6-การกำหนดสิทธิ์-5-tier-data-access--query-optimization)
+> **ไฟล์ที่เกี่ยวข้อง:**
+> - **[schema.sql](schema.sql)** — DDL พร้อมรันจริงบน PostgreSQL 15+ (ต้องการ extension `pgcrypto`, `citext`)
+> - **README.md** — ภาพรวมโปรเจกต์, Tech Stack, Getting Started
 
 ---
 
-## 1. สถาปัตยกรรมและการจัดโครงสร้างข้อมูล (Hierarchy Overview)
+## 📑 สารบัญ
 
-ระบบรองรับโครงสร้างองค์กรแบบ 5 ลำดับขั้น:
+1. [หลักการออกแบบ (Design Principles)](#1-หลักการออกแบบ-design-principles)
+2. [ER Diagram (ภาพรวมความสัมพันธ์)](#2-er-diagram-ภาพรวมความสัมพันธ์)
+3. [รายละเอียดตารางแยกตาม Domain](#3-รายละเอียดตารางแยกตาม-domain)
+4. [Enum / Lookup ที่ตัดสินใจแล้ว](#4-enum--lookup-ที่ตัดสินใจแล้ว)
+5. [Views & Materialized Views สำหรับ Dashboard](#5-views--materialized-views-สำหรับ-dashboard)
+6. [ตาราง Mapping: Frontend Type → DB Table](#6-ตาราง-mapping-frontend-type--db-table)
+7. [แนวทางขยายในอนาคต (Future-proofing)](#7-แนวทางขยายในอนาคต-future-proofing)
+
+---
+
+## 1. หลักการออกแบบ (Design Principles)
+
+| หลักการ | เหตุผล |
+|---|---|
+| **UUID เป็น Primary Key** (`gen_random_uuid()`) | รองรับ distributed insert (หลาย Kiosk ยิงโหวตพร้อมกัน), ไม่ชนกันข้าม service, ซ่อน sequence จริงจาก client |
+| **Business code แยกจาก PK** (`brand_code`, `branch_code`, `event_code` ฯลฯ) | หน้าจอเดิมอ้างอิงด้วยรหัสที่มนุษย์อ่านได้ (เช่น `KFC-CNX-01`) — เก็บเป็น `UNIQUE` column ต่างหากจาก UUID |
+| **Normalize region/province เป็นตาราง lookup** | ข้อมูลเดิมใน Frontend เป็น free-text (`region: string`) เสี่ยงพิมพ์ผิด/สะกดต่างกัน — แยกตารางป้องกันข้อมูลเพี้ยน และ join เพื่อ rollup สถิติได้แม่นยำ |
+| **Junction table สำหรับ many-to-many** | Branch หนึ่งมีได้หลายแบรนด์ (Dual-Brand), User หนึ่งดูแลได้หลายแบรนด์/ภาค/จังหวัด/สาขา, Event หนึ่งผูกได้หลายสาขา |
+| **Lookup table แทน hardcoded ENUM ในจุดที่จะโตในอนาคต** | เช่น `event_categories`, `system_modules` (สอดคล้องกับ `SYSTEM_MODULES` array ใน `roleService.ts`) — ถ้า fix เป็น Postgres ENUM การเพิ่มค่าใหม่ต้อง `ALTER TYPE` ซึ่งเสี่ยง lock ตารางใหญ่ |
+| **Native ENUM เฉพาะค่าที่นิ่งจริง ๆ** | เช่น `status_type (Active/Inactive)`, `sentiment_type (satisfied/neutral/unsatisfied)` — ค่าพวกนี้ผูกกับ business logic โดยตรง ไม่เพิ่มบ่อย |
+| **JSONB สำหรับ config ที่เปลี่ยนบ่อย** | `system_settings`, `satisfaction_config`, `event kiosk_theme_override` — กันไม่ให้ทุกครั้งที่เพิ่มฟิลด์ตั้งค่าใหม่ต้อง migration |
+| **Audit columns ทุกตารางหลัก** | `created_at, updated_at, created_by, updated_by` — ใช้ประกอบกับตาราง `audit_logs` ที่มีอยู่แล้ว (หน้า Audit Triage) |
+| **Soft delete (`deleted_at`)** | ข้อมูล Brand/Branch/User ที่ถูกลบยังต้องโผล่ใน Audit log และ Historical report ได้ — ไม่ hard-delete |
+| **Time-series table แยก partition ได้ในอนาคต** | `satisfaction_votes` และ `audit_logs` โตเร็วมาก — ออกแบบให้ partition by `RANGE (voted_at)` ได้ทันทีโดยไม่ต้องเปลี่ยน schema |
+| **Materialized View สำหรับ Dashboard rollup** | หน้า Dashboard ต้องการตัวเลข 5 ระดับพร้อมกัน — คิวรีสดจาก `satisfaction_votes` ทุกครั้งจะช้าเมื่อข้อมูลเป็นล้านแถว จึงเตรียม matview ไว้ refresh เป็น cron/job |
+
+---
+
+## 2. ER Diagram (ภาพรวมความสัมพันธ์)
+
+### 2.1 Text-based Overview
+
 ```
-👑 Tier 1: Super Admin         → ดูภาพรวมและเปรียบเทียบทุก Brand ในเครือ CRG
-🍗 Tier 2: Brand Owner         → ดูภาพรวมของ Brand และเปรียบเทียบผลงานระดับ "Region (ภาค)"
-📍 Tier 3: Regional Manager (RM) → เปรียบเทียบผลคะแนนระดับ "Province (จังหวัด)" ภายในภาค
-🏙️ Tier 4: Area Manager (AM)     → เปรียบเทียบผลคะแนนระดับ "Branch (สาขา)" ภายในเขต/จังหวัด
-🏪 Tier 5: Branch Staff        → ดูผลคะแนน Real-time, สถานะตู้ Kiosk และข้อเสนอแนะภายในสาขา
+regions ──< provinces ──< branches >──< branch_brands >── brands
+                                │                              │
+                                ├──< kiosks                    │
+                                │                              │
+                                ├──< satisfaction_votes >──────┘
+                                │        (branch_id, kiosk_id, brand_id)
+                                │
+                                ├──< notifications (target_branch_id)
+                                │
+                                └──< event_target_branches >── events ──N:1── brands (nullable)
+                                                                         │
+                                                                         └──N:1── event_categories
+
+users ──< user_brand_scopes >── brands
+      ├──< user_region_scopes >── regions
+      ├──< user_province_scopes >── provinces
+      ├──< user_branch_scopes >── branches
+      ├──1:1─ user_permissions
+      ├──< user_sessions (JWT refresh tokens)
+      └──N:1─ roles ──< role_permissions >── system_modules
+
+audit_logs ──< audit_diff_details
+audit_logs ──N:1── users (actor, nullable — กันเคส actor ถูกลบไปแล้ว)
+
+api_service_health   (standalone — เฝ้าดู microservice)
+system_settings      (singleton key-value — ไม่ผูกตารางอื่น)
+satisfaction_config   (singleton/per-brand JSONB config)
 ```
 
----
-
-## 2. แผนภาพความสัมพันธ์ของข้อมูล (Entity Relationship Diagram - ERD)
+### 2.2 Mermaid ER Diagram
 
 ```mermaid
 erDiagram
-    BRANDS ||--o{ REGIONS : contains
-    REGIONS ||--o{ PROVINCES : contains
-    PROVINCES ||--o{ BRANCHES : contains
-    BRANDS ||--o{ BRANCHES : owns
-    BRANCHES ||--o{ KIOSKS : equips
-    
-    ROLES ||--o{ ROLE_PERMISSIONS : defines
-    ROLES ||--o{ USERS : assigned_to
-    BRANDS ||--o{ USERS : belongs_to
-    BRANCHES ||--o{ USERS : works_at
-    USERS ||--o{ USER_DATA_ACCESS : scopes
+    regions ||--o{ provinces : contains
+    provinces ||--o{ branches : located_in
+    branches }o--o{ brands : "branch_brands"
+    branches ||--o{ kiosks : equips
 
-    BRANCHES ||--o{ SATISFACTION_VOTES : records
-    KIOSKS ||--o{ SATISFACTION_VOTES : receives
-    BRANDS ||--o{ SATISFACTION_VOTES : categorizes
+    branches ||--o{ satisfaction_votes : records
+    kiosks ||--o{ satisfaction_votes : receives
+    brands ||--o{ satisfaction_votes : categorizes
 
-    BRANDS ||--o{ EVENTS : targets
-    BRANCHES ||--o{ NOTIFICATIONS : alerts
+    roles ||--o{ role_permissions : grants
+    system_modules ||--o{ role_permissions : applies_to
+    roles ||--o{ users : assigned_to
+    users ||--|| user_permissions : has
+    users ||--o{ user_sessions : authenticates
+    users ||--o{ user_brand_scopes : accesses
+    users ||--o{ user_region_scopes : accesses
+    users ||--o{ user_province_scopes : accesses
+    users ||--o{ user_branch_scopes : accesses
+    brands ||--o{ user_brand_scopes : scoped
+    regions ||--o{ user_region_scopes : scoped
+    provinces ||--o{ user_province_scopes : scoped
+    branches ||--o{ user_branch_scopes : scoped
 
-    USERS ||--o{ AUDIT_LOGS : performs
-    AUDIT_LOGS ||--o{ AUDIT_DIFF_DETAILS : details
+    event_categories ||--o{ events : classifies
+    brands ||--o{ events : targets
+    events ||--o{ event_target_branches : "scoped_to"
+    branches ||--o{ event_target_branches : "targeted_by"
 
-    BRANDS {
+    branches ||--o{ notifications : alerts
+    users ||--o{ notifications : receives
+
+    users ||--o{ audit_logs : performs
+    audit_logs ||--o{ audit_diff_details : details
+
+    regions {
         uuid id PK
-        varchar brand_id UK
-        varchar brand_name
-        varchar parent_company_name
-        varchar category
+        text name UK
+        smallint display_order
+    }
+    provinces {
+        uuid id PK
+        uuid region_id FK
+        text name
+    }
+    brands {
+        uuid id PK
+        text brand_code UK
+        text brand_name
+        text parent_company_name
+        text category
         text brand_logo_url
-        varchar brand_icon_name
-        varchar status
-        timestamptz created_at
-        timestamptz updated_at
+        text brand_icon_name
+        status_type status
     }
-
-    REGIONS {
+    branches {
         uuid id PK
-        varchar name
-        uuid brand_id FK
-        timestamptz created_at
-    }
-
-    PROVINCES {
-        uuid id PK
-        varchar name
-        uuid region_id FK
-        timestamptz created_at
-    }
-
-    BRANCHES {
-        uuid id PK
-        varchar code UK
-        varchar name
-        uuid brand_id FK
-        uuid region_id FK
+        text branch_code UK
+        text name
         uuid province_id FK
         int kiosk_count
-        varchar status
-        timestamptz created_at
-        timestamptz updated_at
+        status_type status
     }
-
-    KIOSKS {
+    branch_brands {
+        uuid branch_id PK_FK
+        uuid brand_id PK_FK
+    }
+    kiosks {
         uuid id PK
-        varchar kiosk_code UK
-        varchar kiosk_name
+        text kiosk_code UK
         uuid branch_id FK
-        varchar status
+        kiosk_status_type status
         timestamptz last_ping_at
-        timestamptz created_at
     }
-
-    ROLES {
+    roles {
         uuid id PK
-        varchar role_name UK
+        text role_code UK
+        text role_name
         text role_description
-        varchar role_status
+        status_type role_status
         boolean is_system_default
-        timestamptz created_at
-        timestamptz updated_at
     }
-
-    ROLE_PERMISSIONS {
+    system_modules {
+        uuid id PK
+        text module_code UK
+        text module_label
+        smallint display_order
+    }
+    role_permissions {
         uuid id PK
         uuid role_id FK
-        varchar module_name
+        uuid module_id FK
         boolean can_view
         boolean can_create
         boolean can_update
         boolean can_delete
         boolean can_export
     }
-
-    USERS {
+    users {
         uuid id PK
-        varchar first_name
-        varchar last_name
-        varchar email UK
-        varchar phone
+        text user_code UK
+        text first_name
+        text last_name
+        citext email UK
+        text phone
         text password_hash
         uuid role_id FK
-        uuid brand_id FK
-        uuid branch_id FK
-        varchar tier_level
-        varchar status
-        timestamptz created_at
-        timestamptz updated_at
+        tier_level_type tier_level
+        status_type status
+        timestamptz last_login_at
     }
-
-    USER_DATA_ACCESS {
+    user_permissions {
+        uuid user_id PK_FK
+        boolean can_view_super_admin_overview
+        boolean can_view_brand_regional_grid
+        boolean can_view_regional_province_grid
+        boolean can_view_provincial_branch_grid
+        boolean can_view_branch_kiosks_grid
+    }
+    user_sessions {
         uuid id PK
         uuid user_id FK
-        varchar scope_type
-        uuid scope_entity_id
-        boolean can_view_super_admin
-        boolean can_view_brand_regional
-        boolean can_view_regional_province
-        boolean can_view_provincial_branch
-        boolean can_view_branch_kiosks
+        text refresh_token_hash
+        timestamptz expires_at
+        text ip_address
+        text user_agent
     }
-
-    SATISFACTION_VOTES {
+    user_brand_scopes {
+        uuid user_id PK_FK
+        uuid brand_id PK_FK
+    }
+    user_region_scopes {
+        uuid user_id PK_FK
+        uuid region_id PK_FK
+    }
+    user_province_scopes {
+        uuid user_id PK_FK
+        uuid province_id PK_FK
+    }
+    user_branch_scopes {
+        uuid user_id PK_FK
+        uuid branch_id PK_FK
+    }
+    satisfaction_votes {
         uuid id PK
         uuid branch_id FK
         uuid kiosk_id FK
         uuid brand_id FK
-        varchar sentiment
-        inet client_ip
+        sentiment_type sentiment
         timestamptz voted_at
+        inet client_ip
     }
-
-    EVENTS {
+    satisfaction_config {
         uuid id PK
-        varchar event_name
+        jsonb config
+        timestamptz updated_at
+        uuid updated_by FK
+    }
+    event_categories {
+        uuid id PK
+        text category_code UK
+        text category_label
+    }
+    events {
+        uuid id PK
+        text event_code UK
+        text event_name
         date event_date
         time start_time
         time end_time
         uuid brand_id FK
-        varchar brand_scope
         varchar event_location
-        varchar event_category
-        varchar event_status
+        uuid category_id FK
+        text event_status
         text description
-        boolean is_custom_survey_theme
-        varchar custom_theme_name
-        text custom_greeting
-        text custom_thank_you
-        varchar kiosk_theme_override
-        timestamptz created_at
-        timestamptz updated_at
+        jsonb kiosk_theme_override
     }
-
-    AUDIT_LOGS {
-        uuid id PK
-        uuid actor_id FK
-        varchar actor_name
-        varchar actor_role
-        varchar action_type
-        varchar target_entity
-        text description
-        varchar status
-        varchar ip_address
-        timestamptz created_at
+    event_target_branches {
+        uuid event_id PK_FK
+        uuid branch_id PK_FK
     }
-
-    AUDIT_DIFF_DETAILS {
+    notifications {
         uuid id PK
-        uuid audit_log_id FK
-        varchar field_name
-        text before_value
-        text after_value
-    }
-
-    NOTIFICATIONS {
-        uuid id PK
-        varchar title
-        varchar notification_type
+        text title
+        text notification_type
         text description
         boolean is_read
         uuid target_branch_id FK
-        varchar target_branch_name
-        varchar target_branch_code
-        varchar priority
+        uuid recipient_user_id FK
+        text priority
         timestamptz created_at
+        timestamptz read_at
     }
-
-    SYSTEM_SETTINGS {
+    audit_logs {
         uuid id PK
-        varchar setting_key UK
-        text setting_value
-        varchar setting_group
+        timestamptz occurred_at
+        uuid actor_user_id FK
+        text actor_name_snapshot
+        text actor_role_snapshot
+        text action_type
+        text target_entity
+        text description
+        text status
+        inet ip_address
+    }
+    audit_diff_details {
+        uuid id PK
+        uuid audit_log_id FK
+        text field_name
+        text before_value
+        text after_value
+    }
+    system_settings {
+        text setting_key PK
+        jsonb setting_value
         timestamptz updated_at
+        uuid updated_by FK
     }
-
-    API_SERVICE_HEALTH {
+    api_service_health {
         uuid id PK
-        varchar service_name
-        varchar endpoint
-        varchar status
+        text service_code UK
+        text service_name
+        text endpoint
+        text status
         numeric uptime_percent
         int latency_ms
         numeric error_rate_percent
@@ -239,735 +310,428 @@ erDiagram
 
 ---
 
-## 3. พจนานุกรมข้อมูล (PostgreSQL Data Dictionary)
+## 3. รายละเอียดตารางแยกตาม Domain
 
-### 3.1 กลุ่มโครงสร้างองค์กร (Organization Structure)
-
-#### ตาราง `brands`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
-|---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสหลักของแบรนด์ |
-| `brand_id` | `VARCHAR(50)` | UNIQUE, NOT NULL | รหัสอ้างอิงแบรนด์ (เช่น BRD-KFC) |
-| `brand_name` | `VARCHAR(200)` | NOT NULL | ชื่อแบรนด์ เช่น KFC, Mister Donut |
-| `parent_company_name` | `VARCHAR(200)` | NOT NULL | บริษัทแม่ (เช่น Central Restaurants Group) |
-| `category` | `VARCHAR(100)` | NOT NULL | Fast Food (QSR), Beverage & Bakery, etc. |
-| `brand_logo_url` | `TEXT` | NULLABLE | URL ภาพโลโก้ |
-| `brand_icon_name` | `VARCHAR(100)` | NOT NULL DEFAULT '' | ไอคอน Material Symbol |
-| `status` | `VARCHAR(20)` | NOT NULL DEFAULT 'Active' | Active / Inactive |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่แก้ไขล่าสุด |
+### 3.1 Organization Hierarchy (5 ตาราง)
 
 #### ตาราง `regions`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสหลักของภาค |
-| `name` | `VARCHAR(200)` | NOT NULL | ชื่อภาค (เช่น ภาคเหนือ, ภาคใต้, ภาคกลาง) |
-| `brand_id` | `UUID` | FK → `brands.id`, NOT NULL | แบรนด์ที่ภาคนั้นสังกัด |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
+| `id` | `UUID` | PK DEFAULT gen_random_uuid() | |
+| `name` | `TEXT` | UNIQUE NOT NULL | เช่น "ภาคเหนือ" |
+| `display_order` | `SMALLINT` | DEFAULT 0 | เรียงลำดับในดรอปดาวน์ |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
 
 #### ตาราง `provinces`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสหลักของจังหวัด |
-| `name` | `VARCHAR(200)` | NOT NULL | ชื่อจังหวัด (เช่น เชียงใหม่, พิษณุโลก) |
-| `region_id` | `UUID` | FK → `regions.id`, NOT NULL | ภาคที่จังหวัดนั้นสังกัด |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
+| `id` | `UUID` | PK | |
+| `region_id` | `UUID` | FK → regions(id), NOT NULL | |
+| `name` | `TEXT` | NOT NULL | |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| | | UNIQUE(region_id, name) | กันชื่อซ้ำในภาคเดียวกัน |
 
-#### ตาราง `branches`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `brands` ← จาก `BrandModel`
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสหลักของสาขา |
-| `code` | `VARCHAR(50)` | UNIQUE, NOT NULL | รหัสสาขา เช่น BR-KFC-001 |
-| `name` | `VARCHAR(300)` | NOT NULL | ชื่อสาขา เช่น KFC เซ็นทรัล เชียงใหม่ แอร์พอร์ต |
-| `brand_id` | `UUID` | FK → `brands.id`, NOT NULL | แบรนด์ของสาขา |
-| `region_id` | `UUID` | FK → `regions.id`, NOT NULL | ภาคที่สาขาตั้งอยู่ |
-| `province_id` | `UUID` | FK → `provinces.id`, NOT NULL | จังหวัดที่สาขาตั้งอยู่ |
-| `kiosk_count` | `INTEGER` | NOT NULL DEFAULT 0 | จำนวนตู้ Kiosk ภายในสาขา |
-| `status` | `VARCHAR(20)` | NOT NULL DEFAULT 'Active' | Active / Inactive |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่แก้ไขล่าสุด |
+| `id` | `UUID` | PK | |
+| `brand_code` | `TEXT` | UNIQUE NOT NULL | `brandId` เดิม เช่น `CRG-BRD-001` |
+| `brand_name` | `TEXT` | NOT NULL | |
+| `parent_company_name` | `TEXT` | DEFAULT 'Central Restaurants Group' | |
+| `category` | `TEXT` | | อิสระ — Frontend ให้พิมพ์เองได้ |
+| `brand_logo_url` | `TEXT` | | |
+| `brand_icon_name` | `TEXT` | DEFAULT 'restaurant' | Material icon name |
+| `status` | `status_type` | DEFAULT 'Active' | |
+| `deleted_at` | `TIMESTAMPTZ` | NULLABLE | Soft delete |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `created_by` | `UUID` | FK → users(id) NULLABLE | |
+| `updated_by` | `UUID` | FK → users(id) NULLABLE | |
+
+> `totalBranchesCount`, `totalKiosksCount`, `csatAverage` ที่เห็นใน `BrandModel` **ไม่เก็บเป็นคอลัมน์จริง** — คำนวณสดผ่าน view `v_brand_stats` (ดูข้อ 5) เพื่อไม่ให้ตัวเลขเพี้ยนจากข้อมูลจริง
+
+#### ตาราง `branches` ← จาก `BranchModel`
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `branch_code` | `TEXT` | UNIQUE NOT NULL | |
+| `name` | `TEXT` | NOT NULL | |
+| `province_id` | `UUID` | FK → provinces(id), NOT NULL | region ดึงผ่าน province → region join |
+| `kiosk_count` | `INT` | DEFAULT 0, CHECK >= 0 | จำนวนตู้ที่ "ตั้งใจ" ติดตั้ง (จำนวนจริงมาจาก `kiosks` table) |
+| `status` | `status_type` | DEFAULT 'Active' | |
+| `deleted_at` | `TIMESTAMPTZ` | NULLABLE | Soft delete |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `created_by` | `UUID` | FK → users(id) NULLABLE | |
+| `updated_by` | `UUID` | FK → users(id) NULLABLE | |
+
+#### ตาราง `branch_brands` (junction — Dual-Brand Co-Location)
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `branch_id` | `UUID` | FK → branches(id) ON DELETE CASCADE | |
+| `brand_id` | `UUID` | FK → brands(id) ON DELETE CASCADE | |
+| | | PRIMARY KEY(branch_id, brand_id) | |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+
+> เหตุผลที่ใช้ junction แทน `brand_id` column เดียวบน branches: Frontend มี `brands?: string[]` array อยู่แล้ว และ BranchManagement แสดง "Dual-Brand Co-Locations" count
 
 #### ตาราง `kiosks`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสหลักของตู้ Kiosk |
-| `kiosk_code` | `VARCHAR(50)` | UNIQUE, NOT NULL | รหัสตู้ เช่น KSK-01-A |
-| `kiosk_name` | `VARCHAR(200)` | NOT NULL | ชื่อตู้ เช่น Kiosk จุดสั่งอาหาร 1 |
-| `branch_id` | `UUID` | FK → `branches.id`, NOT NULL | สาขาที่ตู้ติดตั้งอยู่ |
-| `status` | `VARCHAR(20)` | NOT NULL DEFAULT 'Online' | Online / Degraded / Offline |
-| `last_ping_at` | `TIMESTAMPTZ` | NULLABLE | เวลาที่ Kiosk ส่ง Heartbeat ล่าสุด |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
+| `id` | `UUID` | PK | |
+| `kiosk_code` | `TEXT` | UNIQUE NOT NULL | เช่น `KSK-01-A` |
+| `kiosk_name` | `TEXT` | DEFAULT '' | ชื่อตู้ (ถ้าต้องการ) |
+| `branch_id` | `UUID` | FK → branches(id), NOT NULL | |
+| `status` | `kiosk_status_type` | DEFAULT 'Online' | Online / Degraded / Offline |
+| `last_ping_at` | `TIMESTAMPTZ` | NULLABLE | ใช้ตรวจ heartbeat |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
 
 ---
 
-### 3.2 กลุ่มผู้ใช้งานและสิทธิ์ (Authentication & RBAC)
+### 3.2 Users, Roles, Data-Access Scope (10 ตาราง)
 
-#### ตาราง `roles`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `system_modules` (แทน hardcoded `SYSTEM_MODULES` array ใน `roleService.ts`)
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสหลักของ Role |
-| `role_name` | `VARCHAR(100)` | UNIQUE, NOT NULL | ชื่อ Role (Super Admin, Brand Owner, etc.) |
-| `role_description`| `TEXT` | NULLABLE | รายละเอียดสิทธิ์หน้าที่ |
-| `role_status` | `VARCHAR(20)` | NOT NULL DEFAULT 'Active' | Active / Inactive |
-| `is_system_default`| `BOOLEAN` | NOT NULL DEFAULT FALSE | เป็น Role เริ่มต้นของระบบที่ไม่ให้ลบ |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่แก้ไข |
+| `id` | `UUID` | PK | |
+| `module_code` | `TEXT` | UNIQUE NOT NULL | เช่น `dashboard_analytics` |
+| `module_label` | `TEXT` | NOT NULL | ชื่อแสดงผล "Dashboard Analytics" |
+| `display_order` | `SMALLINT` | DEFAULT 0 | เรียงลำดับในหน้า Role Permissions |
 
-#### ตาราง `role_permissions`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
-|---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสสิทธิ์ |
-| `role_id` | `UUID` | FK → `roles.id`, ON DELETE CASCADE | รหัส Role ที่ผูก |
-| `module_name` | `VARCHAR(100)` | NOT NULL | โมดูลระบบ (เช่น Dashboard Analytics) |
-| `can_view` | `BOOLEAN` | NOT NULL DEFAULT FALSE | สิทธิ์การเข้าดู |
-| `can_create` | `BOOLEAN` | NOT NULL DEFAULT FALSE | สิทธิ์การสร้างข้อมูล |
-| `can_update` | `BOOLEAN` | NOT NULL DEFAULT FALSE | สิทธิ์การแก้ไข |
-| `can_delete` | `BOOLEAN` | NOT NULL DEFAULT FALSE | สิทธิ์การลบ |
-| `can_export` | `BOOLEAN` | NOT NULL DEFAULT FALSE | สิทธิ์การ Export ข้อมูล |
+> ค่าเริ่มต้น 9 โมดูล (seed): Dashboard Analytics, Brand Management, Branch Management, User Management, Event Calendar, Notification Triage, Data Access Scope, Audit Log & Diff, System Settings
 
-#### ตาราง `users`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `roles` ← จาก `SystemRoleItem`
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสผู้ใช้งาน |
-| `first_name` | `VARCHAR(100)` | NOT NULL | ชื่อจริง |
-| `last_name` | `VARCHAR(100)` | NOT NULL | นามสกุล |
-| `email` | `VARCHAR(255)` | UNIQUE, NOT NULL | อีเมล (ใช้ล็อกอิน) |
-| `phone` | `VARCHAR(50)` | NULLABLE | เบอร์โทรศัพท์ |
-| `password_hash` | `TEXT` | NOT NULL | รหัสผ่านแฮช (BCrypt / Argon2) |
-| `role_id` | `UUID` | FK → `roles.id`, NOT NULL | สิทธิ์ Role หลัก |
-| `brand_id` | `UUID` | FK → `brands.id`, NULLABLE | แบรนด์ที่สังกัด (ถ้ามี) |
-| `branch_id` | `UUID` | FK → `branches.id`, NULLABLE | สาขาที่สังกัด (ถ้ามี) |
-| `tier_level` | `VARCHAR(50)` | NULLABLE | Super Admin, Brand Owner, RM, AM, Branch Staff |
-| `status` | `VARCHAR(20)` | NOT NULL DEFAULT 'Active' | Active / Inactive |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่แก้ไข |
+| `id` | `UUID` | PK | |
+| `role_code` | `TEXT` | UNIQUE NOT NULL | |
+| `role_name` | `TEXT` | NOT NULL | |
+| `role_description` | `TEXT` | | |
+| `role_status` | `status_type` | DEFAULT 'Active' | |
+| `is_system_default` | `BOOLEAN` | DEFAULT FALSE | ป้องกันการลบ role หลัก 5 ตัว |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
 
-#### ตาราง `user_data_access`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `role_permissions` ← จาก `PermissionRow`
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัส Record Data Access |
-| `user_id` | `UUID` | FK → `users.id`, ON DELETE CASCADE | ผู้ใช้งาน |
-| `scope_type` | `VARCHAR(20)` | NOT NULL | `BRAND`, `REGION`, `PROVINCE`, `BRANCH` |
-| `scope_entity_id` | `UUID` | NOT NULL | UUID ของ Entity ที่ผูกสิทธิ์ |
-| `can_view_super_admin` | `BOOLEAN` | DEFAULT FALSE | สิทธิ์ดู Grid Super Admin |
-| `can_view_brand_regional` | `BOOLEAN` | DEFAULT FALSE | สิทธิ์ดู Grid Brand ➔ Region |
-| `can_view_regional_province` | `BOOLEAN` | DEFAULT FALSE | สิทธิ์ดู Grid Region ➔ Province |
-| `can_view_provincial_branch` | `BOOLEAN` | DEFAULT FALSE | สิทธิ์ดู Grid Province ➔ Branch |
-| `can_view_branch_kiosks` | `BOOLEAN` | DEFAULT FALSE | สิทธิ์ดู Grid Kiosks & Live Feed |
+| `id` | `UUID` | PK | |
+| `role_id` | `UUID` | FK → roles(id) ON DELETE CASCADE | |
+| `module_id` | `UUID` | FK → system_modules(id) ON DELETE CASCADE | |
+| `can_view` | `BOOLEAN` | DEFAULT FALSE | |
+| `can_create` | `BOOLEAN` | DEFAULT FALSE | |
+| `can_update` | `BOOLEAN` | DEFAULT FALSE | |
+| `can_delete` | `BOOLEAN` | DEFAULT FALSE | |
+| `can_export` | `BOOLEAN` | DEFAULT FALSE | |
+| | | UNIQUE(role_id, module_id) | |
+
+#### ตาราง `users` ← จาก `UserModel`
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `user_code` | `TEXT` | UNIQUE | `EMP-xxx` สำหรับอ้างอิง |
+| `first_name` | `TEXT` | NOT NULL | |
+| `last_name` | `TEXT` | NOT NULL | |
+| `email` | `CITEXT` | UNIQUE NOT NULL | ใช้ `citext` extension กัน case-sensitivity ตอน login |
+| `phone` | `TEXT` | NULLABLE | |
+| `password_hash` | `TEXT` | NOT NULL | BCrypt hash สำหรับหน้า Login |
+| `role_id` | `UUID` | FK → roles(id), NOT NULL | |
+| `tier_level` | `tier_level_type` | NOT NULL | Super Admin / Brand Owner / RM / AM / Branch Staff / Custom Scope |
+| `status` | `status_type` | DEFAULT 'Active' | |
+| `last_login_at` | `TIMESTAMPTZ` | NULLABLE | |
+| `deleted_at` | `TIMESTAMPTZ` | NULLABLE | Soft delete |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+
+#### ตาราง `user_permissions` ← จาก `DashboardTierPermissions` (1:1 กับ users)
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `user_id` | `UUID` | PK, FK → users(id) ON DELETE CASCADE | |
+| `can_view_super_admin_overview` | `BOOLEAN` | DEFAULT FALSE | Tier 1 grid |
+| `can_view_brand_regional_grid` | `BOOLEAN` | DEFAULT FALSE | Tier 2 grid |
+| `can_view_regional_province_grid` | `BOOLEAN` | DEFAULT FALSE | Tier 3 grid |
+| `can_view_provincial_branch_grid` | `BOOLEAN` | DEFAULT FALSE | Tier 4 grid |
+| `can_view_branch_kiosks_grid` | `BOOLEAN` | DEFAULT FALSE | Tier 5 grid |
+
+> ค่า generate อัตโนมัติจาก `tier_level` ผ่าน trigger หรือ application logic — เก็บเป็นคอลัมน์จริงเผื่อ "Custom Scope" ที่ override เฉพาะราย
+
+#### ตาราง `user_sessions` (JWT Refresh Token — ใหม่)
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `user_id` | `UUID` | FK → users(id) ON DELETE CASCADE | |
+| `refresh_token_hash` | `TEXT` | NOT NULL | hash ของ refresh token (ไม่เก็บ plaintext) |
+| `expires_at` | `TIMESTAMPTZ` | NOT NULL | |
+| `ip_address` | `TEXT` | | |
+| `user_agent` | `TEXT` | | browser/device info |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `revoked_at` | `TIMESTAMPTZ` | NULLABLE | NULL = ยังใช้ได้, มีค่า = ถูกเพิกถอน |
+
+#### ตารางขอบเขตสิทธิ์ (User Scope Junctions — 4 ตาราง)
+
+**`user_brand_scopes`** / **`user_region_scopes`** / **`user_province_scopes`** / **`user_branch_scopes`**
+
+| Column | Type | Constraint |
+|---|---|---|
+| `user_id` | `UUID` | FK → users(id) ON DELETE CASCADE |
+| `{brand_id\|region_id\|province_id\|branch_id}` | `UUID` | FK → ตารางที่เกี่ยวข้อง ON DELETE CASCADE |
+| | | PRIMARY KEY(user_id, ref_id) |
+
+> **เหตุผลที่แยก 4 ตาราง** แทนรวมเป็น `user_scopes(scope_type, scope_id)` เดียว: Postgres ไม่รองรับ polymorphic FK — แยกตารางทำให้ FK constraint ตรวจสอบความถูกต้องจริง ลดโอกาส orphan reference
 
 ---
 
-### 3.3 กลุ่มข้อมูลประเมินและกิจกรรม (CSAT & Operations)
+### 3.3 Satisfaction Voting — Kiosk (2 ตาราง)
 
-#### ตาราง `satisfaction_votes` (High-Throughput Table)
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `satisfaction_votes` ← จาก `SatisfactionVotePayload`
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสผลโหวต |
-| `branch_id` | `UUID` | FK → `branches.id`, NOT NULL | สาขาที่กดประเมิน |
-| `kiosk_id` | `UUID` | FK → `kiosks.id`, NULLABLE | ตู้ Kiosk ที่กดประเมิน |
-| `brand_id` | `UUID` | FK → `brands.id`, NOT NULL | แบรนด์ที่กดประเมิน |
-| `sentiment` | `VARCHAR(20)` | NOT NULL | `satisfied`, `neutral`, `unsatisfied` |
-| `client_ip` | `INET` | NULLABLE | IP Address ของตู้ |
-| `voted_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | เวลาที่กดประเมิน |
+| `id` | `UUID` | PK | |
+| `branch_id` | `UUID` | FK → branches(id), NOT NULL | |
+| `kiosk_id` | `UUID` | FK → kiosks(id), NULLABLE | null = โหวตจากช่องทางอื่นที่ไม่ผ่านตู้ |
+| `brand_id` | `UUID` | FK → brands(id), NOT NULL | |
+| `sentiment` | `sentiment_type` | NOT NULL | satisfied / neutral / unsatisfied |
+| `voted_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | |
+| `client_ip` | `INET` | NULLABLE | ใช้ป้องกันโหวตซ้ำ (`duplicateVoteMinutes`) |
 
-#### ตาราง `events`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+> **Partition strategy:** `PARTITION BY RANGE (voted_at)` แบ่งรายเดือน — ตั้งไว้ตั้งแต่วันแรก ย้ายทีหลังยากกว่าตั้งก่อน
+>
+> **Indexes:** `(branch_id, voted_at DESC)`, `(brand_id, voted_at DESC)`, BRIN index on `(voted_at)` (คุ้มสำหรับ time-series ขนาดใหญ่)
+
+#### ตาราง `satisfaction_config` ← จาก `SatisfactionConfig` (Kiosk UI Settings)
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสกิจกรรม |
-| `event_name` | `VARCHAR(300)` | NOT NULL | ชื่องานหรือแคมเปญ |
-| `event_date` | `DATE` | NOT NULL | วันที่จัดกิจกรรม (YYYY-MM-DD) |
-| `start_time` | `TIME` | NOT NULL | เวลาเริ่ม |
-| `end_time` | `TIME` | NOT NULL | เวลาสิ้นสุด |
-| `brand_id` | `UUID` | FK → `brands.id`, NULLABLE | แบรนด์ที่จัด |
-| `brand_scope` | `VARCHAR(200)` | NULLABLE | ขอบเขต (ทั้งแบรนด์, ภาคเหนือ ฯลฯ) |
-| `event_location` | `VARCHAR(300)` | NULLABLE | สถานที่จัด |
-| `event_category` | `VARCHAR(50)` | NOT NULL | CAMPAIGN, MAINTENANCE, FIRMWARE, CALIBRATION, AUDIT |
-| `event_status` | `VARCHAR(20)` | NOT NULL DEFAULT 'UPCOMING' | LIVE, UPCOMING, COMPLETED |
-| `description` | `TEXT` | NULLABLE | รายละเอียดกิจกรรม |
-| `is_custom_survey_theme` | `BOOLEAN` | DEFAULT FALSE | ใช้งาน Theme แบบพิเศษบน Kiosk หรือไม่ |
-| `custom_theme_name` | `VARCHAR(200)` | NULLABLE | ชื่อ Theme พิเศษ |
-| `custom_greeting` | `TEXT` | NULLABLE | ข้อความต้อนรับพิเศษ |
-| `custom_thank_you` | `TEXT` | NULLABLE | ข้อความขอบคุณพิเศษ |
-| `kiosk_theme_override` | `VARCHAR(200)` | NULLABLE | รหัสคลาส CSS Override |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่สร้าง |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่แก้ไข |
+| `id` | `UUID` | PK | singleton row (หรือแยกตาม brand/event ในอนาคต) |
+| `config` | `JSONB` | NOT NULL | เก็บทั้งก้อนตาม interface `SatisfactionConfig` |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_by` | `UUID` | FK → users(id) NULLABLE | |
+
+> ใช้ JSONB เพราะฟิลด์ config หน้า Kiosk มีเกือบ 15+ ค่า (ดูจาก `SatisfactionSettingsSection.tsx`) — ถ้าแยกคอลัมน์ทั้งหมดจะต้อง migrate ทุกครั้งที่เพิ่ม setting ใหม่
+>
+> **ตัวอย่าง JSONB content:**
+> ```json
+> {
+>   "questionTitle": "ท่านมีความพึงพอใจกับการบริการในวันนี้อย่างไร?",
+>   "questionFontSize": 36,
+>   "questionSubtitle": "โปรดประเมินความพึงพอใจจากตัวเลือกด้านล่าง",
+>   "subtitleFontSize": 18,
+>   "emojiSize": 160,
+>   "labelFontSize": 20,
+>   "gridMaxWidth": 900,
+>   "duplicateVoteMinutes": 30,
+>   "autoResetSeconds": 4,
+>   "thankYouMessageTh": "ขอขอบคุณสำหรับความคิดเห็น...",
+>   "thankYouMessageEn": "Thank you for your valuable feedback!"
+> }
+> ```
 
 ---
 
-### 3.4 กลุ่มความปลอดภัยและระบบ (Audit & System Health)
+### 3.4 Events / Campaigns (3 ตาราง)
 
-#### ตาราง `audit_logs`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `event_categories` (Lookup)
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัส Audit Log |
-| `actor_id` | `UUID` | FK → `users.id`, NULLABLE | ผู้กระทำการ |
-| `actor_name` | `VARCHAR(200)` | NOT NULL | ชื่อผู้กระทำการ |
-| `actor_role` | `VARCHAR(100)` | NOT NULL | บทบาท ณ ขณะนั้น |
-| `action_type` | `VARCHAR(50)` | NOT NULL | CREATE, UPDATE, DELETE, SECURITY, CONFIG_CHANGE ฯลฯ |
-| `target_entity` | `VARCHAR(200)` | NOT NULL | ตาราง/วัตถุเป้าหมาย (เช่น Brand: KFC) |
-| `description` | `TEXT` | NOT NULL | คำอธิบายการทำงาน |
-| `status` | `VARCHAR(50)` | NOT NULL | SUCCESS, FAILED, WARNING |
-| `ip_address` | `VARCHAR(45)` | NULLABLE | IP Address ของผู้ทำรายการ |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่เกิดเหตุการณ์ |
+| `id` | `UUID` | PK | |
+| `category_code` | `TEXT` | UNIQUE NOT NULL | CAMPAIGN / MAINTENANCE / FIRMWARE / CALIBRATION / AUDIT |
+| `category_label` | `TEXT` | NOT NULL | ชื่อแสดงผล |
+| `display_order` | `SMALLINT` | DEFAULT 0 | |
 
-#### ตาราง `audit_diff_details`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `events` ← จาก `EventItem`
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัส Diff Item |
-| `audit_log_id` | `UUID` | FK → `audit_logs.id`, ON DELETE CASCADE | อ้างอิง Log หลัก |
-| `field_name` | `VARCHAR(200)` | NOT NULL | ชื่อฟิลด์ที่มีการเปลี่ยนแปลง |
-| `before_value` | `TEXT` | NULLABLE | ค่าเดิมก่อนแก้ไข |
-| `after_value` | `TEXT` | NULLABLE | ค่าใหม่หลังแก้ไข |
+| `id` | `UUID` | PK | |
+| `event_code` | `TEXT` | UNIQUE NOT NULL | เช่น `EVT-2026-0001` |
+| `event_name` | `TEXT` | NOT NULL | |
+| `event_date` | `DATE` | NOT NULL | |
+| `start_time` | `TIME` | NOT NULL | |
+| `end_time` | `TIME` | NOT NULL | |
+| `brand_id` | `UUID` | FK → brands(id), NULLABLE | NULL = "ทุกแบรนด์" |
+| `event_location` | `TEXT` | | |
+| `category_id` | `UUID` | FK → event_categories(id) | |
+| `event_status` | `TEXT` | CHECK (Upcoming/Active/Completed) | |
+| `description` | `TEXT` | | |
+| `kiosk_theme_override` | `JSONB` | | เก็บ `customThemeName/customGreeting/customThankYou` เป็นก้อน |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `created_by` | `UUID` | FK → users(id) NULLABLE | |
 
-#### ตาราง `notifications`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
+#### ตาราง `event_target_branches` (junction — ใหม่)
+| Column | Type | Constraint | หมายเหตุ |
 |---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสแจ้งเตือน |
-| `title` | `VARCHAR(300)` | NOT NULL | หัวข้อแจ้งเตือน |
-| `notification_type` | `VARCHAR(50)` | NOT NULL | Alert, Feedback, System |
-| `description` | `TEXT` | NOT NULL | รายละเอียด |
-| `is_read` | `BOOLEAN` | NOT NULL DEFAULT FALSE | สถานะเปิดอ่านแล้ว |
-| `target_branch_id` | `UUID` | FK → `branches.id`, NULLABLE | สาขาที่เกิดเหตุการณ์ |
-| `target_branch_name` | `VARCHAR(200)` | NULLABLE | ชื่อสาขา |
-| `target_branch_code` | `VARCHAR(50)` | NULLABLE | รหัสสาขา |
-| `priority` | `VARCHAR(20)` | NOT NULL DEFAULT 'Medium' | High, Medium, Low |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | เวลาที่แจ้งเตือน |
+| `event_id` | `UUID` | FK → events(id) ON DELETE CASCADE | |
+| `branch_id` | `UUID` | FK → branches(id) ON DELETE CASCADE | |
+| | | PRIMARY KEY(event_id, branch_id) | |
 
-#### ตาราง `system_settings`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
-|---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัสการตั้งค่า |
-| `setting_key` | `VARCHAR(100)` | UNIQUE, NOT NULL | คีย์ตั้งค่า (เช่น `kiosk_emoji_size`) |
-| `setting_value` | `TEXT` | NOT NULL | ค่าตั้งค่า (JSON หรือ Text) |
-| `setting_group` | `VARCHAR(100)` | NOT NULL DEFAULT 'general' | กลุ่ม (kiosk_ui, alert, general) |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | เวลาที่อัปเดต |
-
-#### ตาราง `api_service_health`
-| ชื่อคอลัมน์ | ประเภทข้อมูล | เงื่อนไข | คำอธิบาย |
-|---|---|---|---|
-| `id` | `UUID` | PK, DEFAULT gen_random_uuid() | รหัส Service |
-| `service_name` | `VARCHAR(200)` | NOT NULL | ชื่อ Service |
-| `endpoint` | `VARCHAR(500)` | NOT NULL | URL Endpoint ที่ตรวจสอบ |
-| `status` | `VARCHAR(20)` | NOT NULL DEFAULT 'Operational' | Operational, Degraded, Outage, Maintenance |
-| `uptime_percent` | `NUMERIC(5,2)` | NOT NULL DEFAULT 100.00 | อัตราความพร้อมใช้งาน (%) |
-| `latency_ms` | `INTEGER` | NOT NULL DEFAULT 0 | ค่าความหน่วง (ms) |
-| `error_rate_percent` | `NUMERIC(5,2)` | NOT NULL DEFAULT 0.00 | อัตราข้อผิดพลาด (%) |
-| `last_checked_at` | `TIMESTAMPTZ` | NOT NULL DEFAULT NOW() | วันเวลาที่ตรวจสอบล่าสุด |
+> ทำให้ Event ผูกกับสาขาเฉพาะได้ ไม่ใช่แค่ brand-wide — ตรงกับ requirement ใน README ที่ว่า "กำหนดขอบเขตกิจกรรมตามแบรนด์ (ทั้งแบรนด์), เฉพาะภาค หรือเฉพาะสาขาที่ต้องการ"
 
 ---
 
-## 4. สคริปต์สร้างฐานข้อมูล (PostgreSQL DDL Scripts)
+### 3.5 Notifications (1 ตาราง)
+
+#### ตาราง `notifications` ← จาก `SystemNotificationItem`
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `title` | `TEXT` | NOT NULL | |
+| `notification_type` | `TEXT` | CHECK (Alert/Feedback/System) | |
+| `description` | `TEXT` | NOT NULL | |
+| `is_read` | `BOOLEAN` | DEFAULT FALSE | |
+| `target_branch_id` | `UUID` | FK → branches(id), NULLABLE | สาขาที่เกิดเหตุการณ์ (null = ระดับระบบ) |
+| `recipient_user_id` | `UUID` | FK → users(id), NULLABLE | ผู้รับ (null = broadcast ทุกคน) |
+| `priority` | `TEXT` | CHECK (High/Medium/Low), DEFAULT 'Medium' | |
+| `created_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `read_at` | `TIMESTAMPTZ` | NULLABLE | เวลาที่เปิดอ่าน |
+
+---
+
+### 3.6 Audit & Service Health (3 ตาราง)
+
+#### ตาราง `audit_logs` ← จาก `AuditLogItem`
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `occurred_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `actor_user_id` | `UUID` | FK → users(id) ON DELETE SET NULL | |
+| `actor_name_snapshot` | `TEXT` | NOT NULL | snapshot ชื่อ — กันกรณี user ถูกลบแล้ว |
+| `actor_role_snapshot` | `TEXT` | NOT NULL | |
+| `action_type` | `TEXT` | NOT NULL | CREATE/UPDATE/DELETE/SECURITY/EXPORT/CONFIG_CHANGE |
+| `target_entity` | `TEXT` | NOT NULL | เช่น "Brand: KFC" |
+| `description` | `TEXT` | NOT NULL | |
+| `status` | `TEXT` | CHECK (SUCCESS/FAILED/WARNING), DEFAULT 'SUCCESS' | |
+| `ip_address` | `INET` | | |
+
+> **Partition:** เหมือน `satisfaction_votes` — `PARTITION BY RANGE (occurred_at)` รายเดือนได้
+> **Retention policy:** แนะนำ archive หลัง 12 เดือน
+
+#### ตาราง `audit_diff_details` ← จาก `AuditDiffDetail`
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `audit_log_id` | `UUID` | FK → audit_logs(id) ON DELETE CASCADE | |
+| `field_name` | `TEXT` | NOT NULL | |
+| `before_value` | `TEXT` | NULLABLE | |
+| `after_value` | `TEXT` | NULLABLE | |
+
+#### ตาราง `api_service_health` ← จาก `ApiServiceHealth`
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `id` | `UUID` | PK | |
+| `service_code` | `TEXT` | UNIQUE NOT NULL | |
+| `service_name` | `TEXT` | NOT NULL | |
+| `endpoint` | `TEXT` | NOT NULL | |
+| `status` | `TEXT` | CHECK (Operational/Degraded/Outage/Maintenance), DEFAULT 'Operational' | |
+| `uptime_percent` | `NUMERIC(5,2)` | DEFAULT 100.00 | |
+| `latency_ms` | `INT` | DEFAULT 0 | |
+| `error_rate_percent` | `NUMERIC(5,2)` | DEFAULT 0.00 | |
+| `last_checked_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+
+---
+
+### 3.7 System Settings (1 ตาราง)
+
+#### ตาราง `system_settings` (key-value, JSONB per section)
+| Column | Type | Constraint | หมายเหตุ |
+|---|---|---|---|
+| `setting_key` | `TEXT` | PK | `general`, `dashboard`, `reports`, `localization` |
+| `setting_value` | `JSONB` | NOT NULL | ตรงกับ `GeneralSettingsState`, `DashboardSettingsState` ฯลฯ ทั้งก้อน |
+| `updated_at` | `TIMESTAMPTZ` | DEFAULT NOW() | |
+| `updated_by` | `UUID` | FK → users(id) NULLABLE | |
+
+> **ตัวอย่าง:**
+> ```sql
+> INSERT INTO system_settings VALUES ('general', '{"systemName":"Satisfaction Management","companyName":"Globex International","contactEmail":"admin@satisfaction-management.com"}');
+> INSERT INTO system_settings VALUES ('dashboard', '{"refreshInterval":"30s","enableRealtimeSound":false,"benchmarkThreshold":85}');
+> ```
+
+---
+
+## 4. Enum / Lookup ที่ตัดสินใจแล้ว
+
+| ชื่อ | ชนิด | ค่า | เหตุผล |
+|---|---|---|---|
+| `status_type` | Native ENUM | `Active`, `Inactive` | ค่านิ่ง ใช้ทั่วระบบ |
+| `sentiment_type` | Native ENUM | `satisfied`, `neutral`, `unsatisfied` | ค่านิ่ง ผูก business logic โดยตรง |
+| `kiosk_status_type` | Native ENUM | `Online`, `Degraded`, `Offline` | ค่านิ่ง |
+| `tier_level_type` | Native ENUM | `Super Admin`, `Brand Owner`, `Regional Manager`, `Area Manager`, `Branch Staff`, `Custom Scope` | 6 ค่าตาม 5-tier + Custom |
+| `event_categories` | **Lookup table** | CAMPAIGN, MAINTENANCE, FIRMWARE, CALIBRATION, AUDIT (seed) | เพิ่มหมวดใหม่ได้โดยไม่ ALTER TYPE |
+| `system_modules` | **Lookup table** | 9 โมดูลเริ่มต้น (seed) | เพิ่มเมนูใหม่ได้โดยไม่กระทบ role ที่มี |
+
+---
+
+## 5. Views & Materialized Views สำหรับ Dashboard
+
+### 5.1 View: `v_brand_stats` (คำนวณ `totalBranchesCount`, `totalKiosksCount`, `csatAverage` สด)
 
 ```sql
--- ============================================================================
--- Enterprise CSAT Platform - PostgreSQL DDL Schema
--- ============================================================================
-
--- เปิดใช้งาน UUID Extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- 1. Brands Table
-CREATE TABLE brands (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    brand_id VARCHAR(50) NOT NULL UNIQUE,
-    brand_name VARCHAR(200) NOT NULL,
-    parent_company_name VARCHAR(200) NOT NULL DEFAULT 'Central Restaurants Group',
-    category VARCHAR(100) NOT NULL,
-    brand_logo_url TEXT,
-    brand_icon_name VARCHAR(100) NOT NULL DEFAULT 'restaurant',
-    status VARCHAR(20) NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 2. Regions Table
-CREATE TABLE regions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(200) NOT NULL,
-    brand_id UUID NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 3. Provinces Table
-CREATE TABLE provinces (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(200) NOT NULL,
-    region_id UUID NOT NULL REFERENCES regions(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 4. Branches Table
-CREATE TABLE branches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(300) NOT NULL,
-    brand_id UUID NOT NULL REFERENCES brands(id) ON DELETE RESTRICT,
-    region_id UUID NOT NULL REFERENCES regions(id) ON DELETE RESTRICT,
-    province_id UUID NOT NULL REFERENCES provinces(id) ON DELETE RESTRICT,
-    kiosk_count INT NOT NULL DEFAULT 0 CHECK (kiosk_count >= 0),
-    status VARCHAR(20) NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 5. Kiosks Table
-CREATE TABLE kiosks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    kiosk_code VARCHAR(50) NOT NULL UNIQUE,
-    kiosk_name VARCHAR(200) NOT NULL,
-    branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL DEFAULT 'Online' CHECK (status IN ('Online', 'Degraded', 'Offline')),
-    last_ping_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 6. Roles Table
-CREATE TABLE roles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role_name VARCHAR(100) NOT NULL UNIQUE,
-    role_description TEXT,
-    role_status VARCHAR(20) NOT NULL DEFAULT 'Active' CHECK (role_status IN ('Active', 'Inactive')),
-    is_system_default BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 7. Role Permissions Table
-CREATE TABLE role_permissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    module_name VARCHAR(100) NOT NULL,
-    can_view BOOLEAN NOT NULL DEFAULT FALSE,
-    can_create BOOLEAN NOT NULL DEFAULT FALSE,
-    can_update BOOLEAN NOT NULL DEFAULT FALSE,
-    can_delete BOOLEAN NOT NULL DEFAULT FALSE,
-    can_export BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT uq_role_module UNIQUE (role_id, module_name)
-);
-
--- 8. Users Table
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    phone VARCHAR(50),
-    password_hash TEXT NOT NULL,
-    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
-    brand_id UUID REFERENCES brands(id) ON DELETE SET NULL,
-    branch_id UUID REFERENCES branches(id) ON DELETE SET NULL,
-    tier_level VARCHAR(50),
-    status VARCHAR(20) NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 9. User Data Access Scope Table
-CREATE TABLE user_data_access (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    scope_type VARCHAR(20) NOT NULL CHECK (scope_type IN ('BRAND', 'REGION', 'PROVINCE', 'BRANCH')),
-    scope_entity_id UUID NOT NULL,
-    can_view_super_admin BOOLEAN NOT NULL DEFAULT FALSE,
-    can_view_brand_regional BOOLEAN NOT NULL DEFAULT FALSE,
-    can_view_regional_province BOOLEAN NOT NULL DEFAULT FALSE,
-    can_view_provincial_branch BOOLEAN NOT NULL DEFAULT FALSE,
-    can_view_branch_kiosks BOOLEAN NOT NULL DEFAULT FALSE
-);
-
--- 10. Satisfaction Votes Table (Core Transaction Data)
-CREATE TABLE satisfaction_votes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    kiosk_id UUID REFERENCES kiosks(id) ON DELETE SET NULL,
-    brand_id UUID NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
-    sentiment VARCHAR(20) NOT NULL CHECK (sentiment IN ('satisfied', 'neutral', 'unsatisfied')),
-    client_ip INET,
-    voted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 11. Events Calendar Table
-CREATE TABLE events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_name VARCHAR(300) NOT NULL,
-    event_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    brand_id UUID REFERENCES brands(id) ON DELETE SET NULL,
-    brand_scope VARCHAR(200),
-    event_location VARCHAR(300),
-    event_category VARCHAR(50) NOT NULL CHECK (event_category IN ('CAMPAIGN', 'MAINTENANCE', 'FIRMWARE', 'CALIBRATION', 'AUDIT')),
-    event_status VARCHAR(20) NOT NULL DEFAULT 'UPCOMING' CHECK (event_status IN ('LIVE', 'UPCOMING', 'COMPLETED', 'Active', 'Upcoming', 'Completed')),
-    description TEXT,
-    is_custom_survey_theme BOOLEAN NOT NULL DEFAULT FALSE,
-    custom_theme_name VARCHAR(200),
-    custom_greeting TEXT,
-    custom_thank_you TEXT,
-    kiosk_theme_override VARCHAR(200),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 12. Audit Logs Table
-CREATE TABLE audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    actor_name VARCHAR(200) NOT NULL,
-    actor_role VARCHAR(100) NOT NULL,
-    action_type VARCHAR(50) NOT NULL,
-    target_entity VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'SUCCESS',
-    ip_address VARCHAR(45),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 13. Audit Diff Details Table
-CREATE TABLE audit_diff_details (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    audit_log_id UUID NOT NULL REFERENCES audit_logs(id) ON DELETE CASCADE,
-    field_name VARCHAR(200) NOT NULL,
-    before_value TEXT,
-    after_value TEXT
-);
-
--- 14. Notifications Table
-CREATE TABLE notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(300) NOT NULL,
-    notification_type VARCHAR(50) NOT NULL DEFAULT 'Alert',
-    description TEXT NOT NULL,
-    is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    target_branch_id UUID REFERENCES branches(id) ON DELETE SET NULL,
-    target_branch_name VARCHAR(200),
-    target_branch_code VARCHAR(50),
-    priority VARCHAR(20) NOT NULL DEFAULT 'Medium' CHECK (priority IN ('High', 'Medium', 'Low')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 15. System Settings Table
-CREATE TABLE system_settings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    setting_key VARCHAR(100) NOT NULL UNIQUE,
-    setting_value TEXT NOT NULL,
-    setting_group VARCHAR(100) NOT NULL DEFAULT 'general',
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 16. API Health Monitoring Table
-CREATE TABLE api_service_health (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    service_name VARCHAR(200) NOT NULL,
-    endpoint VARCHAR(500) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'Operational' CHECK (status IN ('Operational', 'Degraded', 'Outage', 'Maintenance')),
-    uptime_percent NUMERIC(5,2) NOT NULL DEFAULT 100.00,
-    latency_ms INT NOT NULL DEFAULT 0,
-    error_rate_percent NUMERIC(5,2) NOT NULL DEFAULT 0.00,
-    last_checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- ============================================================================
--- 🚀 INDEXES FOR REAL-TIME ANALYTICS PERFORMANCE
--- ============================================================================
-
--- Index เพื่อการดึง Dashboard Real-time และสรุปคะแนน CSAT
-CREATE INDEX idx_votes_brand_voted ON satisfaction_votes (brand_id, voted_at DESC);
-CREATE INDEX idx_votes_branch_voted ON satisfaction_votes (branch_id, voted_at DESC);
-CREATE INDEX idx_votes_sentiment_voted ON satisfaction_votes (sentiment, voted_at DESC);
-
--- Index สำหรับ Hierarchy Lookups
-CREATE INDEX idx_branches_brand ON branches (brand_id);
-CREATE INDEX idx_branches_region ON branches (region_id);
-CREATE INDEX idx_branches_province ON branches (province_id);
-CREATE INDEX idx_kiosks_branch ON kiosks (branch_id);
-
--- Index สำหรับ Audit และ Notification
-CREATE INDEX idx_audit_logs_created ON audit_logs (created_at DESC);
-CREATE INDEX idx_notifications_unread ON notifications (is_read, created_at DESC);
-CREATE INDEX idx_user_data_access_user ON user_data_access (user_id);
+CREATE VIEW v_brand_stats AS
+SELECT b.id AS brand_id, b.brand_code, b.brand_name,
+       COUNT(DISTINCT br.id) AS total_branches,
+       COUNT(DISTINCT k.id)  AS total_kiosks,
+       ROUND(
+         AVG(CASE WHEN v.sentiment = 'satisfied' THEN 100
+                  WHEN v.sentiment = 'neutral'   THEN 50
+                  ELSE 0 END)
+       , 1) AS csat_average
+FROM brands b
+LEFT JOIN branch_brands bb ON bb.brand_id = b.id
+LEFT JOIN branches br ON br.id = bb.branch_id AND br.deleted_at IS NULL
+LEFT JOIN kiosks k ON k.branch_id = br.id
+LEFT JOIN satisfaction_votes v ON v.brand_id = b.id
+WHERE b.deleted_at IS NULL
+GROUP BY b.id, b.brand_code, b.brand_name;
 ```
+
+### 5.2 Materialized View: Dashboard 5-Tier Rollup
+
+สำหรับ `superAdminBrands`, `brandRegions`, `regionalProvinces`, `provincialBranches`, `branchKiosks` —
+`REFRESH MATERIALIZED VIEW CONCURRENTLY` ทุก 30 วิ–1 นาที ตรงกับ `refreshInterval` ใน Dashboard Settings
 
 ---
 
-## 5. การเชื่อมต่อและโครงสร้าง C# .NET Backend (EF Core & Npgsql)
+## 6. ตาราง Mapping: Frontend Type → DB Table
 
-### 5.1 NuGet Packages ที่ต้องติดตั้งใน C# Project
-```xml
-<ItemGroup>
-  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2" />
-  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
-  <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-  <PackageReference Include="AutoMapper" Version="13.0.1" />
-</ItemGroup>
-```
-
-### 5.2 การตั้งค่า `appsettings.json`
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=satisfaction_db;Username=postgres;Password=your_password;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;"
-  },
-  "Jwt": {
-    "Key": "YOUR_SUPER_SECRET_SECURITY_KEY_AT_LEAST_32_CHARS_LONG!",
-    "Issuer": "EnterpriseCSATBackend",
-    "Audience": "EnterpriseCSATFrontend",
-    "ExpireDays": 7
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning",
-      "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
-    }
-  },
-  "AllowedHosts": "*"
-}
-```
-
-### 5.3 C# Entity Models ตัวอย่าง (`Models/Brand.cs`, `Models/SatisfactionVote.cs`)
-
-```csharp
-namespace Backend.Models;
-
-public class Brand
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string BrandId { get; set; } = string.Empty; // e.g. "BRD-KFC"
-    public string BrandName { get; set; } = string.Empty;
-    public string ParentCompanyName { get; set; } = "Central Restaurants Group";
-    public string Category { get; set; } = "Fast Food (QSR)";
-    public string? BrandLogoUrl { get; set; }
-    public string BrandIconName { get; set; } = "restaurant";
-    public string Status { get; set; } = "Active";
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    // Navigation Properties
-    public ICollection<Branch> Branches { get; set; } = new List<Branch>();
-    public ICollection<Region> Regions { get; set; } = new List<Region>();
-    public ICollection<SatisfactionVote> Votes { get; set; } = new List<SatisfactionVote>();
-}
-
-public class SatisfactionVote
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid BranchId { get; set; }
-    public Branch? Branch { get; set; }
-
-    public Guid? KioskId { get; set; }
-    public Kiosk? Kiosk { get; set; }
-
-    public Guid BrandId { get; set; }
-    public Brand? Brand { get; set; }
-
-    public string Sentiment { get; set; } = "satisfied"; // satisfied, neutral, unsatisfied
-    public string? ClientIp { get; set; }
-    public DateTime VotedAt { get; set; } = DateTime.UtcNow;
-}
-```
-
-### 5.4 โครงสร้าง `AppDbContext.cs`
-```csharp
-using Microsoft.EntityFrameworkCore;
-using Backend.Models;
-
-namespace Backend.Data;
-
-public class AppDbContext : DbContext
-{
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
-    public DbSet<Brand> Brands => Set<Brand>();
-    public DbSet<Region> Regions => Set<Region>();
-    public DbSet<Province> Provinces => Set<Province>();
-    public DbSet<Branch> Branches => Set<Branch>();
-    public DbSet<Kiosk> Kiosks => Set<Kiosk>();
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
-    public DbSet<User> Users => Set<User>();
-    public DbSet<UserDataAccess> UserDataAccess => Set<UserDataAccess>();
-    public DbSet<SatisfactionVote> SatisfactionVotes => Set<SatisfactionVote>();
-    public DbSet<Event> Events => Set<Event>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-    public DbSet<AuditDiffDetail> AuditDiffDetails => Set<AuditDiffDetail>();
-    public DbSet<Notification> Notifications => Set<Notification>();
-    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
-    public DbSet<ApiServiceHealth> ApiServiceHealth => Set<ApiServiceHealth>();
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-
-        // PostgreSQL Table Mapping
-        modelBuilder.Entity<Brand>().ToTable("brands");
-        modelBuilder.Entity<Region>().ToTable("regions");
-        modelBuilder.Entity<Province>().ToTable("provinces");
-        modelBuilder.Entity<Branch>().ToTable("branches");
-        modelBuilder.Entity<Kiosk>().ToTable("kiosks");
-        modelBuilder.Entity<Role>().ToTable("roles");
-        modelBuilder.Entity<RolePermission>().ToTable("role_permissions");
-        modelBuilder.Entity<User>().ToTable("users");
-        modelBuilder.Entity<UserDataAccess>().ToTable("user_data_access");
-        modelBuilder.Entity<SatisfactionVote>().ToTable("satisfaction_votes");
-        modelBuilder.Entity<Event>().ToTable("events");
-        modelBuilder.Entity<AuditLog>().ToTable("audit_logs");
-        modelBuilder.Entity<AuditDiffDetail>().ToTable("audit_diff_details");
-        modelBuilder.Entity<Notification>().ToTable("notifications");
-        modelBuilder.Entity<SystemSetting>().ToTable("system_settings");
-        modelBuilder.Entity<ApiServiceHealth>().ToTable("api_service_health");
-
-        // Indexes & Constraints
-        modelBuilder.Entity<SatisfactionVote>()
-            .HasIndex(v => new { v.BrandId, v.VotedAt });
-
-        modelBuilder.Entity<SatisfactionVote>()
-            .HasIndex(v => new { v.BranchId, v.VotedAt });
-
-        modelBuilder.Entity<RolePermission>()
-            .HasIndex(p => new { p.RoleId, p.ModuleName })
-            .IsUnique();
-    }
-}
-```
-
-### 5.5 การลงทะเบียนใน `Program.cs`
-```csharp
-using Microsoft.EntityFrameworkCore;
-using Backend.Data;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// 1. PostgreSQL Database Context
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// 2. Controllers & API Setup
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
-
-// 3. CORS เพื่อให้ Next.js (port 3000) สามารถเรียก API ได้
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.UseCors("AllowFrontend");
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
-
-app.Run();
-```
+| Frontend (`Types/*.ts`) | DB Table(s) | หมายเหตุ |
+|---|---|---|
+| `BrandModel` | `brands` + view `v_brand_stats` | computed fields ไม่เก็บจริง |
+| `BranchModel` | `branches` + `branch_brands` | `brands[]` → junction |
+| `UserModel` | `users` + `user_*_scopes` + `user_permissions` | scope assignments + dashboard perms |
+| `UserAccessRecord` / `DashboardTierPermissions` | `user_permissions`, scope junctions | |
+| `SystemRoleItem` / `PermissionRow` | `roles` + `role_permissions` + `system_modules` | modules เป็น lookup table |
+| `EventItem` | `events` + `event_categories` + `event_target_branches` | category เป็น FK ไม่ใช่ string |
+| `SystemNotificationItem` | `notifications` | เพิ่ม `recipient_user_id`, `read_at` |
+| `AuditLogItem` / `AuditDiffDetail` | `audit_logs` + `audit_diff_details` | snapshot actor name/role |
+| `ApiServiceHealth` | `api_service_health` | |
+| `SatisfactionVotePayload` | `satisfaction_votes` | partition-ready |
+| `SatisfactionConfig` | `satisfaction_config` (JSONB) | |
+| `GeneralSettingsState` ฯลฯ | `system_settings` (key-value JSONB) | 1 row ต่อ section |
+| `PerformanceTableRow` (Dashboard) | Materialized View | ไม่ใช่ตารางจริง |
 
 ---
 
-## 6. การกำหนดสิทธิ์ 5-Tier Data Access & Query Optimization
+## 7. แนวทางขยายในอนาคต (Future-proofing)
 
-### 6.1 Logic การ Filter ข้อมูลตาม Tier Level
-เมื่อผู้ใช้งานยิง Request มาที่ `/api/dashboard` ทาง Backend C# จะคัดกรองข้อมูลตามสิทธิ์ของ Token:
-
-```csharp
-public async Task<DashboardDataDto> GetDashboardDataAsync(Guid userId, string tierLevel)
-{
-    var query = _context.SatisfactionVotes.AsNoTracking();
-
-    switch (tierLevel)
-    {
-        case "Super Admin":
-            // เห็นข้อมูลทั้งหมดทั้งองค์กร
-            break;
-
-        case "Brand Owner":
-            var allowedBrandIds = await _context.UserDataAccess
-                .Where(u => u.UserId == userId && u.ScopeType == "BRAND")
-                .Select(u => u.ScopeEntityId)
-                .ToListAsync();
-            query = query.Where(v => allowedBrandIds.Contains(v.BrandId));
-            break;
-
-        case "Regional Manager (RM)":
-            var allowedRegionBranches = await _context.Branches
-                .Where(b => _context.UserDataAccess
-                    .Where(u => u.UserId == userId && u.ScopeType == "REGION")
-                    .Select(u => u.ScopeEntityId)
-                    .Contains(b.RegionId))
-                .Select(b => b.Id)
-                .ToListAsync();
-            query = query.Where(v => allowedRegionBranches.Contains(v.BranchId));
-            break;
-
-        case "Area Manager (AM)":
-            var allowedProvinceBranches = await _context.Branches
-                .Where(b => _context.UserDataAccess
-                    .Where(u => u.UserId == userId && u.ScopeType == "PROVINCE")
-                    .Select(u => u.ScopeEntityId)
-                    .Contains(b.ProvinceId))
-                .Select(b => b.Id)
-                .ToListAsync();
-            query = query.Where(v => allowedProvinceBranches.Contains(v.BranchId));
-            break;
-
-        case "Branch Staff":
-            var user = await _context.Users.FindAsync(userId);
-            if (user?.BranchId != null)
-            {
-                query = query.Where(v => v.BranchId == user.BranchId);
-            }
-            break;
-    }
-
-    // ทำ Aggregation สรุปคะแนน CSAT
-    var totalVotes = await query.CountAsync();
-    var satisfiedCount = await query.CountAsync(v => v.Sentiment == "satisfied");
-    var neutralCount = await query.CountAsync(v => v.Sentiment == "neutral");
-    var unsatisfiedCount = await query.CountAsync(v => v.Sentiment == "unsatisfied");
-
-    return new DashboardDataDto
-    {
-        TotalVotes = totalVotes,
-        SatisfiedTotal = satisfiedCount,
-        NeutralTotal = neutralCount,
-        UnsatisfiedTotal = unsatisfiedCount,
-        AverageCsatRate = totalVotes > 0 ? (double)satisfiedCount / totalVotes * 100 : 0
-    };
-}
-```
+| # | แนวทาง | วิธีดำเนินการ |
+|---|---|---|
+| 1 | **Multi-tenant** (หลายบริษัทในระบบเดียว) | เติม `tenant_id uuid` บนตารางหลักทุกตัว + Row-Level Security (`CREATE POLICY`) |
+| 2 | **Multi-language content** | แยกเป็น `*_translations(entity_id, locale, field, value)` |
+| 3 | **Kiosk offline sync** | เติม `client_generated_id uuid UNIQUE` บน `satisfaction_votes` กันโหวตซ้ำตอน retry |
+| 4 | **Historical org structure** | เปลี่ยน `branch_brands` / `branches.province_id` เป็น temporal table (`valid_from`, `valid_to`) |
+| 5 | **Notification multi-channel** (email/SMS/push) | เติมตาราง `notification_deliveries(notification_id, channel, status, sent_at)` |
+| 6 | **Free-text feedback** (Comment จากลูกค้า) | เติมคอลัมน์ `comment TEXT` บน `satisfaction_votes` หรือแยกตาราง `vote_comments` |
+| 7 | **Vote daily aggregation** | สร้าง `vote_daily_summary(date, brand_id, branch_id, sat/neu/unsat counts)` สำหรับ report ย้อนหลังเร็วขึ้น |
 
 ---
 
-## 7. ข้อมูลเริ่มต้นระบบ (Seed Data Script)
+## 8. สรุปจำนวนตาราง
 
-```sql
--- Seed Initial Roles
-INSERT INTO roles (id, role_name, role_description, role_status, is_system_default) VALUES
-('11111111-1111-1111-1111-111111111111', 'Super Administrator', 'ผู้ดูแลระบบสูงสุด จัดการได้ทุกแบรนด์และทุกเมนู', 'Active', TRUE),
-('22222222-2222-2222-2222-222222222222', 'Brand Owner', 'เจ้าของแบรนด์ ดูแลภาพรวมและระดับภาคของแบรนด์ตนเอง', 'Active', TRUE),
-('33333333-3333-3333-3333-333333333333', 'Regional Manager (RM)', 'ผู้จัดการระดับภาค ดูแลเปรียบเทียบระดับจังหวัดในภาค', 'Active', TRUE),
-('44444444-4444-4444-4444-444444444444', 'Area Manager (AM)', 'ผู้จัดการระดับเขต/จังหวัด ดูแลเปรียบเทียบระดับสาขา', 'Active', TRUE),
-('55555555-5555-5555-5555-555555555555', 'Branch Staff', 'เจ้าหน้าที่สาขา ตรวจสอบตู้ Kiosk และดูผลเรียลไทม์', 'Active', TRUE);
-
--- Seed Sample Brand (KFC)
-INSERT INTO brands (id, brand_id, brand_name, parent_company_name, category, brand_icon_name, status) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'BRD-KFC', 'KFC Thailand', 'Central Restaurants Group', 'Fast Food (QSR)', 'lunch_dining', 'Active'),
-('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'BRD-MD', 'Mister Donut', 'Central Restaurants Group', 'Beverage & Bakery', 'donut_large', 'Active'),
-('cccccccc-cccc-cccc-cccc-cccccccccccc', 'BRD-AA', 'Auntie Anne''s', 'Central Restaurants Group', 'Beverage & Bakery', 'bakery_dining', 'Active');
-```
-
+| กลุ่ม | ตาราง | จำนวน |
+|---|---|---|
+| Organization | regions, provinces, brands, branches, branch_brands, kiosks | 6 |
+| Auth & RBAC | system_modules, roles, role_permissions, users, user_permissions, user_sessions, user_brand_scopes, user_region_scopes, user_province_scopes, user_branch_scopes | 10 |
+| CSAT | satisfaction_votes, satisfaction_config | 2 |
+| Events | event_categories, events, event_target_branches | 3 |
+| Notifications | notifications | 1 |
+| Audit & Health | audit_logs, audit_diff_details, api_service_health | 3 |
+| Settings | system_settings | 1 |
+| **รวม** | | **26 ตาราง** |
