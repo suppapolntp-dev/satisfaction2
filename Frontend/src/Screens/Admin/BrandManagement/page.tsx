@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
-import SearchInput from "@/Components/Inputs/SearchInput";
 import SelectInput from "@/Components/Inputs/SelectInput";
 import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
 import BrandModal from "@/Components/Modals/BrandModal";
 import { searchBrands } from "@/Lib/search/searchEngine";
 import { BrandModel } from "@/Types/brand";
 import { brandService } from "@/Services/brandService";
+import { useModal } from "@/Context/ModalContext";
 
 export default function BrandManagementScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   const [corporateBrands, setCorporateBrands] = useState<BrandModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchBrandQuery, setSearchBrandQuery] = useState("");
@@ -99,28 +101,45 @@ export default function BrandManagementScreen() {
     brandIconName: string;
     status: "Active" | "Inactive";
   }) => {
-    if (editingBrand) {
-      const updated = await brandService.updateBrand(editingBrand.id, brandData);
-      setCorporateBrands((prev) =>
-        prev.map((b) => (b.id === editingBrand.id ? updated : b))
-      );
-    } else {
-      const created = await brandService.createBrand({
-        ...brandData,
-        totalBranchesCount: 0,
-        totalKiosksCount: 0,
-        csatAverage: "0.0%",
-      });
-      setCorporateBrands((prev) => [created, ...prev]);
+    try {
+      if (editingBrand) {
+        const updated = await brandService.updateBrand(editingBrand.id, brandData);
+        setCorporateBrands((prev) =>
+          prev.map((b) => (b.id === editingBrand.id ? updated : b))
+        );
+        showSuccess(`แก้ไขข้อมูลแบรนด์ "${brandData.brandName}" สำเร็จเรียบร้อย`);
+      } else {
+        const created = await brandService.createBrand({
+          ...brandData,
+          totalBranchesCount: 0,
+          totalKiosksCount: 0,
+          csatAverage: "0.0%",
+        });
+        setCorporateBrands((prev) => [created, ...prev]);
+        showSuccess(`สร้างแบรนด์ใหม่ "${brandData.brandName}" สำเร็จเรียบร้อย`);
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกข้อมูลแบรนด์ได้");
     }
-    setIsModalOpen(false);
   };
 
-  const handleDeleteBrand = async (id: string, name: string) => {
-    if (confirm(`คุณต้องการลบแบรนด์ "${name}" หรือไม่?`)) {
-      await brandService.deleteBrand(id);
-      setCorporateBrands((prev) => prev.filter((b) => b.id !== id));
-    }
+  const handleDeleteBrand = (id: string, name: string) => {
+    showConfirm({
+      title: "ยืนยันการลบแบรนด์?",
+      description: `คุณต้องการลบแบรนด์ "${name}" ใช่หรือไม่? หากลบแล้วสาขาที่เกี่ยวข้องจะไม่สามารถขายแบรนด์นี้ได้อีก`,
+      variant: "danger",
+      confirmText: "ลบแบรนด์",
+      onConfirm: async () => {
+        try {
+          await brandService.deleteBrand(id);
+          setCorporateBrands((prev) => prev.filter((b) => b.id !== id));
+          showSuccess(`ลบแบรนด์ "${name}" สำเร็จเรียบร้อย`);
+        } catch (err: any) {
+          showError(err?.message || "ไม่สามารถลบแบรนด์ได้");
+        }
+      },
+    });
   };
 
   // Table Columns
@@ -250,50 +269,53 @@ export default function BrandManagementScreen() {
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
       <StatsGrid data={statsOverviewData} />
 
-      {/* ─── 3. DATA TABLE CONTAINER ─── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
-        
-        {/* Controls Bar */}
-        <div className="p-4 border-b border-slate-100 bg-slate-50/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <SearchInput 
-            value={searchBrandQuery}
-            onChange={setSearchBrandQuery}
-            placeholder="ค้นหาชื่อแบรนด์ หรือบริษัทแม่..."
-          />
-          
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-            <SelectInput
-              value={selectedParentCompany}
-              onChange={setSelectedParentCompany}
-              options={[
-                { label: "All Parent Companies", value: "All Parent Companies" },
-                { label: "Central Restaurants Group (CRG)", value: "Central Restaurants Group (CRG)" },
-                { label: "Global Retail Inc.", value: "Global Retail Inc." },
-                { label: "Hospitality Group", value: "Hospitality Group" },
-              ]}
-            />
+      {/* ─── 3. DATA TABLE (UNIFIED LAYOUT: HEAD -> FILTERS -> DATA -> FOOTER) ─── */}
+      <DataTable 
+        title="รายชื่อแบรนด์ธุรกิจในเครือ (Brand Directory)"
+        subtitle="จัดการแบรนด์ธุรกิจ โลโก้ และติดตามสถิติสาขากับคะแนนความพึงพอใจของลูกค้า"
+        icon="corporate_fare"
+        badge={
+          <span className="badge-active">
+            {filteredCorporateBrands.length} แบรนด์
+          </span>
+        }
+        searchPlaceholder="ค้นหาชื่อแบรนด์ หรือบริษัทแม่..."
+        searchQuery={searchBrandQuery}
+        onSearchChange={setSearchBrandQuery}
+        filters={
+          <>
+            <div className="w-full sm:w-56">
+              <SelectInput
+                value={selectedParentCompany}
+                onChange={setSelectedParentCompany}
+                options={[
+                  { label: "All Parent Companies", value: "All Parent Companies" },
+                  { label: "Central Restaurants Group (CRG)", value: "Central Restaurants Group (CRG)" },
+                  { label: "Global Retail Inc.", value: "Global Retail Inc." },
+                  { label: "Hospitality Group", value: "Hospitality Group" },
+                ]}
+              />
+            </div>
             
-            <SelectInput
-              value={selectedBrandStatus}
-              onChange={setSelectedBrandStatus}
-              options={[
-                { label: "All Statuses", value: "All Statuses" },
-                { label: "Active", value: "Active" },
-                { label: "Inactive", value: "Inactive" },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <DataTable 
-          columns={brandTableColumns}
-          data={filteredCorporateBrands}
-          actions={brandTableActions}
-          emptyMessage="ยังไม่มีข้อมูลแบรนด์ในระบบ"
-        />
-
-      </div>
+            <div className="w-full sm:w-36">
+              <SelectInput
+                value={selectedBrandStatus}
+                onChange={setSelectedBrandStatus}
+                options={[
+                  { label: "All Statuses", value: "All Statuses" },
+                  { label: "Active", value: "Active" },
+                  { label: "Inactive", value: "Inactive" },
+                ]}
+              />
+            </div>
+          </>
+        }
+        columns={brandTableColumns}
+        data={filteredCorporateBrands}
+        actions={brandTableActions}
+        emptyMessage="ยังไม่มีข้อมูลแบรนด์ในระบบ"
+        defaultPageSize={10}
+      />
 
       {/* ─── 4. ADD / EDIT BRAND MODAL ─── */}
       <BrandModal

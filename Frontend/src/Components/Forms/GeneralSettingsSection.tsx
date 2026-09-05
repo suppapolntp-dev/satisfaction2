@@ -43,7 +43,7 @@ export default function GeneralSettingsSection({
               value={generalConfig.systemName}
               onChange={(inputEvent) => onUpdateGeneralConfig({ systemName: inputEvent.target.value })}
               className="input-text w-full"
-              placeholder="e.g., Enterprise CSAT Pro"
+              placeholder="e.g., Satisfaction Management"
             />
           </div>
 
@@ -86,7 +86,7 @@ export default function GeneralSettingsSection({
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="w-20 h-20 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shadow-xs shrink-0">
               <span className="material-symbols-outlined text-4xl text-blue-900">
-                analytics
+                sentiment_satisfied
               </span>
             </div>
             <div className="space-y-2">

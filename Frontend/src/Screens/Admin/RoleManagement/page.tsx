@@ -7,11 +7,14 @@ import RolePermissionTable from "@/Components/Tables/RolePermissionTable";
 import RoleModal from "@/Components/Modals/RoleModal";
 import { PermissionRow, PermissionKey, SystemRoleItem } from "@/Types/role";
 import { roleService, generateDefaultMatrix } from "@/Services/roleService";
+import { useModal } from "@/Context/ModalContext";
 
 // ==========================================================================
 // ─── MAIN ROLE MANAGEMENT SCREEN COMPONENT
 // ==========================================================================
 export default function RoleManagementScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   const [rolesList, setRolesList] = useState<SystemRoleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
@@ -156,10 +159,14 @@ export default function RoleManagementScreen() {
 
   const handleSavePermissionChanges = useCallback(async () => {
     if (!activeSelectedRole) return;
-    const currentMatrix = permissionMatrix[selectedRoleId] || [];
-    await roleService.savePermissionMatrix(selectedRoleId, currentMatrix);
-    alert(`บันทึกการเปลี่ยนแปลงสิทธิ์ของ "${activeSelectedRole.roleName}" สำเร็จเรียบร้อยแล้ว!`);
-  }, [selectedRoleId, activeSelectedRole, permissionMatrix]);
+    try {
+      const currentMatrix = permissionMatrix[selectedRoleId] || [];
+      await roleService.savePermissionMatrix(selectedRoleId, currentMatrix);
+      showSuccess(`บันทึกการเปลี่ยนแปลงสิทธิ์ของ "${activeSelectedRole.roleName}" สำเร็จเรียบร้อยแล้ว!`);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกสิทธิ์ได้ โปรดลองใหม่อีกครั้ง");
+    }
+  }, [selectedRoleId, activeSelectedRole, permissionMatrix, showSuccess, showError]);
 
   // ─── Modal Handlers สำหรับ Create / Edit Role ───
   const handleOpenCreateRoleModal = () => {
@@ -179,45 +186,62 @@ export default function RoleManagementScreen() {
     roleStatus: "Active" | "Inactive";
     cloneFromRole?: string;
   }) => {
-    if (editingRole) {
-      const updated = await roleService.updateRole(editingRole.roleId, roleData);
-      setRolesList((prev) =>
-        prev.map((r) => (r.roleId === editingRole.roleId ? { ...r, ...updated } : r))
-      );
-    } else {
-      const newRoleItem = await roleService.createRole({
-        roleName: roleData.roleName,
-        roleStatus: roleData.roleStatus,
-        roleDescription: roleData.roleDescription || "-",
-        totalUsersCount: 0,
-        isSystemDefault: false,
-      });
+    try {
+      if (editingRole) {
+        const updated = await roleService.updateRole(editingRole.roleId, roleData);
+        setRolesList((prev) =>
+          prev.map((r) => (r.roleId === editingRole.roleId ? { ...r, ...updated } : r))
+        );
+        showSuccess(`แก้ไขข้อมูลบทบาท "${roleData.roleName}" สำเร็จเรียบร้อย`);
+      } else {
+        const newRoleItem = await roleService.createRole({
+          roleName: roleData.roleName,
+          roleStatus: roleData.roleStatus,
+          roleDescription: roleData.roleDescription || "-",
+          totalUsersCount: 0,
+          isSystemDefault: false,
+        });
 
-      const clonedPermissions = roleData.cloneFromRole && permissionMatrix[roleData.cloneFromRole]
-        ? permissionMatrix[roleData.cloneFromRole].map((row) => ({ ...row }))
-        : generateDefaultMatrix();
+        const clonedPermissions = roleData.cloneFromRole && permissionMatrix[roleData.cloneFromRole]
+          ? permissionMatrix[roleData.cloneFromRole].map((row) => ({ ...row }))
+          : generateDefaultMatrix();
 
-      await roleService.savePermissionMatrix(newRoleItem.roleId, clonedPermissions);
+        await roleService.savePermissionMatrix(newRoleItem.roleId, clonedPermissions);
 
-      setRolesList((prev) => [...prev, newRoleItem]);
-      setPermissionMatrix((prev) => ({
-        ...prev,
-        [newRoleItem.roleId]: clonedPermissions,
-      }));
-      setSelectedRoleId(newRoleItem.roleId);
+        setRolesList((prev) => [...prev, newRoleItem]);
+        setPermissionMatrix((prev) => ({
+          ...prev,
+          [newRoleItem.roleId]: clonedPermissions,
+        }));
+        setSelectedRoleId(newRoleItem.roleId);
+        showSuccess(`สร้างบทบาท "${roleData.roleName}" สำเร็จเรียบร้อย`);
+      }
+
+      setIsRoleModalOpen(false);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกบทบาทได้");
     }
-
-    setIsRoleModalOpen(false);
   };
 
-  const handleDeleteRole = async (roleId: string, roleName: string) => {
-    if (confirm(`คุณต้องการลบบทบาท "${roleName}" หรือไม่?`)) {
-      await roleService.deleteRole(roleId);
-      setRolesList((prev) => prev.filter((r) => r.roleId !== roleId));
-      if (selectedRoleId === roleId) {
-        setSelectedRoleId(rolesList[0]?.roleId || "");
-      }
-    }
+  const handleDeleteRole = (roleId: string, roleName: string) => {
+    showConfirm({
+      title: "ยืนยันการลบบทบาท?",
+      description: `คุณต้องการลบบทบาท "${roleName}" หรือไม่? หากลบแล้วพนักงานในระบบจะไม่สามารถใช้สิทธิ์ของบทบาทนี้ได้อีก`,
+      variant: "danger",
+      confirmText: "ลบบทบาท",
+      onConfirm: async () => {
+        try {
+          await roleService.deleteRole(roleId);
+          setRolesList((prev) => prev.filter((r) => r.roleId !== roleId));
+          if (selectedRoleId === roleId) {
+            setSelectedRoleId(rolesList[0]?.roleId || "");
+          }
+          showSuccess(`ลบบทบาท "${roleName}" สำเร็จเรียบร้อย`);
+        } catch (err: any) {
+          showError(err?.message || "ไม่สามารถลบบทบาทได้");
+        }
+      },
+    });
   };
 
   return (
@@ -252,7 +276,7 @@ export default function RoleManagementScreen() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Side: System Roles List Selection */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -352,7 +376,7 @@ export default function RoleManagementScreen() {
         </div>
 
         {/* Right Side: Granular Permission Matrix */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden p-6 flex flex-col gap-5">
+        <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden p-6 flex flex-col gap-5">
           
           {/* Header Controls Bar */}
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-slate-100">

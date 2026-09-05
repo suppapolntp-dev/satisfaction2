@@ -3,15 +3,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
-import SearchInput from "@/Components/Inputs/SearchInput";
 import SelectInput from "@/Components/Inputs/SelectInput";
 import BranchModal from "@/Components/Modals/BranchModal";
 import { BranchModel } from "@/Types/branch";
 import { branchService } from "@/Services/branchService";
 import { brandService } from "@/Services/brandService";
 import { searchBranches } from "@/Lib/search/searchEngine";
+import { useModal } from "@/Context/ModalContext";
 
 export default function BranchManagementScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   const [branchesList, setBranchesList] = useState<BranchModel[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,20 +112,26 @@ export default function BranchManagementScreen() {
     kioskCount: number;
     status: "Active" | "Inactive";
   }) => {
-    if (editingBranch) {
-      const updated = await branchService.updateBranch(editingBranch.id, branchData);
-      setBranchesList((prev) =>
-        prev.map((b) => (b.id === editingBranch.id ? updated : b))
-      );
-    } else {
-      const created = await branchService.createBranch({
-        ...branchData,
-        satisfaction: 0,
-        totalVotes: 0,
-      });
-      setBranchesList((prev) => [created, ...prev]);
+    try {
+      if (editingBranch) {
+        const updated = await branchService.updateBranch(editingBranch.id, branchData);
+        setBranchesList((prev) =>
+          prev.map((b) => (b.id === editingBranch.id ? updated : b))
+        );
+        showSuccess(`แก้ไขข้อมูลสาขา "${branchData.name}" สำเร็จเรียบร้อย`);
+      } else {
+        const created = await branchService.createBranch({
+          ...branchData,
+          satisfaction: 0,
+          totalVotes: 0,
+        });
+        setBranchesList((prev) => [created, ...prev]);
+        showSuccess(`สร้างสาขาใหม่ "${branchData.name}" สำเร็จเรียบร้อย`);
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกข้อมูลสาขาได้");
     }
-    setIsModalOpen(false);
   };
 
   // Table Columns
@@ -186,6 +194,7 @@ export default function BranchManagementScreen() {
     {
       key: "status",
       label: "Status",
+      sortable: true,
       render: (b) => (
         <span className={b.status === "Active" ? "badge-active" : "badge-inactive"}>
           <span className={`w-1.5 h-1.5 rounded-full ${b.status === "Active" ? "bg-emerald-600" : "bg-slate-400"}`} />
@@ -206,11 +215,22 @@ export default function BranchManagementScreen() {
       label: "Delete Branch",
       icon: "delete",
       variant: "danger",
-      onClick: async (b) => {
-        if (confirm(`คุณต้องการลบสาขา "${b.name}" หรือไม่?`)) {
-          await branchService.deleteBranch(b.id);
-          setBranchesList((prev) => prev.filter((item) => item.id !== b.id));
-        }
+      onClick: (b) => {
+        showConfirm({
+          title: "ยืนยันการลบสาขา?",
+          description: `คุณต้องการลบสาขา "${b.name}" (${b.code}) หรือไม่? ตู้ Kiosk ทั้งหมดที่ผูกกับสาขานี้จะไม่สามารถส่งผลโหวตได้`,
+          variant: "danger",
+          confirmText: "ลบสาขา",
+          onConfirm: async () => {
+            try {
+              await branchService.deleteBranch(b.id);
+              setBranchesList((prev) => prev.filter((item) => item.id !== b.id));
+              showSuccess(`ลบสาขา "${b.name}" สำเร็จเรียบร้อย`);
+            } catch (err: any) {
+              showError(err?.message || "ไม่สามารถลบสาขาได้");
+            }
+          },
+        });
       },
     },
   ];
@@ -220,7 +240,7 @@ export default function BranchManagementScreen() {
     let result = searchBranches(searchQuery, branchesList);
 
     if (selectedBrand !== "All Brands") {
-      result = result.filter((b) => b.brand.includes(selectedBrand) || (b.brands && b.brands.includes(selectedBrand)));
+      result = result.filter((b) => (Boolean(b.brand) && b.brand.includes(selectedBrand)) || (b.brands && b.brands.includes(selectedBrand)));
     }
     if (selectedRegion !== "All Regions") {
       result = result.filter((b) => b.region === selectedRegion);
@@ -239,7 +259,6 @@ export default function BranchManagementScreen() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-3xl">storefront</span>
             Branch & Co-Location Store Management
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -260,66 +279,68 @@ export default function BranchManagementScreen() {
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
       <StatsGrid data={statsOverviewData} />
 
-      {/* ─── 3. SEARCH & FILTERS ─── */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
-        <div className="w-full md:w-80">
-          <SearchInput
-            placeholder="ค้นหาชื่อสาขา, รหัสสาขา, แบรนด์ หรือจังหวัด..."
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
-          <div className="w-full sm:w-44">
-            <SelectInput
-              value={selectedBrand}
-              onChange={setSelectedBrand}
-              options={[
-                { value: "All Brands", label: "ทุกแบรนด์ (All Brands)" },
-                ...availableBrands.map((brandName) => ({
-                  value: brandName,
-                  label: brandName,
-                })),
-              ]}
-            />
-          </div>
-
-          <div className="w-full sm:w-44">
-            <SelectInput
-              value={selectedRegion}
-              onChange={setSelectedRegion}
-              options={[
-                { value: "All Regions", label: "ทุกภาค (All Regions)" },
-                { value: "ภาคเหนือ", label: "ภาคเหนือ" },
-                { value: "ภาคตะวันออก", label: "ภาคตะวันออก" },
-                { value: "กรุงเทพฯ และปริมณฑล", label: "กรุงเทพฯ และปริมณฑล" },
-                { value: "ภาคใต้", label: "ภาคใต้" },
-                { value: "ภาคตะวันออกเฉียงเหนือ", label: "ภาคตะวันออกเฉียงเหนือ" },
-              ]}
-            />
-          </div>
-
-          <div className="w-full sm:w-40">
-            <SelectInput
-              value={selectedStatus}
-              onChange={setSelectedStatus}
-              options={[
-                { value: "All Statuses", label: "ทุกสถานะ" },
-                { value: "Active", label: "Active (เปิดบริการ)" },
-                { value: "Inactive", label: "Inactive (ปิดปรับปรุง)" },
-              ]}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ─── 4. DATA TABLE ─── */}
+      {/* ─── 3. UNIFIED DATA TABLE (HEAD -> FILTER & SORT -> DATA -> FOOTER) ─── */}
       <DataTable
+        title="รายชื่อสาขาและเครือข่าย Co-Location (Branch Directory)"
+        subtitle="ตรวจสอบข้อมูลสาขาทั้งหมดในเครือข่าย ภูมิภาค จังหวัด จำนวนตู้ Kiosk และสถานะการเปิดบริการ"
+        icon="storefront"
+        badge={
+          <span className="badge-active">
+            {filteredBranches.length} สาขา
+          </span>
+        }
+        searchPlaceholder="ค้นหาชื่อสาขา, รหัสสาขา, แบรนด์ หรือจังหวัด..."
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={
+          <>
+            <div className="w-full sm:w-44">
+              <SelectInput
+                value={selectedBrand}
+                onChange={setSelectedBrand}
+                options={[
+                  { value: "All Brands", label: "ทุกแบรนด์ (All Brands)" },
+                  ...availableBrands.map((brandName) => ({
+                    value: brandName,
+                    label: brandName,
+                  })),
+                ]}
+              />
+            </div>
+
+            <div className="w-full sm:w-44">
+              <SelectInput
+                value={selectedRegion}
+                onChange={setSelectedRegion}
+                options={[
+                  { value: "All Regions", label: "ทุกภาค (All Regions)" },
+                  { value: "ภาคเหนือ", label: "ภาคเหนือ" },
+                  { value: "ภาคตะวันออก", label: "ภาคตะวันออก" },
+                  { value: "กรุงเทพฯ และปริมณฑล", label: "กรุงเทพฯ และปริมณฑล" },
+                  { value: "ภาคใต้", label: "ภาคใต้" },
+                  { value: "ภาคตะวันออกเฉียงเหนือ", label: "ภาคตะวันออกเฉียงเหนือ" },
+                ]}
+              />
+            </div>
+
+            <div className="w-full sm:w-40">
+              <SelectInput
+                value={selectedStatus}
+                onChange={setSelectedStatus}
+                options={[
+                  { value: "All Statuses", label: "ทุกสถานะ" },
+                  { value: "Active", label: "Active (เปิดบริการ)" },
+                  { value: "Inactive", label: "Inactive (ปิดปรับปรุง)" },
+                ]}
+              />
+            </div>
+          </>
+        }
         columns={branchTableColumns}
         data={filteredBranches}
         actions={branchTableActions}
         emptyMessage="ยังไม่มีข้อมูลสาขาในระบบ"
+        defaultPageSize={10}
       />
 
       {/* ─── 5. ADD / EDIT BRANCH MODAL ─── */}

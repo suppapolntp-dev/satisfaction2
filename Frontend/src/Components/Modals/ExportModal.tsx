@@ -54,57 +54,63 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
   };
 
   return createPortal(
-    <div className="modal-overlay animate-pop-in">
-      {/* ชั้นเลเยอร์ Backdrop ปิดเมื่อคลิกนอกกล่อง */}
-      <div className="modal-close-layer cursor-default" onClick={onClose} />
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       {/* กล่อง Modal Panel หลัก */}
-      <div className="modal-panel">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
         
         {/* ─── MODAL HEADER ─── */}
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div>
-            <h2 className="text-base font-bold text-slate-800">Export Analytics Report</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Generate CSAT reports and raw survey data.</p>
+        <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <span className="material-symbols-outlined text-xl">file_download</span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 leading-tight">
+                ส่งออกรายงานสรุปผล (Export Report)
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                ดาวน์โหลดรายงานคะแนนความพึงพอใจ CSAT และผลการประเมินรายสาขา
+              </p>
+            </div>
           </div>
           <button 
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-full transition-colors outline-none cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm cursor-pointer transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            ✕
           </button>
         </div>
 
         {/* ─── MODAL BODY & FORM ─── */}
-        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <div className="p-6 space-y-5 overflow-y-auto max-h-[65vh] custom-scrollbar">
+        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden text-xs">
+          <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
             
             {/* เลือกรูปแบบไฟล์ (File Format Selection) */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                Select Format
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 block">
+                รูปแบบไฟล์เอกสาร (File Format)
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 
                 {/* Excel Option */}
                 <button
                   type="button"
                   onClick={() => setSelectedFileFormat("excel")}
-                  className={`p-4 rounded-xl text-left flex items-center gap-3 transition-all border-2 outline-none cursor-pointer ${
+                  className={`p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all border-2 outline-none cursor-pointer ${
                     selectedFileFormat === "excel"
                       ? "border-blue-900 bg-blue-50/60 text-blue-900 shadow-xs" 
                       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                     selectedFileFormat === "excel" ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-500"
                   }`}>
                     <span className="material-symbols-outlined text-[20px]">table_chart</span>
                   </div>
-                  <div>
-                    <div className="font-bold text-xs">Excel File</div>
-                    <div className="text-[11px] text-slate-500">Raw Survey Data (.xlsx)</div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-xs">Excel Spreadsheet (.xlsx)</div>
+                    <div className="text-[11px] text-slate-500 truncate">ข้อมูลการประเมินดิบ (Raw Data)</div>
                   </div>
                 </button>
 
@@ -112,20 +118,20 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 <button
                   type="button"
                   onClick={() => setSelectedFileFormat("pdf")}
-                  className={`p-4 rounded-xl text-left flex items-center gap-3 transition-all border-2 outline-none cursor-pointer ${
+                  className={`p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all border-2 outline-none cursor-pointer ${
                     selectedFileFormat === "pdf"
                       ? "border-blue-900 bg-blue-50/60 text-blue-900 shadow-xs" 
                       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                     selectedFileFormat === "pdf" ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-500"
                   }`}>
                     <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
                   </div>
-                  <div>
-                    <div className="font-bold text-xs">PDF Document</div>
-                    <div className="text-[11px] text-slate-500">Executive Summary (.pdf)</div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-xs">PDF Document (.pdf)</div>
+                    <div className="text-[11px] text-slate-500 truncate">รายงานสรุปผู้บริหาร (Summary)</div>
                   </div>
                 </button>
 
@@ -133,13 +139,13 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
             </div>
 
             {/* กำหนดช่วงเวลา (Date Range) */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                Date Range
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 block">
+                ช่วงเวลาการประเมิน (Date Range)
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-slate-600">Start Date</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-slate-500">วันที่เริ่มต้น (Start Date)</span>
                   <input 
                     type="date"
                     value={filterStartDate}
@@ -148,8 +154,8 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
                     required
                   />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-slate-600">End Date</span>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-slate-500">วันที่สิ้นสุด (End Date)</span>
                   <input 
                     type="date"
                     value={filterEndDate}
@@ -162,60 +168,72 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
             </div>
 
             {/* ตัวกรองหน่วยงาน (Organizational Scope) */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                Data Scope
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 block">
+                ขอบเขตข้อมูล (Organizational Scope)
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <select 
-                  value={selectedCompanyFilter}
-                  onChange={(selectChangeEvent) => setSelectedCompanyFilter(selectChangeEvent.target.value)}
-                  className="input-select w-full"
-                >
-                  <option value="All Companies">All Companies</option>
-                  <option value="Global Retail Inc.">Global Retail Inc.</option>
-                  <option value="TechCorp Solutions">TechCorp Solutions</option>
-                </select>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-slate-500">กลุ่มธุรกิจ (Company)</span>
+                  <select 
+                    value={selectedCompanyFilter}
+                    onChange={(selectChangeEvent) => setSelectedCompanyFilter(selectChangeEvent.target.value)}
+                    className="input-select w-full truncate"
+                  >
+                    <option value="All Companies">ทุกกลุ่มธุรกิจ (All)</option>
+                    <option value="CRG">กลุ่มธุรกิจ CRG</option>
+                  </select>
+                </div>
 
-                <select 
-                  value={selectedBrandFilter}
-                  onChange={(selectChangeEvent) => setSelectedBrandFilter(selectChangeEvent.target.value)}
-                  className="input-select w-full"
-                >
-                  <option value="All Brands">All Brands</option>
-                  <option value="Luxe Retail">Luxe Retail</option>
-                  <option value="Apex Retail">Apex Retail</option>
-                </select>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-slate-500">แบรนด์ (Brand)</span>
+                  <select 
+                    value={selectedBrandFilter}
+                    onChange={(selectChangeEvent) => setSelectedBrandFilter(selectChangeEvent.target.value)}
+                    className="input-select w-full truncate"
+                  >
+                    <option value="All Brands">ทุกแบรนด์ (All)</option>
+                    <option value="KFC">KFC</option>
+                    <option value="Mister Donut">Mister Donut</option>
+                    <option value="Auntie Anne's">Auntie Anne's</option>
+                    <option value="Arigato">Arigato</option>
+                    <option value="Ootoya">Ootoya</option>
+                  </select>
+                </div>
 
-                <select 
-                  value={selectedBranchFilter}
-                  onChange={(selectChangeEvent) => setSelectedBranchFilter(selectChangeEvent.target.value)}
-                  className="input-select w-full"
-                >
-                  <option value="All Branches">All Branches</option>
-                  <option value="T1 Gate 3">T1 Gate 3</option>
-                  <option value="T2 Arrival Hall">T2 Arrival Hall</option>
-                </select>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-slate-500">สาขา (Branch)</span>
+                  <select 
+                    value={selectedBranchFilter}
+                    onChange={(selectChangeEvent) => setSelectedBranchFilter(selectChangeEvent.target.value)}
+                    className="input-select w-full truncate"
+                  >
+                    <option value="All Branches">ทุกสาขา (All)</option>
+                    <option value="สาขาเซ็นทรัลเวิลด์">สาขาเซ็นทรัลเวิลด์</option>
+                    <option value="สาขาเซ็นทรัลลาดพร้าว">สาขาเซ็นทรัลลาดพร้าว</option>
+                    <option value="สาขาสยามพารากอน">สาขาสยามพารากอน</option>
+                  </select>
+                </div>
               </div>
             </div>
 
           </div>
 
           {/* ─── MODAL FOOTER ─── */}
-          <div className="modal-footer">
+          <div className="flex justify-end gap-3 p-4 border-t border-slate-100 shrink-0 bg-slate-50/50">
             <button 
               type="button"
               onClick={onClose}
-              className="modal-button-secondary"
+              className="btn-secondary text-xs"
             >
-              Cancel
+              ยกเลิก
             </button>
             <button 
               type="submit"
-              className="modal-button-primary"
+              className="btn-primary text-xs shadow-xs"
             >
               <span className="material-symbols-outlined text-[16px]">download</span>
-              Download Report
+              ดาวน์โหลดรายงาน
             </button>
           </div>
         </form>

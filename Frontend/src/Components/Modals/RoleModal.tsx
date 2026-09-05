@@ -67,20 +67,27 @@ export default function RoleModal({
         {/* Header */}
         <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-2xl">
-              {editingRole ? "edit_moderator" : "add_moderator"}
-            </span>
-            <h3 className="text-base font-extrabold text-slate-900">
-              {editingRole ? "Edit Role Details" : "Create New System Role"}
-            </h3>
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <span className="material-symbols-outlined text-xl">
+                {editingRole ? "edit_moderator" : "add_moderator"}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                {editingRole ? "แก้ไขบทบาทระบบ (Edit Role)" : "สร้างบทบาทใหม่ (Create New Role)"}
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                กำหนดชื่อ รหัส และหน้าที่ความรับผิดชอบของบทบาทผู้ใช้งานในระบบ
+              </p>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm cursor-pointer transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            ✕
           </button>
         </div>
 
@@ -157,15 +164,16 @@ export default function RoleModal({
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary shadow-xs"
+              className="btn-primary text-xs shadow-xs"
             >
-              {editingRole ? "Save Changes" : "Create Role"}
+              <span className="material-symbols-outlined text-[16px]">save</span>
+              {editingRole ? "บันทึกข้อมูลบทบาท" : "สร้างบทบาทใหม่"}
             </button>
           </div>
 

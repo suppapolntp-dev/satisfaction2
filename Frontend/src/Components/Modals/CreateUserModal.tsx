@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import SelectInput from "@/Components/Inputs/SelectInput";
 import { DashboardTierPermissions } from "@/Lib/dataAccessContext";
+import { tierLevelService, TierLevelModel } from "@/Services/tierLevelService";
 
 // ==========================================================================
 // ─── 1. INTERFACES
@@ -45,9 +46,15 @@ export default function CreateUserModal({
   const [formRegions, setFormRegions] = useState<string[]>([]);
   const [formProvinces, setFormProvinces] = useState<string[]>([]);
   const [formBranches, setFormBranches] = useState<string[]>([]);
+  const [dynamicTiers, setDynamicTiers] = useState<TierLevelModel[]>([]);
 
   useEffect(() => {
     setIsComponentMounted(true);
+    async function loadTiers() {
+      const tiers = await tierLevelService.getTierLevels();
+      setDynamicTiers(tiers.filter((t) => t.status === "Active"));
+    }
+    loadTiers();
     return () => setIsComponentMounted(false);
   }, []);
 
@@ -132,17 +139,24 @@ export default function CreateUserModal({
       <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         
         {/* ─── MODAL HEADER ─── */}
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/70 shrink-0">
-          <div>
-            <h2 className="text-base font-extrabold text-slate-900">Create New User & Assign Scopes</h2>
-            <p className="text-xs text-slate-500 mt-0.5">สร้างผู้ใช้ใหม่และติ๊กเลือกขอบเขตแบรนด์/สาขา</p>
+        <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <span className="material-symbols-outlined text-xl">person_add</span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                เพิ่มผู้ใช้งานใหม่ (Create New User)
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">กำหนดข้อมูลส่วนตัว เลือกระดับสิทธิ์องค์กร และมิติขอบเขตที่ดูแล</p>
+            </div>
           </div>
-          <button 
+          <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 hover:bg-slate-200 p-1.5 rounded-full transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm cursor-pointer transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            ✕
           </button>
         </div>
 
@@ -220,12 +234,22 @@ export default function CreateUserModal({
                 onChange={(e) => setSelectedTier(e.target.value)}
                 className="input-select w-full bg-white font-semibold"
               >
-                <option value="Super Admin">Super Administrator (ผู้ดูแลระบบระดับองค์กร)</option>
-                <option value="Brand Owner">Brand Manager / Owner (ผู้บริหารระดับแบรนด์)</option>
-                <option value="Regional Manager (RM)">Regional Manager / RM (ผู้จัดการระดับภูมิภาค)</option>
-                <option value="Area Manager (AM)">Area Manager / AM (ผู้จัดการระดับเขต)</option>
-                <option value="Branch Staff">Branch Officer / Staff (เจ้าหน้าที่ประจำสาขา)</option>
-                <option value="Custom Scope">Custom Scope (กำหนดขอบเขตเฉพาะบุคคล)</option>
+                {dynamicTiers.length === 0 ? (
+                  <>
+                    <option value="Super Admin">Super Administrator (ผู้ดูแลระบบระดับองค์กร)</option>
+                    <option value="Brand Owner">Brand Manager / Owner (ผู้บริหารระดับแบรนด์)</option>
+                    <option value="Regional Manager (RM)">Regional Manager / RM (ผู้จัดการระดับภูมิภาค)</option>
+                    <option value="Area Manager (AM)">Area Manager / AM (ผู้จัดการระดับเขต)</option>
+                    <option value="Branch Staff">Branch Officer / Staff (เจ้าหน้าที่ประจำสาขา)</option>
+                    <option value="Custom Scope">Custom Scope (กำหนดขอบเขตเฉพาะบุคคล)</option>
+                  </>
+                ) : (
+                  dynamicTiers.map((tier) => (
+                    <option key={tier.id} value={tier.nameEn}>
+                      {tier.nameTh}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -432,10 +456,10 @@ export default function CreateUserModal({
             </button>
             <button
               type="submit"
-              className="btn-primary text-xs shadow-xs"
+              className="btn-primary text-xs shadow-xs flex items-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-[16px]">person_add</span>
-              Create User
+              <span className="material-symbols-outlined text-[16px]">save</span>
+              <span>บันทึกผู้ใช้งาน</span>
             </button>
           </div>
 

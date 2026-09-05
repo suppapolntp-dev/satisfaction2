@@ -8,6 +8,8 @@ import DetailedPerformanceTable from "@/Components/Tables/DetailedPerformanceTab
 import {
   getActiveDataAccessProfile,
   UserDataAccessProfile,
+  PRESET_TIER_PROFILES,
+  saveActiveDataAccessProfile,
 } from "@/Lib/dataAccessContext";
 import {
   TimeRangeFilter,
@@ -44,7 +46,7 @@ export default function DashboardScreen() {
 
   const { permissions } = activeProfile;
 
-  // ─── Dashboard Data from Service ───
+  // ─── State สำหรับข้อมูล 5 ระดับ ───
   const [superAdminBrands, setSuperAdminBrands] = useState<PerformanceTableRow[]>([]);
   const [brandRegions, setBrandRegions] = useState<PerformanceTableRow[]>([]);
   const [regionalProvinces, setRegionalProvinces] = useState<PerformanceTableRow[]>([]);
@@ -65,13 +67,15 @@ export default function DashboardScreen() {
         setKiosksData(data.branchKiosks || []);
         setCurrentChartData(data.hourlyTrends || []);
         if (data.liveVotes && data.liveVotes.length > 0) {
-          setLiveVotesFeed(data.liveVotes.map((v) => ({
-            id: v.id,
-            kioskName: `${v.kioskCode || ""} - ${v.branchName || ""}`.trim().replace(/^-\s*|\s*-$/g, ""),
-            sentiment: v.sentiment === "satisfied" ? "happy" : v.sentiment === "neutral" ? "neutral" : "sad",
-            sentimentLabel: v.scoreText || "",
-            timestamp: v.time || "",
-          })));
+          setLiveVotesFeed(
+            data.liveVotes.map((v) => ({
+              id: v.id,
+              kioskName: `${v.kioskCode || ""} - ${v.branchName || ""}`.trim().replace(/^-\s*|\s*-$/g, ""),
+              sentiment: v.sentiment === "satisfied" ? "happy" : v.sentiment === "neutral" ? "neutral" : "sad",
+              sentimentLabel: v.scoreText || "",
+              timestamp: v.time || "",
+            }))
+          );
         } else {
           setLiveVotesFeed([]);
         }
@@ -82,6 +86,7 @@ export default function DashboardScreen() {
     fetchDashboard();
   }, [timeFilter]);
 
+  // Live Stream Simulation
   useEffect(() => {
     if (!isLiveStreamActive || kiosksData.length === 0) return;
 
@@ -125,58 +130,105 @@ export default function DashboardScreen() {
       uns += k.unsatisfiedCount || 0;
     });
 
-    const hasData = total > 0;
-    const satP = hasData ? ((sat / total) * 100).toFixed(1) : "0.0";
-    const neuP = hasData ? ((neu / total) * 100).toFixed(1) : "0.0";
-    const unsP = hasData ? ((uns / total) * 100).toFixed(1) : "0.0";
+    if (total === 0 && provincialBranches.length > 0) {
+      provincialBranches.forEach((b) => {
+        total += b.totalVotes || 0;
+        sat += b.satisfiedCount || 0;
+        neu += b.neutralCount || 0;
+        uns += b.unsatisfiedCount || 0;
+      });
+    }
+
+    const satP = total > 0 ? ((sat / total) * 100).toFixed(1) : "0.0";
+    const neuP = total > 0 ? ((neu / total) * 100).toFixed(1) : "0.0";
+    const unsP = total > 0 ? ((uns / total) * 100).toFixed(1) : "0.0";
 
     return {
-      hasData,
-      totalVotes: hasData ? total.toLocaleString() : "",
-      satisfied: hasData ? sat.toLocaleString() : "",
-      neutral: hasData ? neu.toLocaleString() : "",
-      unsatisfied: hasData ? uns.toLocaleString() : "",
-      csatScore: hasData ? `${satP}%` : "",
-      satPercent: hasData ? `${satP}%` : "0%",
-      neuPercent: hasData ? `${neuP}%` : "0%",
-      unsPercent: hasData ? `${unsP}%` : "0%",
+      totalVotes: total.toLocaleString(),
+      satisfied: sat.toLocaleString(),
+      neutral: neu.toLocaleString(),
+      unsatisfied: uns.toLocaleString(),
+      satPercent: `${satP}%`,
+      neuPercent: `${neuP}%`,
+      unsPercent: `${unsP}%`,
+      csatScore: total > 0 ? `${satP}%` : "-",
+      hasData: total > 0,
     };
-  }, [kiosksData]);
+  }, [kiosksData, provincialBranches]);
 
-  const kpiStatsItems: StatItem[] = useMemo(() => [
-    { label: "ยอดประเมินรวมทั้งหมด", value: aggregatedStats.totalVotes || "-", change: "", isUp: true, icon: "poll", color: "text-slate-600" },
-    { label: "พึงพอใจมาก (ดี)", value: aggregatedStats.satisfied || "-", change: aggregatedStats.hasData ? `${aggregatedStats.satPercent} ของโหวตทั้งหมด` : "", isUp: true, icon: "sentiment_satisfied", color: "text-emerald-600" },
-    { label: "ปานกลาง (เฉยๆ)", value: aggregatedStats.neutral || "-", change: aggregatedStats.hasData ? `${aggregatedStats.neuPercent} ของโหวตทั้งหมด` : "", isUp: true, icon: "sentiment_neutral", color: "text-amber-600" },
-    { label: "ไม่พอใจ (แย่)", value: aggregatedStats.unsatisfied || "-", change: aggregatedStats.hasData ? `${aggregatedStats.unsPercent} ของโหวตทั้งหมด` : "", isUp: false, icon: "sentiment_dissatisfied", color: "text-rose-600" },
-  ], [aggregatedStats]);
+  const kpiStatsItems: StatItem[] = useMemo(
+    () => [
+      { label: "ยอดประเมินรวมทั้งหมด", value: aggregatedStats.totalVotes || "-", change: "", isUp: true, icon: "poll", color: "text-slate-600" },
+      { label: "พึงพอใจมาก (ดี)", value: aggregatedStats.satisfied || "-", change: aggregatedStats.hasData ? `${aggregatedStats.satPercent} ของโหวตทั้งหมด` : "", isUp: true, icon: "sentiment_satisfied", color: "text-emerald-600" },
+      { label: "ปานกลาง (เฉยๆ)", value: aggregatedStats.neutral || "-", change: aggregatedStats.hasData ? `${aggregatedStats.neuPercent} ของโหวตทั้งหมด` : "", isUp: true, icon: "sentiment_neutral", color: "text-amber-600" },
+      { label: "ไม่พอใจ (แย่)", value: aggregatedStats.unsatisfied || "-", change: aggregatedStats.hasData ? `${aggregatedStats.unsPercent} ของโหวตทั้งหมด` : "", isUp: false, icon: "sentiment_dissatisfied", color: "text-rose-600" },
+    ],
+    [aggregatedStats]
+  );
 
   const sortedKiosks = useMemo(() => [...kiosksData].sort((a, b) => (b.csatRate || 0) - (a.csatRate || 0)), [kiosksData]);
   const topKiosks = useMemo(() => sortedKiosks.slice(0, 3), [sortedKiosks]);
   const bottomKiosks = useMemo(() => sortedKiosks.slice(-2).reverse(), [sortedKiosks]);
 
+  // Handler for quick tier switching
+  const handleSwitchTier = (tierKey: string) => {
+    const preset = PRESET_TIER_PROFILES[tierKey];
+    if (preset) {
+      saveActiveDataAccessProfile(preset);
+      setActiveProfile(preset);
+    }
+  };
+
+  // Determine current active tier key
+  const currentTierKey = useMemo(() => {
+    if (permissions.canViewSuperAdminOverview) return "SUPER_ADMIN";
+    if (permissions.canViewBrandRegionalGrid) return "BRAND_OWNER";
+    if (permissions.canViewRegionalProvinceGrid) return "REGIONAL_MANAGER";
+    if (permissions.canViewProvincialBranchGrid) return "AREA_MANAGER";
+    return "BRANCH_STAFF";
+  }, [permissions]);
+
   return (
     <div className="space-y-6">
       
       {/* ─── 1. PAGE HEADER SECTION ─── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 pb-4 border-b border-slate-200/80">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-3xl">analytics</span>
+            <span className="material-symbols-outlined text-blue-900 text-3xl">sentiment_satisfied</span>
             Customer Satisfaction Dashboard
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            แดชบอร์ดติดตามและวิเคราะห์คะแนนความพึงพอใจของลูกค้าแบบเรียลไทม์ และเปรียบเทียบผลการดำเนินงาน
+            แดชบอร์ดติดตามและวิเคราะห์คะแนนความพึงพอใจของลูกค้าแบบเรียลไทม์ และเปรียบเทียบผลการดำเนินงาน 5 ลำดับขั้น
           </p>
         </div>
 
-        {/* แผงควบคุมตัวกรองเวลาและปุ่ม Action */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* แผงควบคุมตัวกรองเวลา, สลับสิทธิ์จำลอง และปุ่ม Action */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          
+          {/* Tier Permission View Switcher */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+            <span className="material-symbols-outlined text-blue-900 text-base pl-1.5">shield_person</span>
+            <span className="text-[11px] font-bold text-slate-600 hidden sm:inline">มุมมอง:</span>
+            <select
+              value={currentTierKey}
+              onChange={(e) => handleSwitchTier(e.target.value)}
+              className="bg-white border-0 rounded-lg px-2 py-1 text-xs font-bold text-blue-900 shadow-2xs focus:outline-none cursor-pointer"
+            >
+              <option value="SUPER_ADMIN">Super Admin (5 ตาราง)</option>
+              <option value="BRAND_OWNER">Brand Manager (4 ตาราง)</option>
+              <option value="REGIONAL_MANAGER">Regional Manager (3 ตาราง)</option>
+              <option value="AREA_MANAGER">Area Manager (2 ตาราง)</option>
+              <option value="BRANCH_STAFF">Branch Staff (1 ตาราง)</option>
+            </select>
+          </div>
+
           <button
             type="button"
             onClick={() => setIsLiveStreamActive((prev) => !prev)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border ${
-              isLiveStreamActive 
-                ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs" 
+              isLiveStreamActive
+                ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs"
                 : "bg-slate-100 text-slate-500 border-slate-200"
             }`}
           >
@@ -236,245 +288,274 @@ export default function DashboardScreen() {
         </div>
       </StatsGrid>
 
-      {/* ─── 3. ตารางเปรียบเทียบแบรนด์ทั้งหมดในเครือ ─── */}
-      {permissions.canViewSuperAdminOverview && (
-        <DetailedPerformanceTable
-          title="ภาพรวมผลการประเมินแยกตามแบรนด์ (Brand Performance)"
-          subtitle="เปรียบเทียบยอดการประเมินและคะแนนความพึงพอใจของทุกแบรนด์ในเครือ"
-          icon="military_tech"
-          badgeText="ทุกแบรนด์ในเครือ"
-          badgeClass="badge-active"
-          data={superAdminBrands}
-          nameColumnLabel="แบรนด์ (Brand)"
-        />
-      )}
-
-      {/* ─── 4. ตารางเปรียบเทียบผลงานระดับภาค ─── */}
-      {permissions.canViewBrandRegionalGrid && (
-        <DetailedPerformanceTable
-          title="ผลการประเมินระดับภูมิภาค (Regional Performance)"
-          subtitle="เปรียบเทียบผลการดำเนินงานและความพึงพอใจของแต่ละภูมิภาค"
-          icon="map"
-          badgeText="ระดับภูมิภาค"
-          badgeClass="badge-live"
-          data={brandRegions}
-          nameColumnLabel="ภูมิภาค (Region)"
-        />
-      )}
-
-      {/* ─── 5. ตารางเปรียบเทียบผลงานระดับจังหวัด ─── */}
-      {permissions.canViewRegionalProvinceGrid && (
-        <DetailedPerformanceTable
-          title="ผลการประเมินระดับจังหวัด (Province Performance)"
-          subtitle="เปรียบเทียบคะแนนความพึงพอใจแยกตามรายจังหวัดในพื้นที่รับผิดชอบ"
-          icon="location_city"
-          badgeText="ระดับจังหวัด"
-          badgeClass="badge-active"
-          data={regionalProvinces}
-          nameColumnLabel="จังหวัด (Province)"
-        />
-      )}
-
-      {/* ─── 6. ตารางเปรียบเทียบผลงานระดับสาขาในเขต ─── */}
-      {permissions.canViewProvincialBranchGrid && (
-        <DetailedPerformanceTable
-          title="ผลการประเมินระดับสาขา (Branch Performance)"
-          subtitle="เปรียบเทียบยอดการประเมินตู้ Kiosk และคะแนนความพึงพอใจรายสาขา"
-          icon="store"
-          badgeText="ระดับสาขา"
-          badgeClass="badge-upcoming"
-          data={provincialBranches}
-          nameColumnLabel="สาขา (Branch)"
-        />
-      )}
-
-      {/* ─── 7. [LEVEL 5: BRANCH LEVEL] ตารางตู้ KIOSK, ชาร์ตรายชั่วโมง & LIVE STREAM ─── */}
-      {permissions.canViewBranchKiosksGrid && (
-        <div className="space-y-6">
+      {/* ─── 3. VISUAL CHARTS & REAL-TIME MONITORING WIDGETS ─── */}
+      <div className="space-y-6">
+        
+        {/* Charts Row: Hourly Trend + Sentiment Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Interactive Satisfaction Trend Chart */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-900 text-xl">show_chart</span>
-                  <h2 className="text-sm font-bold text-slate-800">
-                    แนวโน้มคะแนนความพึงพอใจรายชั่วโมง (Hourly Sentiment Trend)
-                  </h2>
-                </div>
-                <span className="badge-live">Live Stream</span>
+          {/* Interactive Satisfaction Trend Chart */}
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-blue-900 text-xl">show_chart</span>
+                <h2 className="text-sm font-bold text-slate-800">
+                  แนวโน้มคะแนนความพึงพอใจรายชั่วโมง (Hourly Sentiment Trend)
+                </h2>
               </div>
+              <span className="badge-live">Live Stream</span>
+            </div>
 
-              <div className="flex-1 flex flex-col justify-end min-h-[200px]">
-                {currentChartData.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center text-xs text-slate-400">
-                    ยังไม่มีข้อมูลแนวโน้มรายชั่วโมง
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-7 gap-2 items-end h-36 border-b border-slate-200 pb-2 px-2">
-                    {currentChartData.map((dp, idx) => {
-                      const rate = dp.satisfiedRate || dp.csatPercentage || 0;
-                      const heightPercent = rate > 0 ? Math.max(10, rate) : 4;
-                      const isHovered = hoveredDataPoint?.hourLabel === dp.hourLabel;
+            <div className="flex-1 flex flex-col justify-end min-h-[200px]">
+              {currentChartData.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-xs text-slate-400">
+                  ยังไม่มีข้อมูลแนวโน้มรายชั่วโมง
+                </div>
+              ) : (
+                <div className="grid grid-cols-7 gap-2 items-end h-36 border-b border-slate-200 pb-2 px-2">
+                  {currentChartData.map((dp, idx) => {
+                    const rate = dp.satisfiedRate || dp.csatPercentage || 0;
+                    const heightPercent = rate > 0 ? Math.max(10, rate) : 4;
+                    const isHovered = hoveredDataPoint?.hourLabel === dp.hourLabel;
 
-                      return (
+                    return (
+                      <div
+                        key={idx}
+                        onMouseEnter={() => setHoveredDataPoint(dp)}
+                        onMouseLeave={() => setHoveredDataPoint(null)}
+                        className="flex flex-col items-center gap-1.5 group cursor-pointer h-full justify-end"
+                      >
+                        {isHovered && (
+                          <div className="text-[10px] font-bold bg-slate-900 text-white px-2 py-1 rounded shadow-md whitespace-nowrap mb-1">
+                            {rate > 0 ? `${rate}%` : "-"} ({dp.totalVotes || dp.totalSurveys || 0} votes)
+                          </div>
+                        )}
                         <div
-                          key={idx}
-                          onMouseEnter={() => setHoveredDataPoint(dp)}
-                          onMouseLeave={() => setHoveredDataPoint(null)}
-                          className="flex flex-col items-center gap-1.5 group cursor-pointer h-full justify-end"
-                        >
-                          {isHovered && (
-                            <div className="text-[10px] font-bold bg-slate-900 text-white px-2 py-1 rounded shadow-md whitespace-nowrap mb-1">
-                              {rate > 0 ? `${rate}%` : "-"} ({dp.totalVotes || dp.totalSurveys || 0} votes)
-                            </div>
-                          )}
-                          <div
-                            className={`w-full max-w-[36px] rounded-t-lg transition-all duration-300 ${
-                              rate >= 92 ? "bg-blue-900 group-hover:bg-blue-950" : rate > 0 ? "bg-blue-600 group-hover:bg-blue-700" : "bg-slate-200"
-                            } ${isHovered ? "ring-2 ring-blue-900 scale-105" : ""}`}
-                            style={{ height: `${heightPercent}%` }}
-                          />
-                          <span className="text-[10px] font-bold text-slate-500 truncate w-full text-center">
-                            {dp.hourLabel || dp.timeLabel}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                          className={`w-full max-w-[36px] rounded-t-lg transition-all duration-300 ${
+                            rate >= 92 ? "bg-blue-900 group-hover:bg-blue-950" : rate > 0 ? "bg-blue-600 group-hover:bg-blue-700" : "bg-slate-200"
+                          } ${isHovered ? "ring-2 ring-blue-900 scale-105" : ""}`}
+                          style={{ height: `${heightPercent}%` }}
+                        />
+                        <span className="text-[10px] font-bold text-slate-500 truncate w-full text-center">
+                          {dp.hourLabel || dp.timeLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-
-            {/* Sentiment Distribution Stacked Breakdown */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-900 text-xl">pie_chart</span>
-                  <h2 className="text-sm font-bold text-slate-800">สัดส่วนความพึงพอใจ</h2>
-                </div>
-                <span className="text-xs text-slate-400 font-bold">{aggregatedStats.totalVotes ? `${aggregatedStats.totalVotes} โหวต` : "-"}</span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-                  <div className="h-full bg-emerald-500" style={{ width: aggregatedStats.satPercent }} />
-                  <div className="h-full bg-amber-400" style={{ width: aggregatedStats.neuPercent }} />
-                  <div className="h-full bg-rose-500" style={{ width: aggregatedStats.unsPercent }} />
-                </div>
-
-                <div className="space-y-2.5 text-xs">
-                  <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 flex justify-between items-center">
-                    <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> ดี (Satisfied)
-                    </span>
-                    <span className="font-extrabold text-emerald-950">{aggregatedStats.hasData ? aggregatedStats.satPercent : "-"}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-100 flex justify-between items-center">
-                    <span className="font-bold text-amber-900 flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> ปานกลาง (Neutral)
-                    </span>
-                    <span className="font-extrabold text-amber-950">{aggregatedStats.hasData ? aggregatedStats.neuPercent : "-"}</span>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-rose-50 border border-rose-100 flex justify-between items-center">
-                    <span className="font-bold text-rose-900 flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> แย่ (Unsatisfied)
-                    </span>
-                    <span className="font-extrabold text-rose-950">{aggregatedStats.hasData ? aggregatedStats.unsPercent : "-"}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
 
-          {/* Kiosks Rankings & Live Stream Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Top 3 Kiosks */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-emerald-600 text-lg">thumb_up</span>
-                  ตู้ Kiosk คะแนนสูงสุด
-                </h3>
-                <span className="badge-active">Top Rank</span>
+          {/* Sentiment Distribution Stacked Breakdown */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-blue-900 text-xl">pie_chart</span>
+                <h2 className="text-sm font-bold text-slate-800">สัดส่วนความพึงพอใจ</h2>
               </div>
+              <span className="text-xs text-slate-400 font-bold">{aggregatedStats.totalVotes ? `${aggregatedStats.totalVotes} โหวต` : "-"}</span>
+            </div>
+
+            <div className="space-y-4">
+              <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                <div className="h-full bg-emerald-500" style={{ width: aggregatedStats.satPercent }} />
+                <div className="h-full bg-amber-400" style={{ width: aggregatedStats.neuPercent }} />
+                <div className="h-full bg-rose-500" style={{ width: aggregatedStats.unsPercent }} />
+              </div>
+
               <div className="space-y-2.5 text-xs">
-                {topKiosks.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-3 text-center">ยังไม่มีข้อมูล</p>
-                ) : (
-                  topKiosks.map((k, idx) => (
-                    <div key={k.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50/60">
-                      <span className="font-bold text-slate-800">#{idx + 1} {k.name}</span>
-                      <span className="font-extrabold text-emerald-600">{k.csatRate}%</span>
-                    </div>
-                  ))
-                )}
+                <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 flex justify-between items-center">
+                  <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> ดี (Satisfied)
+                  </span>
+                  <span className="font-extrabold text-emerald-950">{aggregatedStats.hasData ? aggregatedStats.satPercent : "-"}</span>
+                </div>
+
+                <div className="p-2 rounded-xl bg-amber-50 border border-amber-100 flex justify-between items-center">
+                  <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> ปานกลาง (Neutral)
+                  </span>
+                  <span className="font-extrabold text-amber-950">{aggregatedStats.hasData ? aggregatedStats.neuPercent : "-"}</span>
+                </div>
+
+                <div className="p-2 rounded-xl bg-rose-50 border border-rose-100 flex justify-between items-center">
+                  <span className="font-bold text-rose-900 flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> แย่ (Unsatisfied)
+                  </span>
+                  <span className="font-extrabold text-rose-950">{aggregatedStats.hasData ? aggregatedStats.unsPercent : "-"}</span>
+                </div>
               </div>
             </div>
-
-            {/* Needs Attention Kiosks */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-rose-600 text-lg">warning</span>
-                  ตู้ Kiosk ควรเฝ้าระวัง
-                </h3>
-                <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                  Needs Check
-                </span>
-              </div>
-              <div className="space-y-2.5 text-xs">
-                {bottomKiosks.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-3 text-center">ยังไม่มีข้อมูล</p>
-                ) : (
-                  bottomKiosks.map((k) => (
-                    <div key={k.id} className="flex justify-between items-center p-2 rounded-xl bg-rose-50/40 border border-rose-100">
-                      <span className="font-bold text-slate-800">{k.name}</span>
-                      <span className="font-extrabold text-rose-600">{k.csatRate}%</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Real-time Live Incoming Feed */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-blue-900 text-lg">sensors</span>
-                  Live Feed การประเมินสด
-                </h3>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              </div>
-              <div className="space-y-2 text-xs">
-                {liveVotesFeed.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-3 text-center">ยังไม่มีรายการโหวตล่าสุด</p>
-                ) : (
-                  liveVotesFeed.slice(0, 4).map((feed) => (
-                    <div key={feed.id} className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center">
-                      <span className="font-semibold text-slate-800 text-[11px] truncate">{feed.kioskName}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        feed.sentiment === "happy" ? "bg-emerald-100 text-emerald-900" :
-                        feed.sentiment === "neutral" ? "bg-amber-100 text-amber-900" :
-                        "bg-rose-100 text-rose-900"
-                      }`}>
-                        {feed.sentimentLabel}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
           </div>
 
-          {/* Detailed Branch Kiosks Performance Table */}
+        </div>
+
+        {/* Kiosks Rankings & Live Feed Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Top 3 Kiosks */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-emerald-600 text-lg">thumb_up</span>
+                ตู้ Kiosk คะแนนสูงสุด
+              </h3>
+              <span className="badge-active">Top Rank</span>
+            </div>
+            <div className="space-y-2.5 text-xs">
+              {topKiosks.length === 0 ? (
+                <p className="text-xs text-slate-400 py-3 text-center">ยังไม่มีข้อมูล</p>
+              ) : (
+                topKiosks.map((k, idx) => (
+                  <div key={k.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50/60">
+                    <span className="font-bold text-slate-800">#{idx + 1} {k.name}</span>
+                    <span className="font-extrabold text-emerald-600">{k.csatRate}%</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Needs Attention Kiosks */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-rose-600 text-lg">warning</span>
+                ตู้ Kiosk ควรเฝ้าระวัง
+              </h3>
+              <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                Needs Check
+              </span>
+            </div>
+            <div className="space-y-2.5 text-xs">
+              {bottomKiosks.length === 0 ? (
+                <p className="text-xs text-slate-400 py-3 text-center">ยังไม่มีข้อมูล</p>
+              ) : (
+                bottomKiosks.map((k) => (
+                  <div key={k.id} className="flex justify-between items-center p-2 rounded-xl bg-rose-50/40 border border-rose-100">
+                    <span className="font-bold text-slate-800">{k.name}</span>
+                    <span className="font-extrabold text-rose-600">{k.csatRate}%</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Real-time Live Incoming Feed */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-blue-900 text-lg">sensors</span>
+                Live Feed การประเมินสด
+              </h3>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            </div>
+            <div className="space-y-2 text-xs">
+              {liveVotesFeed.length === 0 ? (
+                <p className="text-xs text-slate-400 py-3 text-center">ยังไม่มีรายการโหวตล่าสุด</p>
+              ) : (
+                liveVotesFeed.slice(0, 4).map((feed) => (
+                  <div key={feed.id} className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center">
+                    <span className="font-semibold text-slate-800 text-[11px] truncate">{feed.kioskName}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      feed.sentiment === "happy" ? "bg-emerald-100 text-emerald-900" :
+                      feed.sentiment === "neutral" ? "bg-amber-100 text-amber-900" :
+                      "bg-rose-100 text-rose-900"
+                    }`}>
+                      {feed.sentimentLabel}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ─── 4. [ส่วนล่างสุดของหน้า] ตารางผลการประเมินเรียงตามระดับสิทธิ์องค์กร (HIERARCHICAL PERFORMANCE TABLES) ─── */}
+      <div className="space-y-6 pt-4 border-t border-slate-200/80">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-900 text-xl">table_chart</span>
+              ตารางวิเคราะห์ผลการประเมินตามโครงสร้างองค์กร
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              แสดงตารางเปรียบเทียบตามสิทธิ์ที่ได้รับอนุญาต ({activeProfile.roleName} - {activeProfile.userName})
+            </p>
+          </div>
+
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-900 border border-blue-200 w-fit">
+            {permissions.canViewSuperAdminOverview
+              ? "สิทธิ์ระดับ 1: แสดงครบ 5 ตาราง"
+              : permissions.canViewBrandRegionalGrid
+              ? "สิทธิ์ระดับ 2: แสดง 4 ตาราง (แบรนด์ลงมา)"
+              : permissions.canViewRegionalProvinceGrid
+              ? "สิทธิ์ระดับ 3: แสดง 3 ตาราง (ภูมิภาคลงมา)"
+              : permissions.canViewProvincialBranchGrid
+              ? "สิทธิ์ระดับ 4: แสดง 2 ตาราง (สาขาและตู้)"
+              : "สิทธิ์ระดับ 5: แสดง 1 ตาราง (ตู้ประจำสาขา)"}
+          </span>
+        </div>
+
+        {/* 1. ตารางเปรียบเทียบแบรนด์ทั้งหมดในเครือ (เฉพาะ Super Admin) */}
+        {permissions.canViewSuperAdminOverview && (
+          <DetailedPerformanceTable
+            title="ภาพรวมผลการประเมินแยกตามแบรนด์ (Brand Performance)"
+            subtitle="เปรียบเทียบยอดการประเมินและคะแนนความพึงพอใจของทุกแบรนด์ในเครือ"
+            icon="military_tech"
+            badgeText="ทุกแบรนด์ในเครือ"
+            badgeClass="badge-active"
+            data={superAdminBrands}
+            nameColumnLabel="แบรนด์ (Brand)"
+          />
+        )}
+
+        {/* 2. ตารางเปรียบเทียบผลงานระดับภาค (Brand Manager & Super Admin) */}
+        {permissions.canViewBrandRegionalGrid && (
+          <DetailedPerformanceTable
+            title="ผลการประเมินระดับภูมิภาค (Regional Performance)"
+            subtitle="เปรียบเทียบผลการดำเนินงานและความพึงพอใจของแต่ละภูมิภาค"
+            icon="map"
+            badgeText="ระดับภูมิภาค"
+            badgeClass="badge-live"
+            data={brandRegions}
+            nameColumnLabel="ภูมิภาค (Region)"
+          />
+        )}
+
+        {/* 3. ตารางเปรียบเทียบผลงานระดับจังหวัด (RM, Brand Manager & Super Admin) */}
+        {permissions.canViewRegionalProvinceGrid && (
+          <DetailedPerformanceTable
+            title="ผลการประเมินระดับจังหวัด (Province Performance)"
+            subtitle="เปรียบเทียบคะแนนความพึงพอใจแยกตามรายจังหวัดในพื้นที่รับผิดชอบ"
+            icon="location_city"
+            badgeText="ระดับจังหวัด"
+            badgeClass="badge-active"
+            data={regionalProvinces}
+            nameColumnLabel="จังหวัด (Province)"
+          />
+        )}
+
+        {/* 4. ตารางเปรียบเทียบผลงานระดับสาขา (AM, RM, Brand Manager & Super Admin) */}
+        {permissions.canViewProvincialBranchGrid && (
+          <DetailedPerformanceTable
+            title="ผลการประเมินระดับสาขา (Branch Performance)"
+            subtitle="เปรียบเทียบยอดการประเมินตู้ Kiosk และคะแนนความพึงพอใจรายสาขา"
+            icon="store"
+            badgeText="ระดับสาขา"
+            badgeClass="badge-upcoming"
+            data={provincialBranches}
+            nameColumnLabel="สาขา (Branch)"
+          />
+        )}
+
+        {/* 5. ตารางสถานะตู้ประเมิน Kiosk ประจำสาขา (Staff, AM, RM, Brand Manager & Super Admin) */}
+        {permissions.canViewBranchKiosksGrid && (
           <DetailedPerformanceTable
             title="สถานะตู้ประเมิน Kiosk ประจำสาขา (Branch Kiosk Terminals)"
             subtitle="ตรวจสอบสถานะการทำงาน จำนวนการประเมิน และคะแนนความพึงพอใจของตู้ Kiosk แต่ละเครื่อง"
@@ -484,11 +565,11 @@ export default function DashboardScreen() {
             data={kiosksData}
             nameColumnLabel="ตู้ Kiosk (Terminal)"
           />
+        )}
 
-        </div>
-      )}
+      </div>
 
-      {/* ─── 8. EXPORT MODAL ─── */}
+      {/* ─── 5. EXPORT MODAL ─── */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}

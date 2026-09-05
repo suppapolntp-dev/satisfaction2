@@ -1,43 +1,83 @@
 # 📊 Customer Satisfaction (CSAT) & Multi-Tier Analytics Platform
 
-> ระบบรับ Feedback และประเมินความพึงพอใจลูกค้าผ่านตู้ Kiosk หน้าร้าน พร้อมระบบ Multi-Tier Analytics Dashboard สำหรับวิเคราะห์และเปรียบเทียบข้อมูลระดับองค์กร
-
----
-
-## 🎯 ผู้ใช้งานและฟังก์ชันหลัก (Key User Groups)
-
-ระบบแบ่งการใช้งานออกเป็น 3 กลุ่มหลักอย่างชัดเจน:
-
-1. **👥 ลูกค้าหน้าร้าน (Customer Kiosk):**
-   * ประเมินความพึงพอใจได้สะดวกรวดเร็วผ่านหน้าจอ Touchscreen (`/satisfaction`)
-   * รองรับการตั้งค่าธีม, คำถาม, และขนาด UI แบบ Real-time จากหลังบ้าน
-2. **🏪 สาขาและหน้าร้าน (Branch & Store):**
-   * ตรวจสอบสถานะการเชื่อมต่อของตู้ Kiosk และดูผลคะแนนแบบ Real-time รายชั่วโมง
-3. **📈 ผู้บริหารระดับต่าง ๆ (Multi-Tier Management):**
-   * เข้าถึงข้อมูลและวิเคราะห์สถิติเปรียบเทียบตามโครงสร้างสิทธิ์การเข้าถึงข้อมูล (Data Access Scope):
-     * `Super Admin (บริษัทแม่)` ➔ ภาพรวมทุกแบรนด์ทั้งองค์กร
-     * `Brand Owner (เจ้าของแบรนด์)` ➔ เปรียบเทียบผลงานระหว่างภาค
-     * `Regional Manager (RM - ระดับภาค)` ➔ เปรียบเทียบผลงานระหว่างจังหวัด
-     * `Area Manager (AM - ระดับเขต/จังหวัด)` ➔ เปรียบเทียบผลงานระหว่างสาขา
-
----
-
-## 📸 ภาพตัวอย่างระบบ (Preview)
-
-| 📱 หน้าจอ Kiosk ประเมินหน้าร้าน | 📊 หน้าจอ Dashboard วิเคราะห์ข้อมูล |
-|:---:|:---:|
-| *(ใส่ลิงก์รูป Screenshot หน้า Kiosk)* | *(ใส่ลิงก์รูป Screenshot หน้า Dashboard)* |
+> ระบบรับ Feedback และประเมินความพึงพอใจลูกค้าผ่านตู้ Kiosk หน้าร้าน พร้อมระบบ Multi-Tier Analytics Dashboard สำหรับวิเคราะห์และเปรียบเทียบข้อมูลระดับองค์กร (กลุ่มธุรกิจร้านอาหารในเครือ Central Restaurants Group - CRG)
 
 ---
 
 ## 🛠️ Tech Stack & Architecture
 
-| ส่วนงาน | เทคโนโลยีที่ใช้ | สถานะ |
+| ส่วนงาน | เทคโนโลยีที่ใช้ | รายละเอียด |
 |---|---|---|
-| **Frontend** | Next.js (App Router), TypeScript, Tailwind CSS | 🟢 พร้อมใช้งาน (Mock Data) |
-| **Backend** | C# .NET Web API | 🟡 กำลังพัฒนา (Roadmap) |
-| **Database** | PostgreSQL | 🟡 กำลังพัฒนา (Roadmap) |
-| **DevOps / Environment** | Docker & Docker Compose | 🟡 กำลังพัฒนา (Roadmap) |
+| **Frontend** | Next.js 16 (App Router), TypeScript, Tailwind CSS, Lucide Icons | Dashboard, Data Grids, Multi-brand Scope, Modal Standard |
+| **Backend API** | ASP.NET Core 9.0 Web API, Entity Framework Core | REST API, JWT Authentication, RBAC 5 Tiers, Scope Filters |
+| **Database** | PostgreSQL 16 | Relational DB พร้อม Data Initializer (Seed Data อัตโนมัติ) |
+| **DevOps / Containers** | Docker & Docker Compose | PostgreSQL + pgAdmin พร้อมใช้งาน |
+
+---
+
+## 🚀 วิธีติดตั้งและรันโปรเจกต์บนเครื่องใหม่ (Quickstart Guide)
+
+### 1. ความต้องการของระบบ (Prerequisites)
+ก่อนเริ่มใช้งาน ให้ตรวจสอบว่าในเครื่องติดตั้งโปรแกรมเหล่านี้แล้ว:
+- **Git**
+- **Docker Desktop** (สำหรับรันฐานข้อมูล PostgreSQL)
+- **.NET SDK 9.0 หรือใหม่กว่า** (`dotnet --version`)
+- **Node.js 18.x หรือ 20.x ขึ้นไป** (`node -v`)
+
+---
+
+### 2. ขั้นตอนการเปิดใช้งานระบบ (Step-by-Step)
+
+#### ขั้นตอนที่ 1: เปิดฐานข้อมูล PostgreSQL ผ่าน Docker
+เปิด Terminal ที่โฟลเดอร์หลักของโปรเจกต์ (`Satifaction2/`):
+```bash
+# สั่งรัน PostgreSQL 16 และ pgAdmin ใน Background
+docker compose up -d
+```
+*ฐานข้อมูลจะรันที่พอร์ต `5432` และ pgAdmin ที่พอร์ต `http://localhost:5050`*
+
+---
+
+#### ขั้นตอนที่ 2: รัน Backend API (.NET 9)
+เปิด Terminal ใหม่ เข้าไปที่โฟลเดอร์ `Backend`:
+```bash
+cd Backend
+
+# รัน Backend (ระบบจะสร้าง Database Table และ Seed ข้อมูลทดสอบให้อัตโนมัติ)
+dotnet run --urls "http://localhost:5005"
+```
+* Backend API จะทำงานที่: **[http://localhost:5005](http://localhost:5005)**
+* Swagger / OpenAPI Docs สำหรับทดสอบ Endpoint: **[http://localhost:5005/swagger](http://localhost:5005/swagger)**
+
+---
+
+#### ขั้นตอนที่ 3: รัน Frontend (Next.js)
+เปิด Terminal ใหม่ เข้าไปที่โฟลเดอร์ `Frontend`:
+```bash
+cd Frontend
+
+# ติดตั้ง Dependencies
+npm install
+
+# รัน Development Server
+npm run dev
+```
+* เข้าใช้งานหน้าเว็บผ่านเบราว์เซอร์ที่: **[http://localhost:3000](http://localhost:3000)**
+
+---
+
+## 🔑 บัญชีผู้ใช้สำหรับเข้าสู่ระบบ (Default Test Accounts)
+
+ทุกบัญชีใช้รหัสผ่านเดียวกัน: **`Admin@123456`**
+
+| บทบาท (Role) | ระดับสิทธิ์ (Tier Level) | อีเมล (Email) | ขอบเขตข้อมูลที่มองเห็น |
+|---|---|---|---|
+| **Super Admin** | Tier 1: องค์กร | `admin@satisfaction.local` | มองเห็นทุกแบรนด์, ทุกภูมิภาค, ทุกจังหวัด, ทุกสาขา |
+| **Brand Manager** | Tier 2: แบรนด์ | `bm.kfc@satisfaction.local` | เฉพาะแบรนด์ KFC ทุกภูมิภาค |
+| **Brand Manager** | Tier 2: แบรนด์ | `bm.mdo@satisfaction.local` | เฉพาะแบรนด์ Mister Donut ทุกภูมิภาค |
+| **Regional Manager** | Tier 3: ภาค | `rm.central@satisfaction.local` | ภาคกลาง (กรุงเทพฯ, นนทบุรี, ปทุมธานี ฯลฯ) |
+| **Area Manager** | Tier 4: จังหวัด/เขต | `am.bangkok@satisfaction.local` | เฉพาะจังหวัดกรุงเทพมหานคร |
+| **Branch Staff** | Tier 5: สาขา | `staff.futurepark@satisfaction.local` | สาขา Future Park Rangsit (Co-Location) |
 
 ---
 
@@ -45,57 +85,29 @@
 
 ```text
 Satifaction2/
-├── Frontend/                          # Next.js Application
+├── Backend/                           # ASP.NET Core 9.0 Web API
+│   ├── Controllers/                   # 14 API Controllers (Auth, Branches, Brands, Dashboard, Events, etc.)
+│   ├── DTOs/                          # Request & Response Contracts
+│   ├── Entities/                      # Database Entity Models (EF Core)
+│   ├── Services/                      # Business Logic & Scope Filtering Service
+│   ├── Data/
+│   │   ├── AppDbContext.cs            # EF Core PostgreSQL DbContext
+│   │   └── Seeds/DbInitializer.cs     # Seed Data จำลองสาขา, แบรนด์, ตู้ Kiosk, และผลโหวตย้อนหลัง
+│   └── appsettings.json               # Backend Configuration
+├── Frontend/                          # Next.js 16 App Router
 │   ├── src/
-│   │   ├── app/
-│   │   │   ├── (admin)/               # ระบบหลังบ้านและ Dashboard
-│   │   │   │   ├── dashboard/         # วิเคราะห์สถิติและเปรียบเทียบข้อมูล
-│   │   │   │   ├── brand/             # จัดการข้อมูลแบรนด์
-│   │   │   │   ├── branch/            # จัดการข้อมูลสาขาและตู้ Kiosk
-│   │   │   │   ├── usermanagement/    # จัดการผู้ใช้งานและ Bulk Import/Export
-│   │   │   │   ├── dataaccess/        # กำหนดขอบเขตสิทธิ์การเข้าถึงข้อมูล (AM/RM)
-│   │   │   │   ├── audit/             # ตรวจสอบประวัติการทำงานและสถานะ Service
-│   │   │   │   └── settings/          # ตั้งค่าข้อความและขนาดปุ่มบนตู้ Kiosk
-│   │   │   └── (user)/
-│   │   │       └── satisfaction/      # หน้าจอ Kiosk Touchscreen สำหรับลูกค้า
-│   │   ├── Components/                # Reusable UI Components (Modals, Grids, Navbar)
-│   │   └── Lib/                       # Utilities & Local State Sync
-└── Backend/                           # C# .NET Web API (Upcoming)
+│   │   ├── app/                       # Routing (Dashboard, Branch, Brand, Event, Audit, Satisfaction)
+│   │   ├── Components/                # UI Components, Modals, Tables, Forms
+│   │   ├── Services/                  # Frontend API Services
+│   │   ├── Types/                     # TypeScript Interfaces
+│   │   └── Lib/                       # Central API Client & Cookie Helpers
+│   └── .env.example                   # ตัวอย่าง Environment Configuration
+├── docker-compose.yml                 # Docker Setup สำหรับ PostgreSQL & pgAdmin
+├── README.md                          # เอกสารแนะนำการติดตั้ง
+└── .gitignore                         # Git Ignore Rules
 ```
-
----
-
-## ⚡ วิธีการติดตั้งและเริ่มใช้งาน (Getting Started)
-
-### ความต้องการของระบบ (Prerequisites)
-* Node.js 18.x ขึ้นไป
-* npm หรือ yarn / pnpm
-
-### ขั้นตอนการรัน Frontend (Development Mode)
-
-```bash
-# 1. เข้าสู่โฟลเดอร์ Frontend
-cd Frontend
-
-# 2. ติดตั้ง Dependencies
-npm install
-
-# 3. รัน Development Server
-npm run dev
-```
-
-เปิดบราวเซอร์ไปที่: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
 ## ⌨️ คีย์ลัดในระบบ (Shortcuts)
 * **<kbd>Ctrl</kbd> + <kbd>K</kbd>** (หรือ **<kbd>Cmd</kbd> + <kbd>K</kbd>** บน Mac): ค้นหาเมนู, สาขา และการตั้งค่าด่วน (Global Command Search)
-
----
-
-## 📌 แผนการพัฒนาต่อไป (Roadmap)
-- [x] ออกแบบ Frontend UI & State Sync (Kiosk + Admin Dashboard)
-- [ ] พัฒนา Backend API ด้วย C# .NET
-- [ ] ออกแบบฐานข้อมูล PostgreSQL และ Migration Script
-- [ ] เชื่อมต่อระบบ Authentication (JWT) และ Role-Based Data Access จริง
-- [ ] จัดทำ Docker Container สำหรับจำลองสภาพแวดล้อม Production

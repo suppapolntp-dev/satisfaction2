@@ -13,6 +13,7 @@ import {
   getStoredSatisfactionConfig, 
   saveStoredSatisfactionConfig 
 } from "@/Lib/satisfactionSettings";
+import { useModal } from "@/Context/ModalContext";
 
 // ==========================================================================
 // ─── 1. INTERFACES (นิยามประเภทแท็บการตั้งค่า)
@@ -21,9 +22,9 @@ import {
 export type SettingsCategoryTab = "general" | "dashboard" | "satisfaction" | "reports" | "localization";
 
 const DEFAULT_GENERAL_SETTINGS: GeneralSettingsState = {
-  systemName: "Enterprise CSAT Pro",
+  systemName: "Satisfaction Management",
   companyName: "Globex International",
-  contactEmail: "admin@csat-enterprise.com",
+  contactEmail: "admin@satisfaction-management.com",
   systemLogoUrl: "",
 };
 
@@ -51,6 +52,8 @@ const DEFAULT_LOCALIZATION_SETTINGS: LocalizationSettingsState = {
 // ==========================================================================
 
 export default function SystemSettingsScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   // สเตตัสหมวดหมู่ที่เลือก (Active Tab)
   const [activeCategoryTab, setActiveCategoryTab] = useState<SettingsCategoryTab>("general");
 
@@ -77,21 +80,31 @@ export default function SystemSettingsScreen() {
 
   // ฟังก์ชันบันทึกการตั้งค่าทั้งหมด (ซิงก์ลง LocalStorage ทันที)
   const handleSaveSettings = () => {
-    saveStoredSatisfactionConfig(satisfactionConfig);
-    alert("บันทึกการตั้งค่าระบบและอัปเดตหน้าจอ Kiosk Satisfaction สำเร็จเรียบร้อยแล้ว!");
+    try {
+      saveStoredSatisfactionConfig(satisfactionConfig);
+      showSuccess("บันทึกการตั้งค่าระบบและอัปเดตหน้าจอ Kiosk Satisfaction สำเร็จเรียบร้อยแล้ว!");
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกการตั้งค่าได้");
+    }
   };
 
   // ฟังก์ชันรีเซ็ตค่ากลับเป็นค่าเริ่มต้น
   const handleResetToDefaults = () => {
-    if (confirm("คุณต้องการรีเซ็ตการตั้งค่าทั้งหมดกลับเป็นค่ามาตรฐานหรือไม่?")) {
-      setGeneralConfig(DEFAULT_GENERAL_SETTINGS);
-      setDashboardConfig(DEFAULT_DASHBOARD_SETTINGS);
-      setSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
-      setReportConfig(DEFAULT_REPORT_SETTINGS);
-      setLocalizationConfig(DEFAULT_LOCALIZATION_SETTINGS);
-      saveStoredSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
-      alert("รีเซ็ตการตั้งค่าระบบเรียบร้อยแล้ว");
-    }
+    showConfirm({
+      title: "ยืนยันการรีเซ็ตการตั้งค่า?",
+      description: "คุณต้องการรีเซ็ตการตั้งค่าระบบทั้งหมดกลับเป็นค่ามาตรฐานเริ่มต้นหรือไม่?",
+      variant: "warning",
+      confirmText: "รีเซ็ตค่าเริ่มต้น",
+      onConfirm: () => {
+        setGeneralConfig(DEFAULT_GENERAL_SETTINGS);
+        setDashboardConfig(DEFAULT_DASHBOARD_SETTINGS);
+        setSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
+        setReportConfig(DEFAULT_REPORT_SETTINGS);
+        setLocalizationConfig(DEFAULT_LOCALIZATION_SETTINGS);
+        saveStoredSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
+        showSuccess("รีเซ็ตการตั้งค่าระบบกลับเป็นค่ามาตรฐานเรียบร้อยแล้ว");
+      },
+    });
   };
 
   return (

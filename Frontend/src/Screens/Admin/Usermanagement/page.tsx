@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
-import SearchInput from "@/Components/Inputs/SearchInput";
 import SelectInput, { SelectOption } from "@/Components/Inputs/SelectInput";
 import { searchUsers } from "@/Lib/search/searchEngine";
 import CreateUserModal from "@/Components/Modals/CreateUserModal";
@@ -13,11 +12,14 @@ import { UserModel, EditableUserModel, ImportedUserModel } from "@/Types/user";
 import { userService } from "@/Services/userService";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
+import { useModal } from "@/Context/ModalContext";
 
 // ==========================================================================
 // ─── MAIN USER MANAGEMENT COMPONENT
 // ==========================================================================
 export default function UserManagementScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   const [usersList, setUsersList] = useState<UserModel[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
@@ -57,8 +59,11 @@ export default function UserManagementScreen() {
   const userStatsOverviewData: StatItem[] = useMemo(() => {
     const total = usersList.length;
     const activeCount = usersList.filter((u) => u.status === "Active").length;
-    const multiBrandCount = usersList.filter((u) => (u.assignedBrands && u.assignedBrands.length > 1) || u.brand.includes(",")).length;
-    const licenseSeats = Math.max(0, 2000 - total);
+    const multiBrandCount = usersList.filter((u) => 
+      (u.assignedBrands && u.assignedBrands.length > 1) || 
+      (Boolean(u.brand) && u.brand.includes(","))
+    ).length;
+    const inactiveCount = total - activeCount;
 
     const hasData = total > 0;
 
@@ -88,12 +93,12 @@ export default function UserManagementScreen() {
         color: "text-purple-600",
       },
       {
-        label: "License Quota",
-        value: hasData ? `${licenseSeats.toLocaleString()} ที่นั่ง` : "-",
+        label: "Inactive Accounts (ปิดใช้งาน)",
+        value: hasData ? `${inactiveCount.toLocaleString()} บัญชี` : "-",
         change: "",
-        isUp: true,
-        icon: "verified_user",
-        color: "text-amber-600",
+        isUp: false,
+        icon: "person_off",
+        color: "text-slate-500",
       },
     ];
   }, [usersList]);
@@ -122,16 +127,26 @@ export default function UserManagementScreen() {
 
   // Callback เมื่อสร้างผู้ใช้เดี่ยวเสร็จ
   const handleUserCreated = async (newUserProfile: any) => {
-    const created = await userService.createUser(newUserProfile);
-    setUsersList((prev) => [created, ...prev]);
+    try {
+      const created = await userService.createUser(newUserProfile);
+      setUsersList((prev) => [created, ...prev]);
+      showSuccess(`สร้างบัญชีผู้ใช้ "${created.firstName} ${created.lastName}" สำเร็จเรียบร้อย`);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถสร้างผู้ใช้งานได้");
+    }
   };
 
   // Callback เมื่อแก้ไขข้อมูลผู้ใช้เสร็จ
   const handleUserUpdated = async (updatedUserProfile: EditableUserModel) => {
-    const updated = await userService.updateUser(updatedUserProfile.id, updatedUserProfile);
-    setUsersList((prev) =>
-      prev.map((u) => (u.id === updated.id ? updated : u))
-    );
+    try {
+      const updated = await userService.updateUser(updatedUserProfile.id, updatedUserProfile);
+      setUsersList((prev) =>
+        prev.map((u) => (u.id === updated.id ? updated : u))
+      );
+      showSuccess(`อัปเดตข้อมูลผู้ใช้ "${updated.firstName} ${updated.lastName}" สำเร็จ`);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถอัปเดตข้อมูลผู้ใช้งานได้");
+    }
   };
 
   // Callback เมื่อ Bulk Import สำเร็จ
@@ -265,17 +280,29 @@ export default function UserManagementScreen() {
         setUsersList((prev) =>
           prev.map((u) => (u.id === selectedUser.id ? { ...u, status: nextStatus } : u))
         );
+        showSuccess(`เปลี่ยนสถานะบัญชี "${selectedUser.firstName}" เป็น ${nextStatus} เรียบร้อยแล้ว`);
       } 
     },
     {
       label: "Delete User",
       icon: "delete",
       variant: "danger",
-      onClick: async (u) => {
-        if (confirm(`คุณต้องการลบผู้ใช้ "${u.firstName} ${u.lastName}" หรือไม่?`)) {
-          await userService.deleteUser(u.id);
-          setUsersList((prev) => prev.filter((item) => item.id !== u.id));
-        }
+      onClick: (u) => {
+        showConfirm({
+          title: "ยืนยันการลบผู้ใช้งาน?",
+          description: `คุณต้องการลบผู้ใช้ "${u.firstName} ${u.lastName}" (${u.email}) ใช่หรือไม่? การกระทำนี้จะตัดสิทธิ์การเข้าใช้งานทันที`,
+          variant: "danger",
+          confirmText: "ลบผู้ใช้",
+          onConfirm: async () => {
+            try {
+              await userService.deleteUser(u.id);
+              setUsersList((prev) => prev.filter((item) => item.id !== u.id));
+              showSuccess(`ลบบัญชีผู้ใช้ "${u.firstName} ${u.lastName}" สำเร็จเรียบร้อย`);
+            } catch (err: any) {
+              showError(err?.message || "ไม่สามารถลบผู้ใช้งานได้");
+            }
+          },
+        });
       },
     },
   ];
@@ -290,9 +317,9 @@ export default function UserManagementScreen() {
     if (selectedBrandFilter !== "All Brands") {
       result = result.filter(
         (u) =>
-          u.brand.includes(selectedBrandFilter) ||
+          (Boolean(u.brand) && u.brand.includes(selectedBrandFilter)) ||
           (u.assignedBrands && u.assignedBrands.includes(selectedBrandFilter)) ||
-          u.brand.includes("ทุกแบรนด์")
+          (Boolean(u.brand) && u.brand.includes("ทุกแบรนด์"))
       );
     }
     if (selectedStatusFilter !== "All Status") {
@@ -342,52 +369,52 @@ export default function UserManagementScreen() {
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
       <StatsGrid data={userStatsOverviewData} />
 
-      {/* ─── 3. SEARCH & FILTER TOOLBAR ─── */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
-        <div className="w-full md:w-80">
-          <SearchInput
-            placeholder="ค้นหาชื่อ, อีเมล, แบรนด์ หรือสาขา..."
-            value={searchUserQuery}
-            onChange={setSearchUserQuery}
-          />
-        </div>
+      {/* ─── 3. USERS DATA TABLE (UNIFIED LAYOUT: HEAD -> FILTERS -> DATA -> FOOTER) ─── */}
+      <DataTable
+        title="รายชื่อผู้ใช้งานและสิทธิ์องค์กร (User Accounts Directory)"
+        subtitle="จัดการข้อมูลผู้ใช้งาน กำหนดระดับสิทธิ์องค์กร และสิทธิ์การเข้าถึงข้อมูลตามลำดับขั้น"
+        icon="manage_accounts"
+        badge={
+          <span className="badge-active">
+            {filteredUsersList.length} บัญชี
+          </span>
+        }
+        searchPlaceholder="ค้นหาชื่อ, อีเมล, แบรนด์ หรือสาขา..."
+        searchQuery={searchUserQuery}
+        onSearchChange={setSearchUserQuery}
+        filters={
+          <>
+            <div className="w-full sm:w-48">
+              <SelectInput
+                value={selectedTierFilter}
+                onChange={setSelectedTierFilter}
+                options={tierFilterOptions}
+              />
+            </div>
 
-        <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
-          <div className="w-full sm:w-44">
-            <SelectInput
-              value={selectedTierFilter}
-              onChange={setSelectedTierFilter}
-              options={tierFilterOptions}
-            />
-          </div>
+            <div className="w-full sm:w-44">
+              <SelectInput
+                value={selectedBrandFilter}
+                onChange={setSelectedBrandFilter}
+                options={brandFilterOptions}
+              />
+            </div>
 
-          <div className="w-full sm:w-40">
-            <SelectInput
-              value={selectedBrandFilter}
-              onChange={setSelectedBrandFilter}
-              options={brandFilterOptions}
-            />
-          </div>
-
-          <div className="w-full sm:w-36">
-            <SelectInput
-              value={selectedStatusFilter}
-              onChange={setSelectedStatusFilter}
-              options={statusFilterOptions}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ─── 4. USERS DATA TABLE ─── */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-        <DataTable
-          columns={userTableColumns}
-          data={filteredUsersList}
-          actions={userTableActions}
-          emptyMessage="ยังไม่มีข้อมูลผู้ใช้งานในระบบ"
-        />
-      </div>
+            <div className="w-full sm:w-36">
+              <SelectInput
+                value={selectedStatusFilter}
+                onChange={setSelectedStatusFilter}
+                options={statusFilterOptions}
+              />
+            </div>
+          </>
+        }
+        columns={userTableColumns}
+        data={filteredUsersList}
+        actions={userTableActions}
+        emptyMessage="ยังไม่มีข้อมูลผู้ใช้งานในระบบ"
+        defaultPageSize={10}
+      />
 
       {/* ─── 5. MODALS INTEGRATION ─── */}
       <CreateUserModal

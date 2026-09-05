@@ -11,7 +11,8 @@ import {
   ProvinceItem, 
   RegionItem, 
   BrandItem, 
-  UserAccessRecord 
+  UserAccessRecord,
+  CustomScopeGroup,
 } from "@/Types/dataAccess";
 import { 
   dataAccessService, 
@@ -19,12 +20,22 @@ import {
 } from "@/Services/dataAccessService";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
+import { customScopeService } from "@/Services/customScopeService";
+import CustomScopeModal from "@/Components/Modals/CustomScopeModal";
+import { tierLevelService, TierLevelModel } from "@/Services/tierLevelService";
+import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
+import SelectInput from "@/Components/Inputs/SelectInput";
+import TierLevelManagementModal from "@/Components/Modals/TierLevelManagementModal";
+import TierLevelFormModal from "@/Components/Modals/TierLevelFormModal";
+import { useModal } from "@/Context/ModalContext";
 
 // ==========================================================================
 // ─── MAIN DATA ACCESS MANAGEMENT COMPONENT
 // ==========================================================================
 
 export default function DataAccessManagementScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   const [usersList, setUsersList] = useState<UserAccessRecord[]>([]);
   const [availableBrandsList, setAvailableBrandsList] = useState<string[]>([]);
   const [availableBranchesList, setAvailableBranchesList] = useState<string[]>([]);
@@ -42,9 +53,26 @@ export default function DataAccessManagementScreen() {
   const [expandedRegions, setExpandedRegions] = useState<Record<string, boolean>>({});
   const [expandedProvinces, setExpandedProvinces] = useState<Record<string, boolean>>({});
 
+  // Custom Scopes States (Co-Location / Dual-Brand)
+  const [customScopes, setCustomScopes] = useState<CustomScopeGroup[]>([]);
+  const [selectedCustomScope, setSelectedCustomScope] = useState<CustomScopeGroup | null>(null);
+  const [isCustomScopeModalOpen, setIsCustomScopeModalOpen] = useState(false);
+  const [editingCustomScope, setEditingCustomScope] = useState<CustomScopeGroup | null>(null);
+
+  // Dynamic Tier Levels States
+  const [tierLevels, setTierLevels] = useState<TierLevelModel[]>([]);
+  const [isTierManagementModalOpen, setIsTierManagementModalOpen] = useState(false);
+  const [isTierFormModalOpen, setIsTierFormModalOpen] = useState(false);
+  const [editingTier, setEditingTier] = useState<TierLevelModel | null>(null);
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccessRecord | null>(null);
+
+  // Table Search and Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTierFilter, setSelectedTierFilter] = useState("All Tiers");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("All Statuses");
 
   // Dynamic Organization Hierarchy constructed from DB
   const [brandHierarchy, setBrandHierarchy] = useState<BrandItem[]>([]);
@@ -54,23 +82,29 @@ export default function DataAccessManagementScreen() {
     async function fetchInitialData() {
       try {
         setIsLoading(true);
-        const [accessUsers, brands, branches] = await Promise.all([
+        const [accessUsers, brands, branches, tiers] = await Promise.all([
           dataAccessService.getDataAccessUsers(),
           brandService.getBrands(),
           branchService.getBranches(),
+          tierLevelService.getTierLevels(),
         ]);
         setUsersList(accessUsers || []);
+        setTierLevels(tiers || []);
         
         const bNames = brands ? brands.map((b) => b.brandName) : [];
         const brNames = branches ? branches.map((b) => b.name) : [];
         setAvailableBrandsList(bNames);
         setAvailableBranchesList(brNames);
 
+        // Load custom scope groups
+        const loadedScopes = customScopeService.getCustomScopes();
+        setCustomScopes(loadedScopes);
+
         // Build dynamic hierarchy tree
         if (brands && brands.length > 0) {
           const tree: BrandItem[] = brands.map((b, bIdx) => {
             const relatedBranches = (branches || []).filter(
-              (br) => br.brand.includes(b.brandName) || (br.brands && br.brands.includes(b.brandName))
+              (br) => (Boolean(br.brand) && br.brand.includes(b.brandName)) || (br.brands && br.brands.includes(b.brandName))
             );
 
             // Group by region
@@ -181,6 +215,16 @@ export default function DataAccessManagementScreen() {
     setSelectedRegion(null);
     setSelectedProvince(null);
     setSelectedBranch(null);
+    setSelectedCustomScope(null);
+  };
+
+  const handleSelectCustomScope = (scope: CustomScopeGroup) => {
+    setSelectedScopeLevel("CUSTOM_SCOPE");
+    setSelectedCustomScope(scope);
+    setSelectedBrand(null);
+    setSelectedRegion(null);
+    setSelectedProvince(null);
+    setSelectedBranch(null);
   };
 
   const handleSelectBrand = (brand: BrandItem) => {
@@ -189,6 +233,7 @@ export default function DataAccessManagementScreen() {
     setSelectedRegion(null);
     setSelectedProvince(null);
     setSelectedBranch(null);
+    setSelectedCustomScope(null);
     setExpandedBrands((prev) => ({ ...prev, [brand.id]: !prev[brand.id] }));
   };
 
@@ -199,6 +244,7 @@ export default function DataAccessManagementScreen() {
     setSelectedRegion(region);
     setSelectedProvince(null);
     setSelectedBranch(null);
+    setSelectedCustomScope(null);
     setExpandedRegions((prev) => ({ ...prev, [region.id]: !prev[region.id] }));
   };
 
@@ -209,6 +255,7 @@ export default function DataAccessManagementScreen() {
     setSelectedRegion(region);
     setSelectedProvince(province);
     setSelectedBranch(null);
+    setSelectedCustomScope(null);
     setExpandedProvinces((prev) => ({ ...prev, [province.id]: !prev[province.id] }));
   };
 
@@ -219,6 +266,7 @@ export default function DataAccessManagementScreen() {
     setSelectedRegion(region);
     setSelectedProvince(province);
     setSelectedBranch(branch);
+    setSelectedCustomScope(null);
   };
 
   // ─── FILTER USERS BASED ON THE SELECTED SCOPE LEVEL ───
@@ -226,32 +274,283 @@ export default function DataAccessManagementScreen() {
     if (selectedScopeLevel === "SUPER_ADMIN") {
       return usersList;
     }
+    if (selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope) {
+      return usersList.filter((u) => {
+        const matchBrand = selectedCustomScope.brands.some((sb) =>
+          u.assignedBrands.some((ub) => ub.includes(sb) || sb.includes(ub))
+        );
+        const matchBranch = selectedCustomScope.branches.some((sbr) =>
+          u.assignedBranches.some((ubr) => ubr.includes(sbr) || sbr.includes(ubr))
+        );
+        return matchBrand || matchBranch;
+      });
+    }
     if (selectedScopeLevel === "BRAND" && selectedBrand) {
-      return usersList.filter((u) => u.assignedBrands.some((b) => selectedBrand.name.includes(b) || b.includes(selectedBrand.name)));
+      return usersList.filter((u) => 
+        u.tierLevel === "Super Admin" ||
+        u.assignedBrands.length === 0 ||
+        u.assignedBrands.some((b) => selectedBrand.name.includes(b) || b.includes(selectedBrand.name))
+      );
     }
     if (selectedScopeLevel === "REGION" && selectedRegion && selectedBrand) {
-      return usersList.filter(
-        (u) =>
-          u.assignedBrands.some((b) => selectedBrand.name.includes(b) || b.includes(selectedBrand.name)) &&
-          u.assignedRegions.includes(selectedRegion.name)
-      );
+      return usersList.filter((u) => {
+        const matchBrand = u.tierLevel === "Super Admin" || u.assignedBrands.length === 0 || u.assignedBrands.some((b) => selectedBrand.name.includes(b) || b.includes(selectedBrand.name));
+        const matchRegion = u.assignedRegions.length === 0 || u.assignedRegions.includes(selectedRegion.name);
+        return matchBrand && matchRegion;
+      });
     }
     if (selectedScopeLevel === "PROVINCE" && selectedProvince && selectedBrand) {
-      return usersList.filter(
-        (u) =>
-          u.assignedBrands.some((b) => selectedBrand.name.includes(b) || b.includes(selectedBrand.name)) &&
-          u.assignedProvinces.includes(selectedProvince.name)
-      );
+      return usersList.filter((u) => {
+        const matchBrand = u.tierLevel === "Super Admin" || u.assignedBrands.length === 0 || u.assignedBrands.some((b) => selectedBrand.name.includes(b) || b.includes(selectedBrand.name));
+        const matchProv = u.assignedProvinces.length === 0 || u.assignedProvinces.includes(selectedProvince.name);
+        const matchRegion = selectedRegion ? (u.assignedRegions.length === 0 || u.assignedRegions.includes(selectedRegion.name)) : true;
+        return matchBrand && matchProv && matchRegion;
+      });
     }
     if (selectedScopeLevel === "BRANCH" && selectedBranch) {
-      return usersList.filter(
-        (u) =>
-          u.assignedBranches.includes(selectedBranch.name) ||
-          u.assignedBranches.some((b) => b.includes("ทุกสาขา"))
-      );
+      return usersList.filter((u) => {
+        const matchBranch = u.assignedBranches.length === 0 || u.assignedBranches.some((b) => b.includes(selectedBranch.name) || selectedBranch.name.includes(b) || b.includes("ทุกสาขา"));
+        return matchBranch;
+      });
     }
     return usersList;
-  }, [usersList, selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
+  }, [usersList, selectedScopeLevel, selectedCustomScope, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
+
+  // Combined Search and Dropdown Filtered Data
+  const searchedAndFilteredUsers = useMemo(() => {
+    let result = filteredUsers;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((u) =>
+        (u.userName && u.userName.toLowerCase().includes(q)) ||
+        (u.userEmail && u.userEmail.toLowerCase().includes(q)) ||
+        (u.userPhone && u.userPhone.toLowerCase().includes(q)) ||
+        (u.tierLevel && u.tierLevel.toLowerCase().includes(q)) ||
+        (u.assignedBrands && u.assignedBrands.some((b) => b.toLowerCase().includes(q))) ||
+        (u.assignedBranches && u.assignedBranches.some((b) => b.toLowerCase().includes(q)))
+      );
+    }
+
+    if (selectedTierFilter !== "All Tiers") {
+      result = result.filter((u) => u.tierLevel === selectedTierFilter);
+    }
+
+    if (selectedStatusFilter !== "All Statuses") {
+      result = result.filter((u) => u.status === selectedStatusFilter);
+    }
+
+    return result;
+  }, [filteredUsers, searchQuery, selectedTierFilter, selectedStatusFilter]);
+
+  // DataTable Column Definitions
+  const dataAccessTableColumns: TableColumn<UserAccessRecord>[] = useMemo(
+    () => [
+      {
+        key: "userName",
+        label: "ผู้ใช้งาน (User)",
+        sortable: true,
+        render: (user: UserAccessRecord) => (
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 text-blue-900 font-bold text-xs flex items-center justify-center shrink-0">
+              {user.userName ? user.userName.charAt(0) : "U"}
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block">{user.userName}</span>
+              <span className="text-[10px] text-slate-400 font-mono">{user.userEmail}</span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "tierLevel",
+        label: "ระดับสิทธิ์ (Tier Level)",
+        sortable: true,
+        render: (user: UserAccessRecord) => (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-100 whitespace-nowrap">
+            {user.tierLevel}
+          </span>
+        ),
+      },
+      {
+        key: "assignedBrands",
+        label: "ขอบเขตที่ดูแล (Scope Coverage)",
+        render: (user: UserAccessRecord) => (
+          <div className="space-y-1 max-w-[220px]">
+            <div className="flex flex-wrap gap-1">
+              {user.assignedBrands.length === 0 ? (
+                <span className="text-[10px] text-slate-400">ทุกแบรนด์</span>
+              ) : (
+                user.assignedBrands.map((b, i) => (
+                  <span key={i} className="text-[10px] font-semibold text-slate-600 bg-slate-50 px-1.5 py-0.2 rounded border border-slate-200">
+                    {b}
+                  </span>
+                ))
+              )}
+            </div>
+            {user.assignedBranches.length > 0 && (
+              <span className="text-[10px] text-slate-400 block truncate" title={user.assignedBranches.join(", ")}>
+                สาขา: {user.assignedBranches.join(", ")}
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "userPhone",
+        label: "เบอร์โทรศัพท์",
+        render: (user: UserAccessRecord) => (
+          <span className="text-xs text-slate-600 font-mono">{user.userPhone || "-"}</span>
+        ),
+      },
+      {
+        key: "status",
+        label: "สถานะ (Status)",
+        sortable: true,
+        render: (user: UserAccessRecord) => (
+          <span className={user.status === "Active" ? "badge-active" : "badge-inactive"}>
+            {user.status === "Active" ? "Active" : "Inactive"}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const dataAccessTableActions: TableAction<UserAccessRecord>[] = useMemo(
+    () => [
+      {
+        label: "แก้ไขสิทธิ์",
+        icon: "edit",
+        onClick: (user) => handleOpenEditModal(user),
+      },
+      {
+        label: "เพิกถอนสิทธิ์",
+        icon: "delete",
+        variant: "danger",
+        onClick: (user) => handleDeleteUser(user.id),
+      },
+    ],
+    []
+  );
+
+  // ─── CUSTOM SCOPE CRUD HANDLERS ───
+
+  const handleOpenCreateCustomScope = () => {
+    setEditingCustomScope(null);
+    setIsCustomScopeModalOpen(true);
+  };
+
+  const handleOpenEditCustomScope = (scope: CustomScopeGroup, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingCustomScope(scope);
+    setIsCustomScopeModalOpen(true);
+  };
+
+  const handleSaveCustomScope = async (scopeData: {
+    name: string;
+    description: string;
+    brands: string[];
+    branches: string[];
+  }) => {
+    try {
+      if (editingCustomScope) {
+        const updated = customScopeService.updateCustomScope(editingCustomScope.id, scopeData);
+        setCustomScopes((prev) =>
+          prev.map((s) => (s.id === editingCustomScope.id ? updated : s))
+        );
+        if (selectedCustomScope?.id === editingCustomScope.id) {
+          setSelectedCustomScope(updated);
+        }
+        showSuccess(`แก้ไขกลุ่มสโคป "${scopeData.name}" สำเร็จเรียบร้อย`);
+      } else {
+        const created = customScopeService.createCustomScope(scopeData);
+        setCustomScopes((prev) => [created, ...prev]);
+        setSelectedScopeLevel("CUSTOM_SCOPE");
+        setSelectedCustomScope(created);
+        showSuccess(`สร้างกลุ่มสโคป "${scopeData.name}" สำเร็จเรียบร้อย`);
+      }
+      setIsCustomScopeModalOpen(false);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกกลุ่มสโคปได้");
+    }
+  };
+
+  const handleDeleteCustomScope = (scope: CustomScopeGroup, e: React.MouseEvent) => {
+    e.stopPropagation();
+    showConfirm({
+      title: "ยืนยันการลบกลุ่มสโคป?",
+      description: `คุณต้องการลบกลุ่มสโคป "${scope.name}" หรือไม่?`,
+      variant: "danger",
+      confirmText: "ลบกลุ่มสโคป",
+      onConfirm: () => {
+        try {
+          customScopeService.deleteCustomScope(scope.id);
+          setCustomScopes((prev) => prev.filter((s) => s.id !== scope.id));
+          if (selectedCustomScope?.id === scope.id) {
+            handleSelectSuperAdminView();
+          }
+          showSuccess(`ลบกลุ่มสโคป "${scope.name}" เรียบร้อยแล้ว`);
+        } catch (err: any) {
+          showError(err?.message || "ไม่สามารถลบกลุ่มสโคปได้");
+        }
+      },
+    });
+  };
+
+  // ─── TIER LEVEL CRUD HANDLERS ───
+
+  const handleOpenCreateTier = () => {
+    setEditingTier(null);
+    setIsTierFormModalOpen(true);
+  };
+
+  const handleOpenEditTier = (tier: TierLevelModel) => {
+    setEditingTier(tier);
+    setIsTierFormModalOpen(true);
+  };
+
+  const handleSaveTier = async (tierData: Omit<TierLevelModel, "id" | "isSystemDefault">) => {
+    try {
+      if (editingTier) {
+        const updated = await tierLevelService.updateTierLevel(editingTier.id, tierData);
+        setTierLevels((prev) =>
+          prev.map((t) => (t.id === editingTier.id ? updated : t)).sort((a, b) => a.levelOrder - b.levelOrder)
+        );
+        showSuccess(`แก้ไขระดับสิทธิ์ "${tierData.nameTh}" สำเร็จเรียบร้อย`);
+      } else {
+        const created = await tierLevelService.createTierLevel(tierData);
+        setTierLevels((prev) => [...prev, created].sort((a, b) => a.levelOrder - b.levelOrder));
+        showSuccess(`สร้างระดับสิทธิ์ "${tierData.nameTh}" สำเร็จเรียบร้อย`);
+      }
+      setIsTierFormModalOpen(false);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกระดับสิทธิ์ได้");
+    }
+  };
+
+  const handleDeleteTier = (tier: TierLevelModel) => {
+    if (tier.isSystemDefault) {
+      showError("ไม่สามารถลบระดับสิทธิ์หลักของระบบ (System Default Tier) ได้");
+      return;
+    }
+
+    showConfirm({
+      title: "ยืนยันการลบระดับสิทธิ์?",
+      description: `คุณต้องการลบระดับสิทธิ์ "${tier.nameTh}" (${tier.tierCode}) หรือไม่?`,
+      variant: "danger",
+      confirmText: "ลบระดับสิทธิ์",
+      onConfirm: async () => {
+        try {
+          await tierLevelService.deleteTierLevel(tier.id);
+          setTierLevels((prev) => prev.filter((t) => t.id !== tier.id));
+          showSuccess(`ลบระดับสิทธิ์ "${tier.nameTh}" เรียบร้อยแล้ว`);
+        } catch (err: any) {
+          showError(err?.message || "ไม่สามารถลบระดับสิทธิ์ได้");
+        }
+      },
+    });
+  };
 
   // Modal Handlers
   const handleOpenAddModal = () => {
@@ -265,29 +564,45 @@ export default function DataAccessManagementScreen() {
   };
 
   const handleSaveUserForm = async (userData: any) => {
-    const saved = await dataAccessService.saveDataAccessUser({
-      ...userData,
-      status: userData.status || "Active",
-    });
+    try {
+      const saved = await dataAccessService.saveDataAccessUser({
+        ...userData,
+        status: userData.status || "Active",
+      });
 
-    setUsersList((prev) => {
-      const idx = prev.findIndex((u) => u.id === saved.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = saved;
-        return copy;
-      }
-      return [saved, ...prev];
-    });
+      setUsersList((prev) => {
+        const idx = prev.findIndex((u) => u.id === saved.id);
+        if (idx >= 0) {
+          const copy = [...prev];
+          copy[idx] = saved;
+          return copy;
+        }
+        return [saved, ...prev];
+      });
 
-    setIsModalOpen(false);
+      setIsModalOpen(false);
+      showSuccess(`บันทึกสิทธิ์ Data Access ของ "${userData.name || 'ผู้ใช้'}" สำเร็จเรียบร้อย`);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถบันทึกสิทธิ์ Data Access ได้");
+    }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (confirm("คุณต้องการเพิกถอนสิทธิ์ Data Access ของผู้ใช้นี้หรือไม่?")) {
-      await dataAccessService.deleteDataAccessUser(id);
-      setUsersList((prev) => prev.filter((u) => u.id !== id));
-    }
+  const handleDeleteUser = (id: string) => {
+    showConfirm({
+      title: "ยืนยันการเพิกถอนสิทธิ์?",
+      description: "คุณต้องการเพิกถอนสิทธิ์ Data Access ของผู้ใช้นี้ใช่หรือไม่?",
+      variant: "danger",
+      confirmText: "เพิกถอนสิทธิ์",
+      onConfirm: async () => {
+        try {
+          await dataAccessService.deleteDataAccessUser(id);
+          setUsersList((prev) => prev.filter((u) => u.id !== id));
+          showSuccess("เพิกถอนสิทธิ์ Data Access เรียบร้อยแล้ว");
+        } catch (err: any) {
+          showError(err?.message || "ไม่สามารถเพิกถอนสิทธิ์ได้");
+        }
+      },
+    });
   };
 
   return (
@@ -305,14 +620,26 @@ export default function DataAccessManagementScreen() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          className="btn-primary text-xs shadow-xs"
-        >
-          <span className="material-symbols-outlined text-[18px]">person_add</span>
-          + กำหนดสิทธิ์ใหม่ (Assign Scope)
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsTierManagementModalOpen(true)}
+            className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+            title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
+          >
+            <span className="material-symbols-outlined text-[18px] text-blue-900">military_tech</span>
+            <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            className="btn-primary text-xs shadow-xs"
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <span>+ กำหนดสิทธิ์ใหม่ (Assign Scope)</span>
+          </button>
+        </div>
       </div>
 
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
@@ -345,6 +672,107 @@ export default function DataAccessManagementScreen() {
               <span>🏢 ภาพรวมระดับองค์กร (Super Admin Level)</span>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20">All</span>
+          </div>
+
+          {/* ─── CUSTOM CO-LOCATION SCOPES (DUAL-BRAND GROUPS) ─── */}
+          <div className="pt-2 border-t border-slate-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                <span className="material-symbols-outlined text-base text-blue-900">hub</span>
+                <span>กลุ่มสโคปกำหนดเอง (Custom Scopes)</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenCreateCustomScope}
+                className="text-[11px] font-bold text-blue-900 hover:text-blue-950 hover:bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer"
+                title="สร้างกลุ่มสโคปสำหรับสาขา 2 แบรนด์ หรือจัดกลุ่มเฉพาะ"
+              >
+                <span className="material-symbols-outlined text-[14px]">add</span>
+                <span>+ สร้าง Scope</span>
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              {customScopes.length === 0 ? (
+                <div className="p-3 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <p className="text-[11px] text-slate-400">ยังไม่มีกลุ่มสโคปกำหนดเอง</p>
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateCustomScope}
+                    className="text-[11px] text-blue-900 font-bold hover:underline mt-1 cursor-pointer"
+                  >
+                    + คลิกเพื่อสร้างกลุ่มสโคปแรก (เช่น สาขา 2 แบรนด์)
+                  </button>
+                </div>
+              ) : (
+                customScopes.map((scope) => {
+                  const isSelected = selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope?.id === scope.id;
+
+                  return (
+                    <div
+                      key={scope.id}
+                      onClick={() => handleSelectCustomScope(scope)}
+                      className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                        isSelected
+                          ? "bg-blue-50/90 border-blue-300 text-blue-950 shadow-2xs"
+                          : "bg-slate-50/70 border-slate-200/80 text-slate-800 hover:bg-slate-100"
+                      }`}
+                    >
+                      {/* Scope Title & Action Buttons */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`material-symbols-outlined text-[18px] shrink-0 ${isSelected ? "text-blue-900" : "text-slate-500"}`}>
+                            store
+                          </span>
+                          <span className="text-xs font-bold truncate">{scope.name}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditCustomScope(scope, e)}
+                            title="แก้ไขสโคป"
+                            className="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteCustomScope(scope, e)}
+                            title="ลบสโคป"
+                            className="w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">delete</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Brand Badges & Branch Counts */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        {scope.brands.map((bName) => (
+                          <span
+                            key={bName}
+                            className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white text-blue-900 border border-blue-200/80 shadow-2xs"
+                          >
+                            {bName}
+                          </span>
+                        ))}
+                        <span className="text-[10px] text-slate-400">
+                          {scope.branches.length} สาขา
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Section Divider: Standard Brand Hierarchy */}
+          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              โครงสร้างตามแบรนด์ (Brand Hierarchies)
+            </span>
           </div>
 
           {/* Dynamic Brands Tree */}
@@ -464,81 +892,108 @@ export default function DataAccessManagementScreen() {
           </div>
         </div>
 
-        {/* ─── RIGHT: ASSIGNED USERS DETAIL TABLE ─── */}
+        {/* ─── RIGHT: ASSIGNED USERS DETAIL TABLE (UNIFIED 4-SECTION TABLE) ─── */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-              <div>
-                <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-900">verified_user</span>
-                  รายชื่อผู้ได้รับสิทธิ์ (Authorized Users in Selected Scope)
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  ขอบเขตปัจจุบัน: <span className="font-bold text-blue-900">
-                    {selectedScopeLevel === "SUPER_ADMIN" ? "องค์กร (Super Admin Level)" : selectedBrand?.name || "ทั้งหมด"}
-                    {selectedRegion ? ` → ${selectedRegion.name}` : ""}
-                    {selectedProvince ? ` → จ.${selectedProvince.name}` : ""}
-                    {selectedBranch ? ` → ${selectedBranch.name}` : ""}
+          {/* Custom Scope Details Banner (if in Custom Scope mode) */}
+          {selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope && (
+            <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-200/80 flex flex-col gap-2 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[18px] text-blue-900">hub</span>
+                  {selectedCustomScope.name}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-blue-800 bg-white px-2 py-0.5 rounded-full border border-blue-100 shadow-2xs">
+                  {selectedCustomScope.id}
+                </span>
+              </div>
+              {selectedCustomScope.description && (
+                <p className="text-xs text-slate-600">{selectedCustomScope.description}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-blue-100/80 text-xs">
+                <span className="font-bold text-slate-700 text-[11px]">แบรนด์ที่ดูแลร่วม (Co-Location):</span>
+                {selectedCustomScope.brands.map((b) => (
+                  <span key={b} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-900 text-white shadow-2xs">
+                    {b}
                   </span>
-                </p>
-              </div>
-
-              <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full w-fit">
-                {filteredUsers.length} บัญชี
-              </span>
-            </div>
-
-            {/* Users List */}
-            {filteredUsers.length === 0 ? (
-              <p className="text-xs text-slate-400 py-12 text-center">ยังไม่มีข้อมูลสิทธิ์การเข้าถึงข้อมูลในระบบ</p>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {filteredUsers.map((user) => (
-                  <div key={user.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-xs">{user.userName}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-100">
-                          {user.tierLevel}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-slate-500 font-mono">
-                        {user.userEmail} • {user.userPhone}
-                      </div>
-                      <div className="flex flex-wrap gap-1 text-[10px] pt-0.5">
-                        <span className="font-bold text-slate-700">แบรนด์:</span>
-                        {user.assignedBrands.map((b, i) => (
-                          <span key={i} className="text-slate-600 bg-slate-50 px-1.5 py-0.2 rounded border border-slate-200">
-                            {b}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(user)}
-                        className="btn-secondary text-xs py-1 px-2.5"
-                      >
-                        <span className="material-symbols-outlined text-[14px]">edit</span>
-                        แก้ไข
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="text-rose-600 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
-                    </div>
-                  </div>
                 ))}
+                <span className="font-bold text-slate-700 text-[11px] ml-2">สาขาที่ครอบคลุม:</span>
+                {selectedCustomScope.branches.length === 0 ? (
+                  <span className="text-[11px] text-slate-400">ทุกสาขาของแบรนด์ที่เลือก</span>
+                ) : (
+                  selectedCustomScope.branches.map((br) => (
+                    <span key={br} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                      {br}
+                    </span>
+                  ))
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-          </div>
+          {/* ─── UNIFIED DATA TABLE (HEAD -> FILTER & SORT -> DATA -> FOOTER) ─── */}
+          <DataTable
+            title="รายชื่อผู้ได้รับสิทธิ์ (Authorized Users in Selected Scope)"
+            subtitle={`ขอบเขตปัจจุบัน: ${
+              selectedScopeLevel === "SUPER_ADMIN"
+                ? "องค์กร (Super Admin Level)"
+                : selectedScopeLevel === "CUSTOM_SCOPE"
+                ? `กลุ่มกำหนดเอง: ${selectedCustomScope?.name || ""}`
+                : selectedBrand?.name || "ทั้งหมด"
+            }${selectedRegion ? ` → ${selectedRegion.name}` : ""}${selectedProvince ? ` → จ.${selectedProvince.name}` : ""}${selectedBranch ? ` → ${selectedBranch.name}` : ""}`}
+            icon="verified_user"
+            badge={
+              <span className="badge-active">
+                {searchedAndFilteredUsers.length} บัญชี
+              </span>
+            }
+            searchPlaceholder="ค้นหาชื่อผู้ใช้, อีเมล, แบรนด์, หรือสาขา..."
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            headerActions={
+              <button
+                type="button"
+                onClick={handleOpenAddModal}
+                className="btn-primary text-xs py-1.5 px-3 shadow-2xs whitespace-nowrap"
+              >
+                <span className="material-symbols-outlined text-[16px]">person_add</span>
+                + กำหนดสิทธิ์ใหม่
+              </button>
+            }
+            filters={
+              <>
+                <div className="w-full sm:w-48">
+                  <SelectInput
+                    value={selectedTierFilter}
+                    onChange={setSelectedTierFilter}
+                    options={[
+                      { value: "All Tiers", label: "ทุกระดับสิทธิ์ (All Tiers)" },
+                      ...tierLevels.map((t) => ({
+                        value: t.nameTh,
+                        label: `${t.nameTh} (Lv.${t.levelOrder})`,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                <div className="w-full sm:w-36">
+                  <SelectInput
+                    value={selectedStatusFilter}
+                    onChange={setSelectedStatusFilter}
+                    options={[
+                      { value: "All Statuses", label: "ทุกสถานะ" },
+                      { value: "Active", label: "Active (ใช้งาน)" },
+                      { value: "Inactive", label: "Inactive (ปิดใช้งาน)" },
+                    ]}
+                  />
+                </div>
+              </>
+            }
+            columns={dataAccessTableColumns}
+            data={searchedAndFilteredUsers}
+            actions={dataAccessTableActions}
+            emptyMessage="ไม่พบข้อมูลผู้ได้รับสิทธิ์ในขอบเขตหรือเงื่อนไขที่ค้นหา"
+            defaultPageSize={10}
+          />
         </div>
 
       </div>
@@ -551,6 +1006,34 @@ export default function DataAccessManagementScreen() {
         availableBrands={availableBrandsList}
         availableBranches={availableBranchesList}
         onSave={handleSaveUserForm}
+      />
+
+      {/* ─── 5. CREATE / EDIT CUSTOM SCOPE MODAL (CO-LOCATION & DUAL-BRAND) ─── */}
+      <CustomScopeModal
+        isOpen={isCustomScopeModalOpen}
+        onClose={() => setIsCustomScopeModalOpen(false)}
+        editingScope={editingCustomScope}
+        availableBrands={availableBrandsList}
+        availableBranches={availableBranchesList}
+        onSave={handleSaveCustomScope}
+      />
+
+      {/* ─── 6. TIER LEVEL MANAGEMENT MODAL (LIST & CRUD GOVERNANCE) ─── */}
+      <TierLevelManagementModal
+        isOpen={isTierManagementModalOpen}
+        onClose={() => setIsTierManagementModalOpen(false)}
+        tierLevels={tierLevels}
+        onOpenCreate={handleOpenCreateTier}
+        onOpenEdit={handleOpenEditTier}
+        onDelete={handleDeleteTier}
+      />
+
+      {/* ─── 7. TIER LEVEL FORM MODAL (CREATE / EDIT SPECIFIC TIER) ─── */}
+      <TierLevelFormModal
+        isOpen={isTierFormModalOpen}
+        onClose={() => setIsTierFormModalOpen(false)}
+        editingTier={editingTier}
+        onSave={handleSaveTier}
       />
 
     </div>

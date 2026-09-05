@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+  import { apiClient } from "./apiClient";
 import { 
   UserAccessRecord, 
   BrandItem, 
@@ -63,14 +63,31 @@ export function computePermissionsByTier(tier: string) {
   }
 }
 
+import { userService } from "./userService";
+
 export const dataAccessService = {
   async getDataAccessUsers(): Promise<UserAccessRecord[]> {
     try {
-      const response = await apiClient.get<UserAccessRecord[]>("/data-access/users");
-      if (response.success && Array.isArray(response.data)) {
-        return response.data;
+      const users = await userService.getUsers();
+      if (users && users.length > 0) {
+        return users.map((u) => ({
+          id: u.id,
+          userId: u.id,
+          userName: `${u.firstName} ${u.lastName}`.trim() || u.id,
+          userEmail: u.email,
+          userPhone: u.phone,
+          tierLevel: u.tierLevel || "Branch Staff",
+          assignedBrands: u.assignedBrands && u.assignedBrands.length > 0 ? u.assignedBrands : (u.brand && u.brand !== "ทุกแบรนด์" ? [u.brand] : []),
+          assignedRegions: u.assignedRegions && u.assignedRegions.length > 0 ? u.assignedRegions : (u.region && u.region !== "-" ? [u.region] : []),
+          assignedProvinces: u.assignedProvinces && u.assignedProvinces.length > 0 ? u.assignedProvinces : (u.province && u.province !== "-" ? [u.province] : []),
+          assignedBranches: u.assignedBranches && u.assignedBranches.length > 0 ? u.assignedBranches : (u.branch && u.branch !== "-" ? [u.branch] : []),
+          permissions: computePermissionsByTier(u.tierLevel || "Branch Staff"),
+          status: u.status,
+        }));
       }
-    } catch {}
+    } catch (err) {
+      console.error("[dataAccessService.getDataAccessUsers] error:", err);
+    }
     return [];
   },
 

@@ -1,8 +1,7 @@
-"use client";
-
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "@/Context/SidebarContext";
+import { useAuth } from "@/Context/AuthContext";
 import { searchGlobalApp, GlobalSearchResult } from "@/Lib/search/searchEngine";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
@@ -11,20 +10,23 @@ import { eventService } from "@/Services/eventService";
 import { roleService } from "@/Services/roleService";
 
 // ==========================================================================
-// ─── TOP NAVBAR COMPONENT WITH LIVE GLOBAL SEARCH ENGINE
+// ─── TOP NAVBAR COMPONENT WITH LIVE GLOBAL SEARCH ENGINE & USER PROFILE
 // ==========================================================================
 
 export default function TopNavBar() {
   const router = useRouter();
   const { isSidebarCollapsed, toggleSidebarCollapse } = useSidebar();
+  const { user, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [dynamicEntities, setDynamicEntities] = useState<GlobalSearchResult[]>([]);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // โหลดข้อมูลจริงจาก Database / Services เมื่อ Focus หรือ Mount
   useEffect(() => {
@@ -142,6 +144,9 @@ export default function TopNavBar() {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
       }
     };
 
@@ -319,15 +324,99 @@ export default function TopNavBar() {
         {/* Divider */}
         <div className="h-5 w-px bg-slate-200 mx-1 select-none pointer-events-none"></div>
 
-        {/* Admin Profile Info */}
-        <div className="flex items-center gap-2.5 pl-1">
-          <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center text-xs font-bold shadow-xs border border-blue-800 select-none">
-            AD
-          </div>
-          <div className="hidden sm:flex flex-col text-left">
-            <span className="text-xs font-bold text-slate-800 leading-tight">Admin Console</span>
-            <span className="text-[10px] text-slate-500">Super Administrator</span>
-          </div>
+        {/* ─── Interactive User Profile Menu & Dropdown ─── */}
+        <div ref={profileMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+            className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition-colors outline-none cursor-pointer group"
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center text-xs font-bold shadow-xs border border-blue-800 select-none group-hover:scale-105 transition-transform">
+              {user ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "SA" : "SA"}
+            </div>
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-xs font-bold text-slate-800 leading-tight">
+                {user ? `${user.firstName} ${user.lastName}` : "System Admin"}
+              </span>
+              <span className="text-[10px] text-blue-900 font-semibold">
+                {user?.tierLevel || user?.roleName || "Super Administrator"}
+              </span>
+            </div>
+            <span className="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-slate-600 transition-transform duration-200">
+              {isProfileMenuOpen ? "expand_less" : "expand_more"}
+            </span>
+          </button>
+
+          {/* Profile Dropdown Menu */}
+          {isProfileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 flex flex-col">
+              
+              {/* User Header Details */}
+              <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center text-sm font-bold shadow-xs border border-blue-800 shrink-0">
+                  {user ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "SA" : "SA"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs text-slate-900 truncate">
+                    {user ? `${user.firstName} ${user.lastName}` : "System Admin"}
+                  </div>
+                  <div className="text-[11px] text-slate-500 truncate">
+                    {user?.email || "admin@satisfaction.local"}
+                  </div>
+                  <div className="mt-1">
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200 font-mono">
+                      {user?.tierLevel || user?.roleName || "SuperAdmin"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Actions */}
+              <div className="p-1.5 space-y-0.5 text-xs text-slate-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    router.push("/docs");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-slate-400">description</span>
+                  <span>API Documentation</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    router.push("/settings");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-slate-400">settings</span>
+                  <span>System Settings</span>
+                </button>
+              </div>
+
+              {/* Sign Out Action */}
+              <div className="p-1.5 border-t border-slate-100 bg-slate-50/50">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsProfileMenuOpen(false);
+                    if (confirm("คุณต้องการออกจากระบบหรือไม่?")) {
+                      await logout();
+                    }
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors text-left font-medium text-xs cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-rose-500">logout</span>
+                  <span>Sign Out (ออกจากระบบ)</span>
+                </button>
+              </div>
+
+            </div>
+          )}
         </div>
         
       </div>

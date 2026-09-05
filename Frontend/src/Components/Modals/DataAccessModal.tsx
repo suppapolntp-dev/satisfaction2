@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { UserAccessRecord } from "@/Types/dataAccess";
+import { tierLevelService, TierLevelModel } from "@/Services/tierLevelService";
 
 export interface DataAccessModalProps {
   isOpen: boolean;
@@ -47,6 +48,15 @@ export default function DataAccessModal({
   const [formSelectedRegions, setFormSelectedRegions] = useState<string[]>([]);
   const [formSelectedProvinces, setFormSelectedProvinces] = useState<string[]>([]);
   const [formSelectedBranches, setFormSelectedBranches] = useState<string[]>([]);
+  const [dynamicTiers, setDynamicTiers] = useState<TierLevelModel[]>([]);
+
+  useEffect(() => {
+    async function loadTiers() {
+      const tiers = await tierLevelService.getTierLevels();
+      setDynamicTiers(tiers.filter((t) => t.status === "Active"));
+    }
+    loadTiers();
+  }, []);
 
   useEffect(() => {
     if (editingUser) {
@@ -108,19 +118,26 @@ export default function DataAccessModal({
         {/* Header */}
         <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-2xl">
-              {editingUser ? "edit_square" : "person_add"}
-            </span>
-            <h3 className="text-base font-extrabold text-slate-900">
-              {editingUser ? "แก้ไขการกำหนดสิทธิ์ Data Access" : "กำหนดสิทธิ์ผู้ใช้ใหม่ (Assign Data Scope)"}
-            </h3>
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <span className="material-symbols-outlined text-xl">
+                {editingUser ? "edit_square" : "person_add"}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                {editingUser ? "แก้ไขการกำหนดสิทธิ์ Data Access" : "กำหนดสิทธิ์ผู้ใช้ใหม่ (Assign Data Scope)"}
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                กำหนดระดับสิทธิ์องค์กร และเลือกขอบเขตสาขาที่ผู้ใช้งานดูแล
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm cursor-pointer transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            ✕
           </button>
         </div>
 
@@ -159,11 +176,21 @@ export default function DataAccessModal({
                 onChange={(e) => setFormTier(e.target.value as UserAccessRecord["tierLevel"])}
                 className="input-select w-full font-bold"
               >
-                <option value="Super Admin">Super Administrator</option>
-                <option value="Brand Owner">Brand Manager / Owner</option>
-                <option value="Regional Manager (RM)">Regional Manager (RM)</option>
-                <option value="Area Manager (AM)">Area Manager (AM)</option>
-                <option value="Branch Staff">Branch Officer / Staff</option>
+                {dynamicTiers.length === 0 ? (
+                  <>
+                    <option value="Super Admin">Super Administrator</option>
+                    <option value="Brand Owner">Brand Manager / Owner</option>
+                    <option value="Regional Manager (RM)">Regional Manager (RM)</option>
+                    <option value="Area Manager (AM)">Area Manager (AM)</option>
+                    <option value="Branch Staff">Branch Officer / Staff</option>
+                  </>
+                ) : (
+                  dynamicTiers.map((tier) => (
+                    <option key={tier.id} value={tier.nameEn}>
+                      {tier.nameTh}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>
@@ -333,14 +360,15 @@ export default function DataAccessModal({
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary shadow-xs"
+              className="btn-primary text-xs shadow-xs"
             >
+              <span className="material-symbols-outlined text-[16px]">save</span>
               บันทึกสิทธิ์
             </button>
           </div>

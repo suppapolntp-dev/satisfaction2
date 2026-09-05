@@ -20,9 +20,11 @@ export default function EventDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
-        <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-2xl">event_note</span>
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <span className="material-symbols-outlined text-xl">event_note</span>
+            </div>
             <div>
               <h3 className="text-base font-extrabold text-slate-900">{event.eventName}</h3>
               <span className="text-[10px] text-slate-400 font-mono">{event.eventId}</span>
@@ -31,9 +33,9 @@ export default function EventDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm cursor-pointer transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            ✕
           </button>
         </div>
 
@@ -82,7 +84,7 @@ export default function EventDetailModal({
             <button
               type="button"
               onClick={() => onDelete(event.eventId)}
-              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer text-xs"
             >
               <span className="material-symbols-outlined text-[16px]">delete</span>
               ลบกิจกรรม
@@ -90,7 +92,7 @@ export default function EventDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary text-xs"
             >
               Close
             </button>

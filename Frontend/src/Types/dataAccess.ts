@@ -1,6 +1,6 @@
 import { DashboardTierPermissions } from "@/Lib/dataAccessContext";
 
-export type HierarchyScopeLevel = "SUPER_ADMIN" | "BRAND" | "REGION" | "PROVINCE" | "BRANCH";
+export type HierarchyScopeLevel = "SUPER_ADMIN" | "BRAND" | "REGION" | "PROVINCE" | "BRANCH" | "CUSTOM_SCOPE";
 
 export interface BranchItem {
   id: string;
@@ -31,6 +31,15 @@ export interface BrandItem {
   regions: RegionItem[];
 }
 
+export interface CustomScopeGroup {
+  id: string;
+  name: string;
+  description?: string;
+  brands: string[];
+  branches: string[];
+  createdAt: string;
+}
+
 export interface UserAccessRecord {
   id: string;
   userId: string;
@@ -46,4 +55,3 @@ export interface UserAccessRecord {
   status: "Active" | "Inactive";
   lastActiveDate?: string;
 }
-

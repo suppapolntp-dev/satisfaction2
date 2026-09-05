@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import TouchEnabler from "@/app/TouchEnabler";
-
+import { AuthProvider } from "@/Context/AuthContext";
+import { ModalProvider } from "@/Context/ModalContext";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Kiosk Satisfaction Survey",
-  description: "Airport Kiosk Satisfaction Survey System",
+  title: "Satisfaction Management",
+  description: "Satisfaction Management System",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="h-full w-full bg-white text-neutral-800 transition-colors duration-200">
         <TouchEnabler />
-          {children}
+        <AuthProvider>
+          <ModalProvider>
+            {children}
+          </ModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );

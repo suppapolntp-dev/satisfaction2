@@ -10,6 +10,7 @@ import { searchEvents } from "@/Lib/search/searchEngine";
 import { EventItem, EventCategory, CalendarCell } from "@/Types/event";
 import { eventService } from "@/Services/eventService";
 import { brandService } from "@/Services/brandService";
+import { useModal } from "@/Context/ModalContext";
 
 // ==========================================================================
 // ─── HELPER FUNCTIONS FOR CALENDAR DATES
@@ -64,6 +65,8 @@ const CATEGORY_STYLES: Record<EventCategory, { label: string; badgeClass: string
 // ==========================================================================
 
 export default function EventManagementScreen() {
+  const { showConfirm, showSuccess, showError } = useModal();
+
   const [eventsList, setEventsList] = useState<EventItem[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -249,19 +252,35 @@ export default function EventManagementScreen() {
   };
 
   const handleSaveNewEvent = async (eventData: any) => {
-    const created = await eventService.createEvent(eventData);
-    setEventsList((prev) => [created as any, ...prev]);
-    setIsAddEventModalOpen(false);
+    try {
+      const created = await eventService.createEvent(eventData);
+      setEventsList((prev) => [created as any, ...prev]);
+      setIsAddEventModalOpen(false);
+      showSuccess(`สร้างกิจกรรม "${eventData.eventName || 'ใหม่'}" ในปฏิทินเรียบร้อยแล้ว`);
+    } catch (err: any) {
+      showError(err?.message || "ไม่สามารถสร้างกิจกรรมได้");
+    }
   };
 
-  const handleDeleteEvent = async (id: string) => {
-    if (confirm("คุณต้องการลบกิจกรรมนี้ออกจากปฏิทินหรือไม่?")) {
-      await eventService.deleteEvent(id);
-      setEventsList((prev) => prev.filter((e) => e.eventId !== id));
-      if (selectedEventForDetail?.eventId === id) {
-        setSelectedEventForDetail(null);
-      }
-    }
+  const handleDeleteEvent = (id: string) => {
+    showConfirm({
+      title: "ยืนยันการลบกิจกรรม?",
+      description: "คุณต้องการลบกิจกรรมนี้ออกจากปฏิทินองค์กรใช่หรือไม่?",
+      variant: "danger",
+      confirmText: "ลบกิจกรรม",
+      onConfirm: async () => {
+        try {
+          await eventService.deleteEvent(id);
+          setEventsList((prev) => prev.filter((e) => e.eventId !== id));
+          if (selectedEventForDetail?.eventId === id) {
+            setSelectedEventForDetail(null);
+          }
+          showSuccess("ลบกิจกรรมออกจากปฏิทินเรียบร้อยแล้ว");
+        } catch (err: any) {
+          showError(err?.message || "ไม่สามารถลบกิจกรรมได้");
+        }
+      },
+    });
   };
 
   return (

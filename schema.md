@@ -556,3 +556,4 @@ INSERT INTO system_settings (setting_key, setting_value) VALUES
   ('reports',      '{"pdfHeaderTitle":"Confidential - Executive CSAT Performance & Sentiment Report","pdfFooterNote":"Generated automatically by Enterprise CSAT Backoffice.","defaultExportFormat":"excel","includeWatermark":true}'),
   ('localization', '{"systemTimezone":"Asia/Bangkok (UTC+07:00)","dateFormatPattern":"DD/MM/YYYY","defaultLanguage":"Thai (ไทย)"}');
 ```
+

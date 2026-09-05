@@ -28,7 +28,7 @@ export default function RolePermissionTable({
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
+    <div className="w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
       <table className="w-full border-collapse text-left text-xs">
         {/* ─── TABLE HEADER ─── */}
         <thead>

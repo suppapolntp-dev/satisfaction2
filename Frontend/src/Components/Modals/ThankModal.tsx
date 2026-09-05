@@ -81,11 +81,14 @@ export function ThankModal({
   const dynamicFontEn = Number(thankYouFontSizeEn) || 16;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300">
+    <div 
+      onContextMenu={(e) => e.preventDefault()}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 select-none antialiased cursor-default"
+    >
       
       {/* ─── Spacious & Airy Thank You Modal Card (ขยายความกว้าง ไม่กระจุกตัว) ─── */}
       <div 
-        className="relative w-full bg-white rounded-3xl p-8 sm:p-12 md:p-14 shadow-2xl border border-slate-100 flex flex-col items-center text-center transform transition-all duration-300"
+        className="relative w-full bg-white rounded-3xl p-8 sm:p-12 md:p-14 shadow-2xl border border-slate-100 flex flex-col items-center text-center transform transition-all duration-300 select-none"
         style={{
           maxWidth: `${dynamicModalWidth}px`,
         }}

@@ -103,19 +103,26 @@ export default function EventModal({
         {/* Header */}
         <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-2xl">
-              add_circle
-            </span>
-            <h3 className="text-base font-extrabold text-slate-900">
-              สร้างกิจกรรมใหม่ (Add New Event)
-            </h3>
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <span className="material-symbols-outlined text-xl">
+                event
+              </span>
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                สร้างกิจกรรมใหม่ (Add New Event)
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                กำหนดตารางเวลากิจกรรม แคมเปญ หรือการซ่อมบำรุงตู้ Kiosk ในสาขา
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm cursor-pointer transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            ✕
           </button>
         </div>
 
