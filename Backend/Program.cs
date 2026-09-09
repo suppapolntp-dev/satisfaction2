@@ -28,6 +28,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
+// 2.1 Background Hosted Services (Automated Health & Alert Watchers)
+builder.Services.AddHostedService<KioskMonitoringBackgroundService>();
+builder.Services.AddHostedService<CsatAlertWatcherBackgroundService>();
+
 // ============================================================================
 // 3. JWT AUTHENTICATION & SECURITY
 // ============================================================================

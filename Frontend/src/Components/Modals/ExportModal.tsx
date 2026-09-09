@@ -35,22 +35,56 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
     return null;
   }
 
-  // ฟังก์ชันจำลองการ Export ข้อมูล
-  const handleFormSubmit = (formSubmitEvent: React.FormEvent<HTMLFormElement>) => {
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+  // ฟังก์ชันดาวน์โหลดรายงานจาก Backend API จริง
+  const handleFormSubmit = async (formSubmitEvent: React.FormEvent<HTMLFormElement>) => {
     formSubmitEvent.preventDefault();
+    setIsDownloading(true);
 
-    const exportPayload = {
-      format: selectedFileFormat,
-      startDate: filterStartDate,
-      endDate: filterEndDate,
-      company: selectedCompanyFilter,
-      brand: selectedBrandFilter,
-      branch: selectedBranchFilter,
-    };
+    try {
+      const token = typeof window !== "undefined" 
+        ? localStorage.getItem("satisfaction_access_token") 
+        : null;
 
-    console.log("Generating and exporting CSAT Analytics report:", exportPayload);
-    alert(`กำลังดาวน์โหลดรายงานสรุปคะแนน CSAT ในรูปแบบ ${selectedFileFormat.toUpperCase()}...`);
-    onClose();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5005/api";
+      const response = await fetch(`${apiUrl}/export/csat-report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          format: selectedFileFormat,
+          startDate: filterStartDate,
+          endDate: filterEndDate,
+          company: selectedCompanyFilter,
+          brand: selectedBrandFilter,
+          branch: selectedBranchFilter
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("ดาวน์โหลดรายงานไม่สำเร็จ");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = downloadUrl;
+      anchor.download = `CSAT_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      onClose();
+    } catch (err: any) {
+      console.error("Export error:", err);
+      alert("เกิดข้อผิดพลาดในการดาวน์โหลดรายงาน กรุณาตรวจสอบการเชื่อมต่อ");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return createPortal(
