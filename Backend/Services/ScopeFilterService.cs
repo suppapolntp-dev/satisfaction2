@@ -137,6 +137,12 @@ public class ScopeFilterService : IScopeFilterService
             return query;
         }
 
+        if (user.TierLevel == TierLevel.Brand)
+        {
+            var brandIds = user.UserBrandScopes.Select(b => b.BrandId).ToList();
+            return query.Where(k => k.Branch != null && k.Branch.BranchBrands.Any(bb => brandIds.Contains(bb.BrandId)));
+        }
+
         if (user.TierLevel == TierLevel.Branch)
         {
             var branchIds = user.UserBranchScopes.Select(b => b.BranchId).ToList();
@@ -155,7 +161,18 @@ public class ScopeFilterService : IScopeFilterService
             return query.Where(k => k.Branch != null && k.Branch.Province != null && regionIds.Contains(k.Branch.Province.RegionId));
         }
 
-        return query;
+        // Custom Scope: ผสมเงื่อนไขตามที่ได้รับมอบหมาย
+        var customBranchIds = user.UserBranchScopes.Select(b => b.BranchId).ToList();
+        var customProvinceIds = user.UserProvinceScopes.Select(p => p.ProvinceId).ToList();
+        var customRegionIds = user.UserRegionScopes.Select(r => r.RegionId).ToList();
+        var customBrandIds = user.UserBrandScopes.Select(b => b.BrandId).ToList();
+
+        return query.Where(k =>
+            (customBranchIds.Count == 0 || customBranchIds.Contains(k.BranchId)) &&
+            (customProvinceIds.Count == 0 || (k.Branch != null && customProvinceIds.Contains(k.Branch.ProvinceId))) &&
+            (customRegionIds.Count == 0 || (k.Branch != null && k.Branch.Province != null && customRegionIds.Contains(k.Branch.Province.RegionId))) &&
+            (customBrandIds.Count == 0 || (k.Branch != null && k.Branch.BranchBrands.Any(bb => customBrandIds.Contains(bb.BrandId))))
+        );
     }
 }
 

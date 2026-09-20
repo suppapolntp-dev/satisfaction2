@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ThankModal } from "../Modals/ThankModal";
+import { satisfactionService } from "@/Services/satisfactionService";
 import { 
   SatisfactionConfig, 
   DEFAULT_SATISFACTION_CONFIG, 
@@ -89,14 +90,24 @@ export function BtnSatisfaction() {
 
   // ฟังก์ชันเมื่อผู้ใช้แตะปุ่มประเมิน
   const handleVoteClick = async (level: SentimentLevel) => {
-
     setIsProcessingVote(true);
     setSelectedSentiment(level);
 
-    // ส่งคะแนนไปยัง Backend / API Layer
+    // Map level: "happy" -> 1 (Positive), "neutral" -> 2 (Neutral), "sad" -> 3 (Negative)
+    const sentimentNumber = level === "happy" ? 1 : level === "neutral" ? 2 : 3;
+
+    try {
+      await satisfactionService.submitVote({
+        sentiment: sentimentNumber,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Failed to submit vote:", err);
+    }
+
     setTimeout(() => {
       setIsThankModalOpen(true);
-    }, 250);
+    }, 200);
   };
 
   const handleCloseModal = () => {

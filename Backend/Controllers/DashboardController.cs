@@ -31,12 +31,14 @@ public class DashboardController : ControllerBase
 
     /// <summary>
     /// 1. ดึงภาพรวมคะแนน CSAT และจำนวนโหวต (Summary Cards)
-    /// GET /api/dashboard/overview?startDate=2026-08-01&endDate=2026-08-31
+    /// GET /api/dashboard/overview?timeFilter=today&brandId=...
     /// </summary>
     [HttpGet("overview")]
     public async Task<ActionResult<ApiResponse<DashboardOverviewDto>>> GetOverview(
         [FromQuery] DateTime? startDate, 
-        [FromQuery] DateTime? endDate)
+        [FromQuery] DateTime? endDate,
+        [FromQuery] string? timeFilter,
+        [FromQuery] Guid? brandId)
     {
         var user = await GetCurrentAuthenticatedUserAsync();
         if (user == null)
@@ -44,19 +46,22 @@ public class DashboardController : ControllerBase
             return Unauthorized(ApiResponse<DashboardOverviewDto>.Fail("ไม่พบข้อมูลผู้ใช้งาน"));
         }
 
-        var result = await _dashboardService.GetOverviewAsync(user, startDate, endDate);
+        var (start, end) = ResolveDateRange(timeFilter, startDate, endDate);
+        var result = await _dashboardService.GetOverviewAsync(user, start, end, brandId);
         return Ok(result);
     }
 
     /// <summary>
-    /// 2. ดึงข้อมูลกราฟแนวโน้ม CSAT รายวัน/รายสัปดาห์
-    /// GET /api/dashboard/trends?interval=daily&startDate=2026-08-01&endDate=2026-08-31
+    /// 2. ดึงข้อมูลกราฟแนวโน้ม CSAT รายชั่วโมง/รายวัน/รายสัปดาห์
+    /// GET /api/dashboard/trends?interval=daily&timeFilter=today&brandId=...
     /// </summary>
     [HttpGet("trends")]
     public async Task<ActionResult<ApiResponse<List<TrendChartDto>>>> GetTrends(
         [FromQuery] string interval = "daily",
         [FromQuery] DateTime? startDate = null,
-        [FromQuery] DateTime? endDate = null)
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] string? timeFilter = null,
+        [FromQuery] Guid? brandId = null)
     {
         var user = await GetCurrentAuthenticatedUserAsync();
         if (user == null)
@@ -64,19 +69,22 @@ public class DashboardController : ControllerBase
             return Unauthorized(ApiResponse<List<TrendChartDto>>.Fail("ไม่พบข้อมูลผู้ใช้งาน"));
         }
 
-        var result = await _dashboardService.GetTrendChartAsync(user, interval, startDate, endDate);
+        var (start, end) = ResolveDateRange(timeFilter, startDate, endDate);
+        var result = await _dashboardService.GetTrendChartAsync(user, interval, start, end, brandId);
         return Ok(result);
     }
 
     /// <summary>
-    /// 3. ดึงข้อมูลตาราง Grid 5 ระดับ (tierType: "brand", "branch")
-    /// GET /api/dashboard/grid?tierType=branch&startDate=2026-08-01&endDate=2026-08-31
+    /// 3. ดึงข้อมูลตาราง Grid 5 ระดับ (tierType: "brand", "region", "province", "branch", "kiosk")
+    /// GET /api/dashboard/grid?tierType=branch&timeFilter=today&brandId=...
     /// </summary>
     [HttpGet("grid")]
     public async Task<ActionResult<ApiResponse<List<TierGridRowDto>>>> GetTierGrid(
         [FromQuery] string tierType = "branch",
         [FromQuery] DateTime? startDate = null,
-        [FromQuery] DateTime? endDate = null)
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] string? timeFilter = null,
+        [FromQuery] Guid? brandId = null)
     {
         var user = await GetCurrentAuthenticatedUserAsync();
         if (user == null)
@@ -84,16 +92,19 @@ public class DashboardController : ControllerBase
             return Unauthorized(ApiResponse<List<TierGridRowDto>>.Fail("ไม่พบข้อมูลผู้ใช้งาน"));
         }
 
-        var result = await _dashboardService.GetTierGridAsync(user, tierType, startDate, endDate);
+        var (start, end) = ResolveDateRange(timeFilter, startDate, endDate);
+        var result = await _dashboardService.GetTierGridAsync(user, tierType, start, end, brandId);
         return Ok(result);
     }
 
     /// <summary>
     /// 4. ดึงฟีดผลโหวตสด Real-time จากตู้ Kiosk หน้าร้าน
-    /// GET /api/dashboard/live-feed?limit=20
+    /// GET /api/dashboard/live-feed?limit=20&brandId=...
     /// </summary>
     [HttpGet("live-feed")]
-    public async Task<ActionResult<ApiResponse<List<LiveVoteFeedDto>>>> GetLiveFeed([FromQuery] int limit = 20)
+    public async Task<ActionResult<ApiResponse<List<LiveVoteFeedDto>>>> GetLiveFeed(
+        [FromQuery] int limit = 20,
+        [FromQuery] Guid? brandId = null)
     {
         var user = await GetCurrentAuthenticatedUserAsync();
         if (user == null)
@@ -101,8 +112,28 @@ public class DashboardController : ControllerBase
             return Unauthorized(ApiResponse<List<LiveVoteFeedDto>>.Fail("ไม่พบข้อมูลผู้ใช้งาน"));
         }
 
-        var result = await _dashboardService.GetLiveVotesAsync(user, limit);
+        var result = await _dashboardService.GetLiveVotesAsync(user, limit, brandId);
         return Ok(result);
+    }
+
+    private static (DateTime start, DateTime end) ResolveDateRange(string? timeFilter, DateTime? startDate, DateTime? endDate)
+    {
+        var now = DateTime.UtcNow;
+        if (startDate.HasValue && endDate.HasValue)
+        {
+            return (startDate.Value, endDate.Value);
+        }
+
+        return timeFilter?.ToLower() switch
+        {
+            "today" => (now.Date, now),
+            "yesterday" => (now.Date.AddDays(-1), now.Date.AddTicks(-1)),
+            "week" => (now.Date.AddDays(-7), now),
+            "month" => (now.Date.AddDays(-30), now),
+            "quarter" => (now.Date.AddDays(-90), now),
+            "year" => (now.Date.AddDays(-365), now),
+            _ => (startDate ?? now.Date.AddDays(-30), endDate ?? now)
+        };
     }
 
     /// <summary>

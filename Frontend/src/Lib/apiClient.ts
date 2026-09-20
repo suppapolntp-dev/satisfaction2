@@ -62,15 +62,29 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
             credentials: "include", // ส่ง cookies ข้ามไปยัง Backend
         });
 
-        const data: ApiResponse<T> = await response.json();
-
-        // จัดการกรณี 401 Unauthorized (Token หมดอายุ)
+        // จัดการกรณี 401 Unauthorized (Token หมดอายุ หรือยังไม่ได้ Login)
         if (response.status === 401) {
             clearAuthCookies();
             if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
                 window.location.href = "/login";
             }
+            return {
+                success: false,
+                message: "Unauthorized",
+                data: null as any,
+                errors: ["Unauthorized"],
+                timestamp: new Date().toISOString(),
+            };
         }
+
+        const text = await response.text();
+        const data: ApiResponse<T> = text ? JSON.parse(text) : {
+            success: response.ok,
+            message: response.statusText,
+            data: null as any,
+            errors: null,
+            timestamp: new Date().toISOString(),
+        };
 
         return data;
     } catch (error: any) {

@@ -9,22 +9,21 @@ import {
 
 export interface DashboardOverviewApiDto {
   totalVotes: number;
-  satisfiedVotes: number;
-  neutralVotes: number;
-  unsatisfiedVotes: number;
+  positiveCount: number;
+  neutralCount: number;
+  negativeCount: number;
   csatScore: number;
-  activeBranchesCount: number;
-  activeKiosksCount: number;
+  activeBranches: number;
+  activeKiosks: number;
+  comparisonChange?: number;
 }
 
 export interface TrendChartApiDto {
-  date: string;
-  hour: number;
-  timeLabel: string;
+  periodLabel: string;
+  positive: number;
+  neutral: number;
+  negative: number;
   totalVotes: number;
-  satisfiedCount: number;
-  neutralCount: number;
-  unsatisfiedCount: number;
   csatScore: number;
 }
 
@@ -33,11 +32,12 @@ export interface TierGridRowApiDto {
   code: string;
   name: string;
   subTitle: string;
+  positive: number;
+  neutral: number;
+  negative: number;
   totalVotes: number;
-  satisfiedCount: number;
-  neutralCount: number;
-  unsatisfiedCount: number;
   csatScore: number;
+  kioskCount?: number;
   status: string;
 }
 
@@ -45,23 +45,36 @@ export interface LiveVoteFeedApiDto {
   id: string;
   branchName: string;
   brandName: string;
-  kioskCode?: string;
+  kioskName?: string;
   sentiment: number; // 1 = Positive, 2 = Neutral, 3 = Negative
-  sentimentName: string;
   votedAt: string;
-  clientIp?: string;
 }
 
 export const dashboardService = {
-  // 1. ดึงข้อมูลภาพรวมแดชบอร์ดทั้งหมด
-  async getDashboardData(timeFilter: string = "today"): Promise<DashboardDataResponse> {
+  // 1. ดึงข้อมูลภาพรวมแดชบอร์ดทั้งหมด (รองรับแยกแบรนด์ brandId และเวลา timeFilter)
+  async getDashboardData(timeFilter: string = "today", brandId?: string): Promise<DashboardDataResponse> {
     try {
-      // ดึง 4 Endpoints ขนานกันเพื่อความรวดเร็วสูงสุด
-      const [overviewRes, trendsRes, gridRes, feedRes] = await Promise.allSettled([
-        apiClient.get<DashboardOverviewApiDto>("/dashboard/overview"),
-        apiClient.get<TrendChartApiDto[]>("/dashboard/trends?interval=daily"),
-        apiClient.get<TierGridRowApiDto[]>("/dashboard/grid?tierType=branch"),
-        apiClient.get<LiveVoteFeedApiDto[]>("/dashboard/live-feed?limit=20"),
+      const brandParam = brandId && brandId !== "ALL" ? `&brandId=${encodeURIComponent(brandId)}` : "";
+      
+      // ดึง Overview, Trends, Grid แยกตาม Brand, Region, Province, Branch, Kiosk ขนานกัน
+      const [
+        overviewRes, 
+        trendsRes, 
+        brandGridRes, 
+        regionGridRes, 
+        provinceGridRes, 
+        branchGridRes, 
+        kioskGridRes, 
+        feedRes
+      ] = await Promise.allSettled([
+        apiClient.get<DashboardOverviewApiDto>(`/dashboard/overview?timeFilter=${timeFilter}${brandParam}`),
+        apiClient.get<TrendChartApiDto[]>(`/dashboard/trends?interval=hourly&timeFilter=${timeFilter}${brandParam}`),
+        apiClient.get<TierGridRowApiDto[]>(`/dashboard/grid?tierType=brand${brandParam}&timeFilter=${timeFilter}`),
+        apiClient.get<TierGridRowApiDto[]>(`/dashboard/grid?tierType=region${brandParam}&timeFilter=${timeFilter}`),
+        apiClient.get<TierGridRowApiDto[]>(`/dashboard/grid?tierType=province${brandParam}&timeFilter=${timeFilter}`),
+        apiClient.get<TierGridRowApiDto[]>(`/dashboard/grid?tierType=branch${brandParam}&timeFilter=${timeFilter}`),
+        apiClient.get<TierGridRowApiDto[]>(`/dashboard/grid?tierType=kiosk${brandParam}&timeFilter=${timeFilter}`),
+        apiClient.get<LiveVoteFeedApiDto[]>(`/dashboard/live-feed?limit=20${brandParam}`),
       ]);
 
       // แปลง Overview Stats
@@ -79,15 +92,19 @@ export const dashboardService = {
       if (overviewRes.status === "fulfilled" && overviewRes.value.success && overviewRes.value.data) {
         const o = overviewRes.value.data;
         const total = o.totalVotes || 0;
+        const pos = o.positiveCount || 0;
+        const neu = o.neutralCount || 0;
+        const neg = o.negativeCount || 0;
+
         aggregatedStats = {
-          satisfiedTotal: o.satisfiedVotes,
-          neutralTotal: o.neutralVotes,
-          unsatisfiedTotal: o.unsatisfiedVotes,
+          satisfiedTotal: pos,
+          neutralTotal: neu,
+          unsatisfiedTotal: neg,
           totalVotes: total,
-          averageCsatRate: o.csatScore,
-          satPercent: total > 0 ? `${((o.satisfiedVotes / total) * 100).toFixed(1)}%` : "0%",
-          neuPercent: total > 0 ? `${((o.neutralVotes / total) * 100).toFixed(1)}%` : "0%",
-          unsPercent: total > 0 ? `${((o.unsatisfiedVotes / total) * 100).toFixed(1)}%` : "0%",
+          averageCsatRate: o.csatScore || 0,
+          satPercent: total > 0 ? `${((pos / total) * 100).toFixed(1)}%` : "0%",
+          neuPercent: total > 0 ? `${((neu / total) * 100).toFixed(1)}%` : "0%",
+          unsPercent: total > 0 ? `${((neg / total) * 100).toFixed(1)}%` : "0%",
         };
       }
 
@@ -95,56 +112,70 @@ export const dashboardService = {
       let hourlyTrends: DashboardHourlyTrendPoint[] = [];
       if (trendsRes.status === "fulfilled" && trendsRes.value.success && Array.isArray(trendsRes.value.data)) {
         hourlyTrends = trendsRes.value.data.map((t) => ({
-          hourLabel: t.timeLabel,
-          timeLabel: t.timeLabel,
+          hourLabel: t.periodLabel,
+          timeLabel: t.periodLabel,
           satisfiedRate: t.csatScore,
           csatPercentage: t.csatScore,
           totalVotes: t.totalVotes,
           totalSurveys: t.totalVotes,
-          satisfiedCount: t.satisfiedCount,
-          neutralCount: t.neutralCount,
-          unsatisfiedCount: t.unsatisfiedCount,
+          satisfiedCount: t.positive,
+          neutralCount: t.neutral,
+          unsatisfiedCount: t.negative,
         }));
       }
 
-      // แปลง Tier Grid Rows
-      let provincialBranches: PerformanceTableRow[] = [];
-      if (gridRes.status === "fulfilled" && gridRes.value.success && Array.isArray(gridRes.value.data)) {
-        provincialBranches = gridRes.value.data.map((g) => ({
-          id: g.id,
-          name: g.name,
-          subLabel: g.subTitle,
-          code: g.code,
-          csatRate: g.csatScore,
-          totalVotes: g.totalVotes,
-          satisfiedCount: g.satisfiedCount,
-          neutralCount: g.neutralCount,
-          unsatisfiedCount: g.unsatisfiedCount,
-          status: g.status,
-        }));
-      }
+      const mapGridRows = (
+        res: PromiseSettledResult<{ success: boolean; data: TierGridRowApiDto[] }>,
+        defaultSub: string = ""
+      ): PerformanceTableRow[] => {
+        if (res.status === "fulfilled" && res.value.success && Array.isArray(res.value.data)) {
+          return res.value.data.map((g) => ({
+            id: g.id,
+            name: g.name,
+            subLabel: g.subTitle || defaultSub,
+            code: g.code,
+            csatRate: g.csatScore,
+            totalVotes: g.totalVotes,
+            satisfiedCount: g.positive,
+            neutralCount: g.neutral,
+            unsatisfiedCount: g.negative,
+            status: g.status,
+          }));
+        }
+        return [];
+      };
+
+      const superAdminBrands = mapGridRows(brandGridRes, "Brand");
+      const brandRegions = mapGridRows(regionGridRes, "Region");
+      const regionalProvinces = mapGridRows(provinceGridRes, "Province");
+      const provincialBranches = mapGridRows(branchGridRes, "Branch");
+      const branchKiosks = mapGridRows(kioskGridRes, "Kiosk");
 
       // แปลง Live Votes
       let liveVotes: LiveVoteItem[] = [];
       if (feedRes.status === "fulfilled" && feedRes.value.success && Array.isArray(feedRes.value.data)) {
-        liveVotes = feedRes.value.data.map((f) => ({
-          id: f.id,
-          time: new Date(f.votedAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
-          branchName: f.branchName,
-          brandName: f.brandName,
-          kioskCode: f.kioskCode,
-          sentiment: f.sentiment === 1 ? "satisfied" : f.sentiment === 2 ? "neutral" : "unsatisfied",
-          scoreText: f.sentimentName,
-        }));
+        liveVotes = feedRes.value.data.map((f) => {
+          const sentimentType = f.sentiment === 1 ? "satisfied" : f.sentiment === 2 ? "neutral" : "unsatisfied";
+          const sentimentLabel = f.sentiment === 1 ? "ดี (Satisfied)" : f.sentiment === 2 ? "ปานกลาง (Neutral)" : "แย่ (Unsatisfied)";
+          return {
+            id: f.id,
+            time: f.votedAt ? new Date(f.votedAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "",
+            branchName: f.branchName || "",
+            brandName: f.brandName || "",
+            kioskCode: f.kioskName || "ตู้ Kiosk หน้าร้าน",
+            sentiment: sentimentType,
+            scoreText: sentimentLabel,
+          };
+        });
       }
 
       return {
         aggregatedStats,
-        superAdminBrands: provincialBranches,
-        brandRegions: provincialBranches,
-        regionalProvinces: provincialBranches,
+        superAdminBrands: superAdminBrands.length > 0 ? superAdminBrands : provincialBranches,
+        brandRegions: brandRegions.length > 0 ? brandRegions : provincialBranches,
+        regionalProvinces: regionalProvinces.length > 0 ? regionalProvinces : provincialBranches,
         provincialBranches,
-        branchKiosks: provincialBranches,
+        branchKiosks: branchKiosks.length > 0 ? branchKiosks : provincialBranches,
         hourlyTrends,
         liveVotes,
       };

@@ -27,23 +27,74 @@ public class SatisfactionController : ControllerBase
     }
 
     /// <summary>
+    /// <summary>
     /// 1. รับผลการกดโหวตจากลูกค้าหน้าร้าน (เปิดเป็น Public ให้ตู้ Kiosk ยิงเข้ามาได้รวดเร็ว)
     /// POST /api/satisfaction/vote
     /// </summary>
     [HttpPost("vote")]
-    public async Task<ActionResult<ApiResponse>> SubmitVote([FromBody] SubmitVoteRequest request)
+    public async Task<ActionResult<ApiResponse<SubmitVoteResponse>>> SubmitVote([FromBody] SubmitVoteRequest request)
     {
-        if (request.BranchId == Guid.Empty || request.BrandId == Guid.Empty)
+        // 1. ตรวจหาจาก KioskCode หากส่งมา
+        if ((!request.KioskId.HasValue || request.KioskId == Guid.Empty) && !string.IsNullOrWhiteSpace(request.KioskCode))
         {
-            return BadRequest(ApiResponse.Fail("กรุณาระบุ BranchId และ BrandId"));
+            var kiosk = await _context.Kiosks
+                .Include(k => k.Branch)
+                .ThenInclude(b => b!.BranchBrands)
+                .FirstOrDefaultAsync(k => k.KioskCode == request.KioskCode);
+
+            if (kiosk != null)
+            {
+                request.KioskId = kiosk.Id;
+                request.BranchId ??= kiosk.BranchId;
+                request.BrandId ??= kiosk.Branch?.BranchBrands.FirstOrDefault()?.BrandId;
+            }
+        }
+
+        // 2. ตรวจหาจาก BranchCode หากส่งมา
+        if ((!request.BranchId.HasValue || request.BranchId == Guid.Empty) && !string.IsNullOrWhiteSpace(request.BranchCode))
+        {
+            var branch = await _context.Branches
+                .Include(b => b.BranchBrands)
+                .Include(b => b.Kiosks)
+                .FirstOrDefaultAsync(b => b.BranchCode == request.BranchCode);
+
+            if (branch != null)
+            {
+                request.BranchId = branch.Id;
+                request.BrandId ??= branch.BranchBrands.FirstOrDefault()?.BrandId;
+                request.KioskId ??= branch.Kiosks.FirstOrDefault()?.Id;
+            }
+        }
+
+        // 3. Fallback: หากยังไม่มี BranchId หรือ BrandId ให้เลือกสาขาและตู้หลักในระบบอัตโนมัติ
+        if (!request.BranchId.HasValue || request.BranchId == Guid.Empty || 
+            !request.BrandId.HasValue || request.BrandId == Guid.Empty)
+        {
+            var defaultKiosk = await _context.Kiosks
+                .Include(k => k.Branch)
+                .ThenInclude(b => b!.BranchBrands)
+                .FirstOrDefaultAsync();
+
+            if (defaultKiosk != null && defaultKiosk.Branch != null)
+            {
+                request.KioskId ??= defaultKiosk.Id;
+                request.BranchId ??= defaultKiosk.BranchId;
+                request.BrandId ??= defaultKiosk.Branch.BranchBrands.FirstOrDefault()?.BrandId;
+            }
+        }
+
+        if (!request.BranchId.HasValue || request.BranchId == Guid.Empty || 
+            !request.BrandId.HasValue || request.BrandId == Guid.Empty)
+        {
+            return BadRequest(ApiResponse<SubmitVoteResponse>.Fail("กรุณาระบุ BranchId และ BrandId"));
         }
 
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var vote = new SatisfactionVote
         {
-            BranchId = request.BranchId,
-            BrandId = request.BrandId,
+            BranchId = request.BranchId.Value,
+            BrandId = request.BrandId.Value,
             KioskId = request.KioskId,
             Sentiment = request.Sentiment,
             VotedAt = DateTime.UtcNow,
@@ -65,10 +116,15 @@ public class SatisfactionController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("🗳️ [CSAT Vote Recorded] Branch: {BranchId}, Brand: {BrandId}, Sentiment: {Sentiment}",
-            request.BranchId, request.BrandId, request.Sentiment);
+        _logger.LogInformation("🗳️ [CSAT Vote Recorded] VoteId: {VoteId}, Branch: {BranchId}, Brand: {BrandId}, Sentiment: {Sentiment}",
+            vote.Id, request.BranchId, request.BrandId, request.Sentiment);
 
-        return Ok(ApiResponse.Ok("บันทึกผลการประเมินสำเร็จ ขอบคุณที่ใช้บริการ"));
+        return Ok(ApiResponse<SubmitVoteResponse>.Ok(new SubmitVoteResponse
+        {
+            VoteId = vote.Id,
+            Status = "Recorded",
+            Message = "บันทึกผลการประเมินสำเร็จ ขอบคุณที่ใช้บริการ"
+        }));
     }
 
     /// <summary>
