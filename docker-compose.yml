@@ -19,7 +19,7 @@ services:
     container_name: satisfaction_pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@satisfaction.local
+      PGADMIN_DEFAULT_EMAIL: admin@satisfaction.com
       PGADMIN_DEFAULT_PASSWORD: Admin@123456
     ports:
       - "5050:80"
