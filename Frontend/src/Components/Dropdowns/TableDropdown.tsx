@@ -13,6 +13,7 @@ export interface DropdownActionItem {
 }
 
 interface TableDropdownProps {
+  
   actions: DropdownActionItem[];
 }
 
