@@ -2,6 +2,8 @@
 
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
+import MetricCard from "@/Components/Cards/MetricCard";
+import { useMetricCards } from "@/Components/Cards/MetricCard/useMetricCards";
 import { useDashboardScreen } from "./useDashboardScreen";
 
 export default function DashboardScreen() {
@@ -11,6 +13,8 @@ export default function DashboardScreen() {
     handleTabChange,
     handleFilterClick,
   } = useDashboardScreen();
+
+  const { metrics } = useMetricCards();
 
   return (
     <div className="space-y-6">
@@ -47,28 +51,11 @@ export default function DashboardScreen() {
         }}
       />
 
-      {/* Metric Cards Shell */}
+      {/* ─── 2. REUSABLE METRIC CARDS GRID ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
-          <span className="text-xs font-medium text-slate-500">Total Votes Today</span>
-          <div className="mt-2 text-2xl font-bold text-slate-900">1,248</div>
-          <span className="text-xs text-emerald-600 font-medium">+12.4% vs yesterday</span>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
-          <span className="text-xs font-medium text-slate-500">Satisfaction Score (CSAT)</span>
-          <div className="mt-2 text-2xl font-bold text-emerald-700">94.2%</div>
-          <span className="text-xs text-emerald-600 font-medium">+2.1% target exceeded</span>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
-          <span className="text-xs font-medium text-slate-500">Active Kiosks</span>
-          <div className="mt-2 text-2xl font-bold text-slate-900">18 / 18</div>
-          <span className="text-xs text-slate-500">100% online & healthy</span>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
-          <span className="text-xs font-medium text-slate-500">Avg. Response Time</span>
-          <div className="mt-2 text-2xl font-bold text-slate-900">1.8s</div>
-          <span className="text-xs text-slate-500">Sub-second local sync</span>
-        </div>
+        {metrics.map((item) => (
+          <MetricCard key={item.id || item.label} item={item} />
+        ))}
       </div>
 
       {/* Main Canvas Placeholder */}
