@@ -1,36 +1,234 @@
 "use client";
 
-import React from "react";
-import Sidebar from "@/Components/Sidebars/sidebar";
-import TopNavBar from "@/Components/Navigations/TopNavBar";
+import React, { useState, useEffect, useRef, useMemo, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
+import Sidebar, { DEFAULT_NAV_GROUPS, NavGroup, NavItem } from "@/Components/Sidebars/Sidebar";
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
 }
 
 function AdminLayoutInner({ children }: AdminLayoutShellProps) {
-  const { isSidebarCollapsed } = useSidebar();
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const { openMobile } = useSidebar();
+
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
+  const paletteInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: Ctrl+K / Cmd+K to open, Escape to close
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const isMeta = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+
+      if (isMeta && key === "k") {
+        event.preventDefault();
+        setIsPaletteOpen(true);
+        setPaletteQuery("");
+        setTimeout(() => paletteInputRef.current?.focus(), 50);
+      } else if (key === "escape") {
+        setIsPaletteOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Quick command actions
+  const allPaletteActions = useMemo(() => {
+    const list: { label: string; route: string; shortcut: string }[] = [];
+    DEFAULT_NAV_GROUPS.forEach((g: NavGroup) => {
+      g.items.forEach((item: NavItem) => {
+        list.push({
+          label: `${g.groupName} / ${item.label}`,
+          route: item.route,
+          shortcut: item.id.slice(0, 1).toUpperCase(),
+        });
+      });
+    });
+    list.push({ label: "Developer Playground", route: "/test", shortcut: "T" });
+    list.push({ label: "Customer Kiosk Screen", route: "/satisfaction", shortcut: "K" });
+    return list;
+  }, []);
+
+  const filteredPaletteActions = useMemo(() => {
+    const q = paletteQuery.trim().toLowerCase();
+    if (!q) return allPaletteActions;
+    return allPaletteActions.filter((a) => a.label.toLowerCase().includes(q));
+  }, [allPaletteActions, paletteQuery]);
+
+  const handleNavigate = (route: string) => {
+    setIsPaletteOpen(false);
+    startTransition(() => {
+      router.push(route);
+    });
+  };
+
+  const handleOpenSearch = () => {
+    setIsPaletteOpen(true);
+    setPaletteQuery("");
+    setTimeout(() => paletteInputRef.current?.focus(), 50);
+  };
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-50 text-slate-900 antialiased font-[var(--font-inter)]">
-      {/* ─── 1. Collapsible Fixed Sidebar Navigation ─── */}
+    <div className="min-h-screen flex bg-[#E8F1EB] text-slate-900 antialiased font-[var(--font-inter)]">
+      {/* ─── 1. Floating Reusable Neo-Mint Sidebar ─── */}
       <Sidebar />
 
-      {/* ─── 2. Responsive Main Workspace (ขยายพื้นที่ตาม Sidebar อัตโนมัติ) ─── */}
-      <div 
-        className={`flex flex-col flex-1 min-w-0 transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? "pl-[76px]" : "pl-[260px]"
-        }`}
-      >
-        {/* Sticky Top Navigation Bar */}
-        <TopNavBar />
+      {/* ─── 2. Responsive Main Workspace ─── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Floating Bento Top App Bar */}
+        <header className="sticky top-3 z-30 mx-3 mt-3 h-16 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] px-4 sm:px-6 flex items-center justify-between gap-3 transition-all">
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Mobile Hamburger Toggle */}
+            <button
+              type="button"
+              onClick={openMobile}
+              className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+              aria-label="Open mobile navigation"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
 
-        {/* Dynamic Page Content Shell */}
-        <main className="flex-1 w-full p-6 max-w-[1600px] mx-auto">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+              <span className="text-slate-400 hidden sm:inline">Satisfaction</span>
+              <svg className="w-3.5 h-3.5 text-slate-300 hidden sm:inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+              <span className="text-slate-900 font-bold">Dashboard &amp; Operations</span>
+            </div>
+          </div>
+
+          {/* Center: Search Trigger in Navbar */}
+          <div className="flex-1 max-w-md mx-2 sm:mx-4">
+            <button
+              type="button"
+              onClick={handleOpenSearch}
+              className="hidden sm:flex items-center gap-2.5 w-full h-10 px-3.5 bg-slate-100/90 hover:bg-slate-200/70 rounded-full text-slate-500 hover:text-slate-900 transition-colors shadow-[inset_0_0_0_1px_rgba(15,23,42,0.05)] text-xs font-medium cursor-pointer"
+            >
+              <svg className="w-4 h-4 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <span className="truncate">Search pages, actions, modules...</span>
+              <span className="ml-auto flex items-center gap-1">
+                <kbd className="font-sans text-[10px] font-medium text-slate-400 border border-slate-200/90 bg-white/90 rounded px-1.5 py-0.5 shadow-2xs">
+                  Ctrl K
+                </kbd>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenSearch}
+              className="sm:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+              aria-label="Search"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Right Utility Actions */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <Link
+              href="/test"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200/90 bg-white text-slate-700 hover:text-slate-900 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-2xs"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+              <span className="hidden md:inline">Dev Playground</span>
+            </Link>
+
+            <Link
+              href="/satisfaction"
+              target="_blank"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-sm transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              <span className="hidden sm:inline">Open Kiosk</span>
+            </Link>
+          </div>
+        </header>
+
+        {/* Dynamic Nested Content Outlet */}
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
+
+      {/* Global Command Palette Overlay */}
+      {isPaletteOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[14vh] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setIsPaletteOpen(false)}
+        >
+          <div
+            className="w-[min(540px,92vw)] bg-white border border-slate-200 rounded-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.35)] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative border-b border-slate-200 px-4 flex items-center">
+              <svg className="w-5 h-5 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                ref={paletteInputRef}
+                type="text"
+                value={paletteQuery}
+                onChange={(e) => setPaletteQuery(e.target.value)}
+                placeholder="Search pages and quick actions..."
+                className="w-full h-14 bg-transparent outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
+              />
+              {paletteQuery && (
+                <button
+                  type="button"
+                  onClick={() => setPaletteQuery("")}
+                  className="text-xs text-slate-400 hover:text-slate-600 px-2 py-1 rounded"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="max-h-72 overflow-y-auto p-2 space-y-1">
+              {filteredPaletteActions.map((action) => (
+                <div
+                  key={action.label}
+                  onClick={() => handleNavigate(action.route)}
+                  className="flex items-center justify-between h-10 px-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
+                >
+                  <span>{action.label}</span>
+                  <kbd className="text-[10px] text-slate-400 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-mono">
+                    {action.shortcut}
+                  </kbd>
+                </div>
+              ))}
+              {filteredPaletteActions.length === 0 && (
+                <div className="p-4 text-center text-xs text-slate-400">No results found</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

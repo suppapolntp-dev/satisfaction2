@@ -1,32 +1,61 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-// ==========================================================================
-// ─── 1. INTERFACES (นิยามประเภทข้อมูลสำหรับ Sidebar State)
-// ==========================================================================
 export interface SidebarContextType {
   isSidebarCollapsed: boolean;
   toggleSidebarCollapse: () => void;
   setSidebarCollapsed: (isCollapsed: boolean) => void;
+  isMobileOpen: boolean;
+  openMobile: () => void;
+  closeMobile: () => void;
+  toggleMobile: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-// ==========================================================================
-// ─── 2. PROVIDER COMPONENT
-// ==========================================================================
+const STORAGE_KEY = "satisfaction_sidebar_collapsed";
+
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
 
-  // ฟังก์ชันสลับสถานะการย่อ/ขยาย
-  const toggleSidebarCollapse = () => {
-    setIsSidebarCollapsed((previousState) => !previousState);
-  };
+  // Restore state from localStorage on client mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved !== null) {
+        setIsSidebarCollapsed(saved === "true");
+      }
+    } catch {
+      // ignore storage access errors
+    }
+  }, []);
 
-  const setSidebarCollapsed = (isCollapsed: boolean) => {
+  const toggleSidebarCollapse = useCallback(() => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_KEY, String(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }, []);
+
+  const setSidebarCollapsed = useCallback((isCollapsed: boolean) => {
     setIsSidebarCollapsed(isCollapsed);
-  };
+    try {
+      localStorage.setItem(STORAGE_KEY, String(isCollapsed));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const openMobile = useCallback(() => setIsMobileOpen(true), []);
+  const closeMobile = useCallback(() => setIsMobileOpen(false), []);
+  const toggleMobile = useCallback(() => setIsMobileOpen((prev) => !prev), []);
 
   return (
     <SidebarContext.Provider
@@ -34,6 +63,10 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         isSidebarCollapsed,
         toggleSidebarCollapse,
         setSidebarCollapsed,
+        isMobileOpen,
+        openMobile,
+        closeMobile,
+        toggleMobile,
       }}
     >
       {children}
@@ -41,9 +74,6 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ==========================================================================
-// ─── 3. CUSTOM HOOK สำหรับเรียกใช้งาน
-// ==========================================================================
 export function useSidebar(): SidebarContextType {
   const context = useContext(SidebarContext);
   if (!context) {
@@ -51,4 +81,3 @@ export function useSidebar(): SidebarContextType {
   }
   return context;
 }
-
