@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useTransition } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useSidebar } from "@/Context/SidebarContext";
+import { useSidebarNav } from "./useSidebarNav";
+import { useProfileMenu } from "./useProfileMenu";
 
 // ==========================================================================
 // ─── TYPES & NAV CONFIGURATION (Neo-Mint Design System)
@@ -137,7 +137,7 @@ function NavIcon({
           ? "w-5 h-5 text-current"
           : `w-8 h-8 rounded-xl ${
               isActive
-                ? "bg-[#22C55E] text-white shadow-[0_1px_3px_rgba(34,197,94,0.28)]"
+                ? "bg-[var(--primary-container)] text-white shadow-[0_1px_3px_rgba(37,99,235,0.28)]"
                 : "text-slate-500 group-hover:text-slate-900"
             }`
       }`}
@@ -202,30 +202,21 @@ function NavIcon({
 // ==========================================================================
 
 export default function Sidebar() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [, startTransition] = useTransition();
-
   const {
     isSidebarCollapsed,
     toggleSidebarCollapse,
     isMobileOpen,
     closeMobile,
-  } = useSidebar();
+    handleNavigate,
+    isItemActive,
+  } = useSidebarNav();
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  // Close profile on click outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const {
+    isProfileOpen,
+    profileRef,
+    toggleProfile,
+    closeProfile,
+  } = useProfileMenu();
 
   // Keyboard shortcut (Ctrl+B for sidebar toggle, Escape for profile)
   useEffect(() => {
@@ -237,28 +228,13 @@ export default function Sidebar() {
         event.preventDefault();
         toggleSidebarCollapse();
       } else if (key === "escape") {
-        setIsProfileOpen(false);
+        closeProfile();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebarCollapse]);
-
-  const handleNavigate = (route: string) => {
-    setIsProfileOpen(false);
-    closeMobile();
-    startTransition(() => {
-      router.push(route);
-    });
-  };
-
-  const isItemActive = (route: string, exact?: boolean) => {
-    if (exact || route === "/dashboard") {
-      return pathname === route;
-    }
-    return pathname === route || (pathname ? pathname.startsWith(`${route}/`) : false);
-  };
+  }, [toggleSidebarCollapse, closeProfile]);
 
   return (
     <>
@@ -323,7 +299,7 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={toggleSidebarCollapse}
-                className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#22C55E] to-[#16A34A] text-white flex items-center justify-center font-black shadow-sm shadow-emerald-500/25 hover:shadow-md hover:scale-[1.03] transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+                className="w-11 h-11 rounded-2xl bg-[var(--primary-container)] text-white flex items-center justify-center font-black shadow-sm shadow-blue-500/25 hover:shadow-md hover:scale-[1.03] transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-container)] cursor-pointer"
                 data-tip="Expand sidebar (Ctrl+B)"
                 aria-label="Expand sidebar"
               >
@@ -336,9 +312,9 @@ export default function Sidebar() {
                 <Link
                   href="/dashboard"
                   onClick={closeMobile}
-                  className="flex items-center gap-2.5 min-w-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded-xl px-1 cursor-pointer"
+                  className="flex items-center gap-2.5 min-w-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-container)] rounded-xl px-1 cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#22C55E] to-[#16A34A] text-white flex items-center justify-center font-black shrink-0 shadow-sm shadow-emerald-500/25 group-hover:scale-105 transition-transform">
+                  <div className="w-8 h-8 rounded-xl bg-[var(--primary-container)] text-white flex items-center justify-center font-black shrink-0 shadow-sm shadow-blue-500/25 group-hover:scale-105 transition-transform">
                     <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                     </svg>
@@ -358,7 +334,7 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={toggleSidebarCollapse}
-                  className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shrink-0 cursor-pointer"
+                  className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-container)] shrink-0 cursor-pointer"
                   aria-label="Collapse sidebar (Ctrl+B)"
                   title="Collapse sidebar (Ctrl+B)"
                 >
@@ -413,7 +389,7 @@ export default function Sidebar() {
                           data-tip={item.label}
                           className={`w-11 h-11 mx-auto rounded-2xl flex items-center justify-center transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 cursor-pointer ${
                             active
-                              ? "bg-[#D7F4DF] text-[#006e2f] shadow-[0_1px_3px_rgba(0,110,47,0.1),inset_0_0_0_1px_rgba(34,197,94,0.35)]"
+                              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] shadow-[0_1px_3px_rgba(37,99,235,0.1),inset_0_0_0_1px_rgba(37,99,235,0.35)]"
                               : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/80"
                           }`}
                         >
@@ -434,7 +410,7 @@ export default function Sidebar() {
                         onClick={closeMobile}
                         className={`group w-full h-10 px-1.5 rounded-xl flex items-center gap-2.5 text-xs font-medium transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 cursor-pointer ${
                           active
-                            ? "bg-[#D7F4DF]/70 text-[#006e2f] shadow-[inset_0_0_0_1px_rgba(34,197,94,0.3)] font-semibold"
+                            ? "bg-[var(--accent-bg)]/70 text-[var(--primary-container)] shadow-[inset_0_0_0_1px_rgba(37,99,235,0.3)] font-semibold"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                         }`}
                       >
@@ -478,10 +454,7 @@ export default function Sidebar() {
               {/* Profile Button Trigger in Rail Mode */}
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsProfileOpen((prev) => !prev);
-                }}
+                onClick={toggleProfile}
                 className="w-11 h-11 mx-auto rounded-2xl flex items-center justify-center relative hover:bg-slate-100/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
                 data-tip="Guy (SuperAdmin)"
                 aria-haspopup="menu"
@@ -496,16 +469,13 @@ export default function Sidebar() {
             /* Profile Button Trigger in Expanded Mode */
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsProfileOpen((prev) => !prev);
-              }}
+              onClick={toggleProfile}
               className="w-full h-11 px-1.5 rounded-xl flex items-center gap-2.5 hover:bg-slate-100/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 text-left cursor-pointer"
               aria-haspopup="menu"
             >
               <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 relative shadow-2xs">
                 G
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#22C55E] ring-2 ring-white" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-white" />
               </div>
               <div className="min-w-0 flex-1 leading-tight">
                 <b className="block font-semibold text-xs text-slate-900 truncate">

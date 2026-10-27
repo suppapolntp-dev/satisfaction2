@@ -1,82 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, useTransition } from "react";
+import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
-import Sidebar, { DEFAULT_NAV_GROUPS, NavGroup, NavItem } from "@/Components/Sidebars/Sidebar";
+import Sidebar from "@/Components/Sidebars/Sidebar";
+import { useCommandPalette } from "./useCommandPalette";
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
 }
 
 function AdminLayoutInner({ children }: AdminLayoutShellProps) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const { openMobile } = useSidebar();
-
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [paletteQuery, setPaletteQuery] = useState("");
-  const paletteInputRef = useRef<HTMLInputElement>(null);
-
-  // Keyboard shortcut: Ctrl+K / Cmd+K to open, Escape to close
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      const isMeta = event.ctrlKey || event.metaKey;
-      const key = event.key.toLowerCase();
-
-      if (isMeta && key === "k") {
-        event.preventDefault();
-        setIsPaletteOpen(true);
-        setPaletteQuery("");
-        setTimeout(() => paletteInputRef.current?.focus(), 50);
-      } else if (key === "escape") {
-        setIsPaletteOpen(false);
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Quick command actions
-  const allPaletteActions = useMemo(() => {
-    const list: { label: string; route: string; shortcut: string }[] = [];
-    DEFAULT_NAV_GROUPS.forEach((g: NavGroup) => {
-      g.items.forEach((item: NavItem) => {
-        list.push({
-          label: `${g.groupName} / ${item.label}`,
-          route: item.route,
-          shortcut: item.id.slice(0, 1).toUpperCase(),
-        });
-      });
-    });
-    list.push({ label: "Developer Playground", route: "/test", shortcut: "T" });
-    list.push({ label: "Customer Kiosk Screen", route: "/satisfaction", shortcut: "K" });
-    return list;
-  }, []);
-
-  const filteredPaletteActions = useMemo(() => {
-    const q = paletteQuery.trim().toLowerCase();
-    if (!q) return allPaletteActions;
-    return allPaletteActions.filter((a) => a.label.toLowerCase().includes(q));
-  }, [allPaletteActions, paletteQuery]);
-
-  const handleNavigate = (route: string) => {
-    setIsPaletteOpen(false);
-    startTransition(() => {
-      router.push(route);
-    });
-  };
-
-  const handleOpenSearch = () => {
-    setIsPaletteOpen(true);
-    setPaletteQuery("");
-    setTimeout(() => paletteInputRef.current?.focus(), 50);
-  };
+  const {
+    isPaletteOpen,
+    paletteQuery,
+    setPaletteQuery,
+    paletteInputRef,
+    filteredPaletteActions,
+    handleNavigate,
+    handleOpenSearch,
+    handleCloseSearch,
+  } = useCommandPalette();
 
   return (
-    <div className="min-h-screen flex bg-[#E8F1EB] text-slate-900 antialiased font-[var(--font-inter)]">
+    <div className="min-h-screen flex bg-[var(--background)] text-[var(--on-surface)] antialiased font-[var(--font-inter)]">
       {/* ─── 1. Floating Reusable Neo-Mint Sidebar ─── */}
       <Sidebar />
 
@@ -89,7 +37,7 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
             <button
               type="button"
               onClick={openMobile}
-              className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+              className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-container)] cursor-pointer"
               aria-label="Open mobile navigation"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -131,7 +79,7 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
             <button
               type="button"
               onClick={handleOpenSearch}
-              className="sm:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+              className="sm:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-container)] cursor-pointer"
               aria-label="Search"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -157,7 +105,7 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
             <Link
               href="/satisfaction"
               target="_blank"
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--primary-container)] text-[var(--on-primary-container)] text-xs font-semibold hover:bg-[var(--primary-hover)] shadow-sm transition-colors cursor-pointer"
             >
               <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -179,7 +127,7 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
       {isPaletteOpen && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-[14vh] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150"
-          onClick={() => setIsPaletteOpen(false)}
+          onClick={handleCloseSearch}
         >
           <div
             className="w-[min(540px,92vw)] bg-white border border-slate-200 rounded-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.35)] overflow-hidden"

@@ -3,3 +3,6 @@ export * from "./PageHeader";
 
 export { default as TitleHeader } from "./TitleHeader";
 export * from "./TitleHeader";
+
+export * from "./useFavorite";
+

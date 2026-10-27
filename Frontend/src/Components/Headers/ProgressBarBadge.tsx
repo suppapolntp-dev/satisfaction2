@@ -13,7 +13,7 @@ export interface ProgressBarBadgeProps {
 export default function ProgressBarBadge({
   value,
   label,
-  barColor = "bg-[#006e2f]",
+  barColor = "bg-[var(--primary-container)]",
   trackColor = "bg-slate-200/90",
   className = "",
 }: ProgressBarBadgeProps) {

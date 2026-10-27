@@ -25,7 +25,7 @@ export interface TitleHeaderProps {
   icon?: React.ReactNode;
 
   /**
-   * Background color class for the icon tile (default: "bg-[#006e2f]")
+   * Background color class for the icon tile (default: "bg-[var(--primary-container)]")
    */
   iconBgColor?: string;
 
@@ -66,7 +66,7 @@ export default function TitleHeader({
   slaText,
   badgeDivider = true,
   icon,
-  iconBgColor = "bg-[#006e2f]",
+  iconBgColor = "bg-[var(--primary-container)]",
   title,
   subtitle,
   actions,
@@ -85,7 +85,7 @@ export default function TitleHeader({
           <div className="flex flex-wrap items-center gap-2 mb-2">
             {badge && (
               typeof badge === "string" ? (
-                <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#006e2f] border border-emerald-200/80 shadow-2xs">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[var(--accent-bg)] text-[var(--primary-container)] border border-[var(--accent-light)] shadow-2xs">
                   {badge}
                 </span>
               ) : (

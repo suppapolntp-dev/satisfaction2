@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useFavorite } from "./useFavorite";
 
 export interface FavoriteButtonProps {
   isFavorite?: boolean;
@@ -15,14 +16,14 @@ export default function FavoriteButton({
   className = "",
   ariaLabel,
 }: FavoriteButtonProps) {
-  const [internalFavorite, setInternalFavorite] = useState(false);
+  const { isFavorite: internalFavorite, toggleFavorite } = useFavorite();
   const isStarred = controlledFavorite !== undefined ? controlledFavorite : internalFavorite;
 
   const handleStarClick = () => {
     if (onToggle) {
       onToggle();
     } else {
-      setInternalFavorite((prev) => !prev);
+      toggleFavorite();
     }
   };
 

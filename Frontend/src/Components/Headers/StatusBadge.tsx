@@ -13,24 +13,24 @@ export interface StatusBadgeProps {
 
 const VARIANT_STYLES: Record<StatusBadgeVariant, { dot: string; pill: string }> = {
   success: {
-    dot: "bg-emerald-500",
-    pill: "bg-emerald-50/80 border-emerald-200/90 text-emerald-800",
+    dot: "bg-[var(--success)]",
+    pill: "bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success)]",
   },
   warning: {
-    dot: "bg-amber-500",
-    pill: "bg-amber-50/60 border-amber-200/80 text-amber-800",
+    dot: "bg-[var(--warning)]",
+    pill: "bg-[var(--warning-bg)] border-[var(--warning-border)] text-[var(--warning)]",
   },
   danger: {
-    dot: "bg-rose-500",
-    pill: "bg-rose-50/60 border-rose-200/80 text-rose-800",
+    dot: "bg-[var(--error)]",
+    pill: "bg-[var(--error-bg)] border-[var(--error-border)] text-[var(--error)]",
   },
   info: {
-    dot: "bg-blue-500",
-    pill: "bg-blue-50/60 border-blue-200/80 text-blue-800",
+    dot: "bg-[var(--primary-container)]",
+    pill: "bg-[var(--accent-bg)] border-[var(--accent-light)] text-[var(--primary-container)]",
   },
   neutral: {
-    dot: "bg-slate-400",
-    pill: "bg-slate-50 border-slate-200 text-slate-600",
+    dot: "bg-[var(--outline)]",
+    pill: "bg-[var(--surface-variant)] border-[var(--outline-variant)] text-[var(--on-surface-variant)]",
   },
 };
 

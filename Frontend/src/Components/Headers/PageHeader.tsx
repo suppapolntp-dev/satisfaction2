@@ -180,11 +180,9 @@ export default function PageHeader({
             if (typeof primaryAction === "object" && "label" in primaryAction) {
               const action = primaryAction as PrimaryActionConfig;
               const btnBg =
-                action.variant === "emerald" || !action.variant
-                  ? "bg-[#006e2f] hover:bg-[#005a26] text-white shadow-xs"
-                  : action.variant === "dark"
-                  ? "bg-slate-900 hover:bg-slate-800 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white";
+                action.variant === "dark"
+                  ? "bg-[var(--primary)] hover:bg-slate-800 text-[var(--on-primary)]"
+                  : "bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-[var(--on-primary-container)] shadow-xs";
 
               return (
                 <button

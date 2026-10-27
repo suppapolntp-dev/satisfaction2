@@ -36,12 +36,12 @@ export default function HeaderTabs({
               onClick={() => onTabChange && onTabChange(tab.id)}
               className={`inline-flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold whitespace-nowrap transition-all border-b-2 cursor-pointer ${
                 isActive
-                  ? "text-[#006e2f] border-[#006e2f] font-bold"
+                  ? "text-[var(--primary-container)] border-[var(--primary-container)] font-bold"
                   : "text-slate-500 hover:text-slate-900 border-transparent hover:border-slate-300"
               }`}
             >
               {tab.icon && (
-                <span className={isActive ? "text-[#006e2f]" : "text-slate-400"}>
+                <span className={isActive ? "text-[var(--primary-container)]" : "text-slate-400"}>
                   {tab.icon}
                 </span>
               )}
@@ -50,7 +50,7 @@ export default function HeaderTabs({
                 <span
                   className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
                     isActive
-                      ? "bg-emerald-100 text-[#006e2f]"
+                      ? "bg-[var(--accent-bg)] text-[var(--primary-container)]"
                       : "bg-slate-200 text-slate-600"
                   }`}
                 >
