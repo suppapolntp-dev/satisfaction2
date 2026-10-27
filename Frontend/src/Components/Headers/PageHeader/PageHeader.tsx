@@ -1,12 +1,6 @@
 "use client";
 
 import React from "react";
-import HeaderBackButton, { HeaderBackButtonProps } from "../HeaderBackButton";
-import FavoriteButton, { FavoriteButtonProps } from "../FavoriteButton";
-import StatusBadge, { StatusBadgeProps, StatusBadgeVariant } from "../StatusBadge";
-import ProgressBarBadge, { ProgressBarBadgeProps } from "../ProgressBarBadge";
-import LastUpdatedBadge, { LastUpdatedBadgeProps } from "../LastUpdatedBadge";
-import CollaboratorStack, { CollaboratorStackProps, CollaboratorUser } from "../CollaboratorStack";
 import HeaderTabs, { HeaderTabsProps, HeaderTabItem } from "./HeaderTabs";
 
 export { HeaderTabs };
@@ -23,47 +17,13 @@ export interface PageHeaderProps {
   /** Page / Project Title */
   title: string | React.ReactNode;
 
-  /** Optional back navigation trigger */
-  showBack?: boolean;
-  onBack?: () => void;
-  backButtonProps?: Partial<HeaderBackButtonProps>;
-
-  /** Favorite / Bookmark star state */
-  showFavorite?: boolean;
-  isFavorite?: boolean;
-  onToggleFavorite?: () => void;
-
-  /** Details & Metadata Badges */
+  /** Details & Metadata description */
   description?: string | React.ReactNode;
 
-  /** Status Badge */
-  status?: {
-    label: string;
-    variant?: StatusBadgeVariant;
-    dotColor?: string;
-  };
+  /** Custom badges or status elements rendered next to title */
+  badges?: React.ReactNode;
 
-  /** Progress Bar Indicator */
-  progress?: {
-    value: number;
-    label?: string;
-    color?: string;
-  };
-
-  /** Last Updated badge */
-  lastUpdated?: string;
-
-  /** Slot for custom metadata badges */
-  customBadges?: React.ReactNode;
-
-  /** Collaborator avatars */
-  collaborators?: {
-    label?: string;
-    users: CollaboratorUser[];
-    overflowCount?: number;
-  };
-
-  /** Action Buttons */
+  /** Action Buttons or right-side toolbar */
   primaryAction?: PrimaryActionConfig | React.ReactNode;
   secondaryActions?: React.ReactNode;
 
@@ -77,18 +37,8 @@ export interface PageHeaderProps {
 
 export default function PageHeader({
   title,
-  showBack = false,
-  onBack,
-  backButtonProps,
-  showFavorite = false,
-  isFavorite,
-  onToggleFavorite,
   description,
-  status,
-  progress,
-  lastUpdated,
-  customBadges,
-  collaborators,
+  badges,
   primaryAction,
   secondaryActions,
   tabs,
@@ -102,43 +52,15 @@ export default function PageHeader({
     >
       {/* ─── 1. TOP TIER: Identity, Metadata & Actions ─── */}
       <div className="p-4 sm:p-5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-        {/* Left Side: Back Button + Title + Details */}
+        {/* Left Side: Title + Badges + Description */}
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 min-w-0 w-full xl:w-auto">
-          {showBack && (
-            <HeaderBackButton onClick={onBack} {...backButtonProps} />
-          )}
-
           <div className="flex items-center gap-2">
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight truncate">
               {title}
             </h1>
-            {showFavorite && (
-              <FavoriteButton
-                isFavorite={isFavorite}
-                onToggle={onToggleFavorite}
-              />
-            )}
           </div>
 
-          {status && (
-            <StatusBadge
-              label={status.label}
-              variant={status.variant}
-              dotColor={status.dotColor}
-            />
-          )}
-
-          {progress && (
-            <ProgressBarBadge
-              value={progress.value}
-              label={progress.label}
-              barColor={progress.color}
-            />
-          )}
-
-          {lastUpdated && <LastUpdatedBadge text={lastUpdated} />}
-
-          {customBadges}
+          {badges}
 
           {description && (
             <p className="w-full text-xs text-slate-500 mt-0.5 leading-relaxed hidden xl:block">
@@ -147,16 +69,8 @@ export default function PageHeader({
           )}
         </div>
 
-        {/* Right Side: Collaborators & Action Buttons */}
+        {/* Right Side: Action Buttons */}
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full xl:w-auto justify-between xl:justify-end pt-3 xl:pt-0 border-t xl:border-t-0 border-slate-100">
-          {collaborators && (
-            <CollaboratorStack
-              label={collaborators.label}
-              users={collaborators.users}
-              overflowCount={collaborators.overflowCount}
-            />
-          )}
-
           {secondaryActions && (
             <div className="flex items-center gap-2">{secondaryActions}</div>
           )}

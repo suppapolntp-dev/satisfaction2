@@ -18,15 +18,17 @@ export default function DashboardScreen() {
       <PageHeader
         title="Dashboard"
         description="Real-time CSAT Pulse, Multi-Tier Operations & Cross-Brand Experience Intelligence"
-        status={{
-          label: "Live Telemetry Active",
-          variant: "success",
-        }}
-        progress={{
-          value: 94,
-          label: "94.2% CSAT SLA",
-        }}
-        lastUpdated="Updated just now"
+        badges={
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live Telemetry Active
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+              94.2% CSAT SLA
+            </span>
+          </div>
+        }
         tabs={dashboardTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
