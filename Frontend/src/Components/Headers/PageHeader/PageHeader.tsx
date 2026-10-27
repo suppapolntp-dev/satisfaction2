@@ -1,29 +1,16 @@
 "use client";
 
 import React from "react";
-import HeaderBackButton, { HeaderBackButtonProps } from "./HeaderBackButton";
-import FavoriteButton, { FavoriteButtonProps } from "./FavoriteButton";
-import StatusBadge, { StatusBadgeProps, StatusBadgeVariant } from "./StatusBadge";
-import ProgressBarBadge, { ProgressBarBadgeProps } from "./ProgressBarBadge";
-import LastUpdatedBadge, { LastUpdatedBadgeProps } from "./LastUpdatedBadge";
-import CollaboratorStack, { CollaboratorStackProps, CollaboratorUser } from "./CollaboratorStack";
+import HeaderBackButton, { HeaderBackButtonProps } from "../HeaderBackButton";
+import FavoriteButton, { FavoriteButtonProps } from "../FavoriteButton";
+import StatusBadge, { StatusBadgeProps, StatusBadgeVariant } from "../StatusBadge";
+import ProgressBarBadge, { ProgressBarBadgeProps } from "../ProgressBarBadge";
+import LastUpdatedBadge, { LastUpdatedBadgeProps } from "../LastUpdatedBadge";
+import CollaboratorStack, { CollaboratorStackProps, CollaboratorUser } from "../CollaboratorStack";
 import HeaderTabs, { HeaderTabsProps, HeaderTabItem } from "./HeaderTabs";
 
-// Re-export subcomponents and types
-export { default as HeaderBackButton } from "./HeaderBackButton";
-export * from "./HeaderBackButton";
-export { default as FavoriteButton } from "./FavoriteButton";
-export * from "./FavoriteButton";
-export { default as StatusBadge } from "./StatusBadge";
-export * from "./StatusBadge";
-export { default as ProgressBarBadge } from "./ProgressBarBadge";
-export * from "./ProgressBarBadge";
-export { default as LastUpdatedBadge } from "./LastUpdatedBadge";
-export * from "./LastUpdatedBadge";
-export { default as CollaboratorStack } from "./CollaboratorStack";
-export * from "./CollaboratorStack";
-export { default as HeaderTabs } from "./HeaderTabs";
-export * from "./HeaderTabs";
+export { HeaderTabs };
+export type { HeaderTabsProps, HeaderTabItem };
 
 export interface PrimaryActionConfig {
   label: string;
@@ -180,9 +167,11 @@ export default function PageHeader({
             if (typeof primaryAction === "object" && "label" in primaryAction) {
               const action = primaryAction as PrimaryActionConfig;
               const btnBg =
-                action.variant === "dark"
-                  ? "bg-[var(--primary)] hover:bg-slate-800 text-[var(--on-primary)]"
-                  : "bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-[var(--on-primary-container)] shadow-xs";
+                action.variant === "emerald" || !action.variant
+                  ? "bg-[#006e2f] hover:bg-[#005a26] text-white shadow-xs"
+                  : action.variant === "dark"
+                  ? "bg-slate-900 hover:bg-slate-800 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white";
 
               return (
                 <button

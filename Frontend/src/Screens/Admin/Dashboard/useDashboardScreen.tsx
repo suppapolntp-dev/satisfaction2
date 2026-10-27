@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { HeaderTabItem } from "@/Components/Headers/HeaderTabs";
+import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 
 export function useDashboardScreen() {
   const [activeTab, setActiveTab] = useState<string>("overview");
