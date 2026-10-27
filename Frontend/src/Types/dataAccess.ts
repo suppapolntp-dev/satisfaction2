@@ -1,14 +1,18 @@
-import { DashboardTierPermissions } from "@/Lib/dataAccessContext";
-
-export type HierarchyScopeLevel = "SUPER_ADMIN" | "BRAND" | "REGION" | "PROVINCE" | "BRANCH" | "CUSTOM_SCOPE";
+export type HierarchyScopeLevel =
+  | "SUPER_ADMIN"
+  | "BRAND"
+  | "REGION"
+  | "PROVINCE"
+  | "BRANCH"
+  | "CUSTOM_SCOPE";
 
 export interface BranchItem {
   id: string;
   code: string;
   name: string;
-  brandName: string;
-  kiosksCount: number;
-  csatScore: string;
+  brandName?: string;
+  kiosksCount?: number;
+  csatScore?: string;
 }
 
 export interface ProvinceItem {
@@ -27,7 +31,8 @@ export interface RegionItem {
 export interface BrandItem {
   id: string;
   name: string;
-  logoIcon: string;
+  code?: string;
+  logoIcon?: string;
   regions: RegionItem[];
 }
 
@@ -37,21 +42,14 @@ export interface CustomScopeGroup {
   description?: string;
   brands: string[];
   branches: string[];
-  createdAt: string;
+  createdAt?: string;
 }
 
-export interface UserAccessRecord {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  userPhone?: string;
-  tierLevel: "Super Admin" | "Brand Owner" | "Regional Manager (RM)" | "Area Manager (AM)" | "Branch Staff" | "Custom Scope" | string;
-  assignedBrands: string[];
-  assignedRegions: string[];
-  assignedProvinces: string[];
-  assignedBranches: string[];
-  permissions: DashboardTierPermissions;
-  status: "Active" | "Inactive";
-  lastActiveDate?: string;
+export interface UserDataAccessRole {
+  roleCode: string;
+  tierLevel: HierarchyScopeLevel;
+  allowedBrandIds?: string[];
+  allowedBranchIds?: string[];
+  canExport?: boolean;
+  canManageScope?: boolean;
 }

@@ -2,9 +2,27 @@
 
 import React, { useState } from "react";
 import { HeaderTabItem } from "@/Components/Headers/PageHeader";
+import { HierarchyScopeLevel, UserDataAccessRole } from "@/Types/dataAccess";
 
-export function useDashboardScreen() {
+export interface DashboardScreenState {
+  currentUserRole?: UserDataAccessRole;
+}
+
+export function useDashboardScreen(initialState: DashboardScreenState = {}) {
   const [activeTab, setActiveTab] = useState<string>("overview");
+
+  // Prepared role/dataaccess variables for permission gating
+  const [currentUserRole, setCurrentUserRole] = useState<UserDataAccessRole>(
+    initialState.currentUserRole || {
+      roleCode: "SUPER_ADMIN",
+      tierLevel: "SUPER_ADMIN",
+      canExport: true,
+      canManageScope: true,
+    }
+  );
+
+  const canAccessAnalytics = currentUserRole.tierLevel !== undefined;
+  const isSuperAdmin = currentUserRole.tierLevel === "SUPER_ADMIN";
 
   const dashboardTabs: HeaderTabItem[] = [
     {
@@ -30,25 +48,6 @@ export function useDashboardScreen() {
         </svg>
       ),
     },
-    {
-      id: "branches",
-      label: "Branches",
-      badge: 18,
-      icon: (
-        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        </svg>
-      ),
-    },
-    {
-      id: "feedback",
-      label: "Feedback Stream",
-      icon: (
-        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      ),
-    },
   ];
 
   const handleTabChange = (tabId: string) => {
@@ -64,5 +63,9 @@ export function useDashboardScreen() {
     dashboardTabs,
     handleTabChange,
     handleFilterClick,
+    currentUserRole,
+    setCurrentUserRole,
+    canAccessAnalytics,
+    isSuperAdmin,
   };
 }

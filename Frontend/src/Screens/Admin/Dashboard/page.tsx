@@ -4,6 +4,9 @@ import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
 import { useMetricCards } from "@/Components/Cards/MetricCard/useMetricCards";
+import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
+import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
+import SatisfactionAnalyticsCard from "@/Components/Cards/SatisfactionAnalyticsCard";
 import { useDashboardScreen } from "./useDashboardScreen";
 
 export default function DashboardScreen() {
@@ -12,9 +15,31 @@ export default function DashboardScreen() {
     dashboardTabs,
     handleTabChange,
     handleFilterClick,
+    currentUserRole,
+    canAccessAnalytics,
+    isSuperAdmin,
   } = useDashboardScreen();
 
   const { metrics } = useMetricCards();
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    brandHierarchy,
+    selectedScopeLevel,
+    selectedBrand,
+    selectedRegion,
+    selectedProvince,
+    selectedBranch,
+    expandedNodes,
+    toggleNode,
+    selectSuperAdmin,
+    selectBrand,
+    selectRegion,
+    selectProvince,
+    selectBranch,
+    activeScopeInfo,
+  } = useOrgTree();
 
   return (
     <div className="space-y-6">
@@ -31,6 +56,11 @@ export default function DashboardScreen() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
               94.2% CSAT SLA
             </span>
+            {currentUserRole && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase bg-blue-50 text-blue-700 border border-blue-200/80">
+                {currentUserRole.tierLevel}
+              </span>
+            )}
           </div>
         }
         tabs={dashboardTabs}
@@ -51,30 +81,67 @@ export default function DashboardScreen() {
         }}
       />
 
-      {/* ─── 2. REUSABLE METRIC CARDS GRID ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((item) => (
-          <MetricCard key={item.id || item.label} item={item} />
-        ))}
-      </div>
+      {/* ─── TAB 1: OVERVIEW VIEW ─── */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Top Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {metrics.map((item) => (
+              <MetricCard key={item.id || item.label} item={item} />
+            ))}
+          </div>
 
-      {/* Main Canvas Placeholder */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] min-h-[380px] flex flex-col items-center justify-center text-center">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="9" rx="1.5" />
-            <rect x="14" y="3" width="7" height="5" rx="1.5" />
-            <rect x="14" y="12" width="7" height="9" rx="1.5" />
-            <rect x="3" y="16" width="7" height="5" rx="1.5" />
-          </svg>
+          {/* Main Canvas Placeholder */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] min-h-[380px] flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="9" rx="1.5" />
+                <rect x="14" y="3" width="7" height="5" rx="1.5" />
+                <rect x="14" y="12" width="7" height="9" rx="1.5" />
+                <rect x="3" y="16" width="7" height="5" rx="1.5" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-slate-900">
+              Overview Canvas Ready
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mt-1">
+              หน้า Overview พร้อมรองรับแผนภูมิภาพรวมและตารางสรุปในขั้นตอนถัดไป
+            </p>
+          </div>
         </div>
-        <h3 className="text-base font-semibold text-slate-900">
-          Layout &amp; Sidebar Ready
-        </h3>
-        <p className="text-xs text-slate-500 max-w-sm mt-1">
-          Sidebar และ Admin Layout สไตล์ Neo-Mint ถูกติดตั้งเรียบร้อยแล้ว รอรับคำสั่งขั้นตอนถัดไปสำหรับเนื้อหา Dashboard
-        </p>
-      </div>
+      )}
+
+      {/* ─── TAB 2: ANALYSES VIEW (Tree Sidebar + Live Satisfaction Pulse) ─── */}
+      {activeTab === "analytics" && (
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* Left: 5-Tier Organization Hierarchy Tree Navigation */}
+          <OrgHierarchyTreeSidebar
+            brandHierarchy={brandHierarchy}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedScopeLevel={selectedScopeLevel}
+            selectedBrand={selectedBrand}
+            selectedRegion={selectedRegion}
+            selectedProvince={selectedProvince}
+            selectedBranch={selectedBranch}
+            expandedNodes={expandedNodes}
+            onToggleNode={toggleNode}
+            onSelectSuperAdmin={selectSuperAdmin}
+            onSelectBrand={selectBrand}
+            onSelectRegion={selectRegion}
+            onSelectProvince={selectProvince}
+            onSelectBranch={selectBranch}
+          />
+
+          {/* Right: Satisfaction Buttons transformed into Dashboard Analytics Cards */}
+          <div className="flex-1 w-full min-w-0">
+            <SatisfactionAnalyticsCard
+              scopeTitle={activeScopeInfo.title}
+              scopeTier={activeScopeInfo.tier}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
