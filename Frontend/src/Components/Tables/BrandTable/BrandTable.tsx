@@ -41,7 +41,7 @@ function SortHeaderCell({
     >
       <div className={`inline-flex items-center gap-1.5 ${alignmentClass}`}>
         <span>{label}</span>
-        <span className={`transition-opacity ${isActive ? "opacity-100 text-emerald-600" : "opacity-30"}`}>
+        <span className={`transition-opacity ${isActive ? "opacity-100 text-[#006e2f]" : "opacity-30"}`}>
           {isActive && direction === "desc" ? (
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="m6 9 6 6 6-6" />
@@ -98,7 +98,7 @@ export default function BrandTable({
               value={searchKeyword}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search by brand name, code..."
-              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all"
+              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-800 placeholder-slate-400 transition-all"
             />
             {searchKeyword && (
               <button
@@ -126,7 +126,7 @@ export default function BrandTable({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+              className="text-[#006e2f] hover:text-[#005a26] font-medium transition-colors cursor-pointer"
             >
               Reset search
             </button>
@@ -286,13 +286,13 @@ export default function BrandTable({
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset ${
                           isActive
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                            ? "bg-[#D7F4DF] text-[#006e2f] ring-[#006e2f]/20"
                             : "bg-slate-100 text-slate-600 ring-slate-500/20"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            isActive ? "bg-emerald-500" : "bg-slate-400"
+                            isActive ? "bg-[#006e2f]" : "bg-slate-400"
                           }`}
                         />
                         {brand.status || "Active"}
@@ -345,10 +345,10 @@ export default function BrandTable({
                                   setActiveMenuBrandId(null);
                                   onEditBrand?.(brand);
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#D7F4DF]/50 hover:text-[#006e2f] transition-colors cursor-pointer group"
                               >
                                 <svg
-                                  className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-emerald-600"
+                                  className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-[#006e2f]"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
@@ -423,9 +423,9 @@ export default function BrandTable({
                     key={`page-${pageNumber}`}
                     type="button"
                     onClick={() => handlePageChange(pageNumber)}
-                    className={`w-7 h-7 text-xs font-medium rounded-lg transition-colors ${
+                    className={`w-7 h-7 text-xs font-semibold rounded-lg transition-colors ${
                       isCurrent
-                        ? "bg-emerald-600 text-white"
+                        ? "bg-[#006e2f] text-white shadow-2xs font-bold"
                         : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >

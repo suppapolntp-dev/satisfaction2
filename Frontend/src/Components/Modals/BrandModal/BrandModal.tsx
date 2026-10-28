@@ -58,14 +58,14 @@ export default function BrandModal({
         {/* ─── MODAL HEADER ─── */}
         <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-[#D7F4DF] border border-[#006e2f]/20 text-[#006e2f] flex items-center justify-center shrink-0">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                 <path d="m15 5 4 4" />
               </svg>
             </div>
             <div>
-              <h2 id="brand-modal-title" className="text-base font-bold text-slate-900 leading-snug">
+              <h2 id="brand-modal-title" className="text-base font-extrabold text-slate-900 leading-snug">
                 แก้ไขข้อมูลแบรนด์ (Edit Brand)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -77,7 +77,7 @@ export default function BrandModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shadow-2xs"
             aria-label="Close modal"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,7 +111,7 @@ export default function BrandModal({
               value={formData.brandName}
               onChange={(e) => handleChange("brandName", e.target.value)}
               placeholder="e.g. KFC, Mister Donut"
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all"
+              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-800 placeholder-slate-400 transition-all"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function BrandModal({
                 value={formData.brandId}
                 onChange={(e) => handleChange("brandId", e.target.value)}
                 placeholder="e.g. BRD_001"
-                className="w-full px-3.5 py-2.5 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 placeholder-slate-400 transition-all"
+                className="w-full px-3.5 py-2.5 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-700 placeholder-slate-400 transition-all"
               />
             </div>
 
@@ -138,7 +138,7 @@ export default function BrandModal({
                 <select
                   value={formData.status}
                   onChange={(e) => handleChange("status", e.target.value as "Active" | "Inactive")}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 cursor-pointer appearance-none transition-all pr-9"
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-800 cursor-pointer appearance-none transition-all pr-9"
                 >
                   <option value="Active">Active (เปิดใช้งาน)</option>
                   <option value="Inactive">Inactive (ปิดใช้งาน)</option>
@@ -163,7 +163,7 @@ export default function BrandModal({
                 value={formData.parentCompanyName}
                 onChange={(e) => handleChange("parentCompanyName", e.target.value)}
                 placeholder="e.g. Central Restaurants Group"
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all"
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-800 placeholder-slate-400 transition-all"
               />
             </div>
 
@@ -176,7 +176,7 @@ export default function BrandModal({
                 value={formData.category}
                 onChange={(e) => handleChange("category", e.target.value)}
                 placeholder="e.g. Fast Food (QSR), Bakery"
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all"
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-800 placeholder-slate-400 transition-all"
               />
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function BrandModal({
               value={formData.brandLogoUrl}
               onChange={(e) => handleChange("brandLogoUrl", e.target.value)}
               placeholder="https://example.com/logo.png"
-              className="w-full px-3.5 py-2.5 text-sm font-mono bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all"
+              className="w-full px-3.5 py-2.5 text-sm font-mono bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e2f]/20 focus:border-[#006e2f] text-slate-800 placeholder-slate-400 transition-all"
             />
             {formData.brandLogoUrl && (
               <div className="mt-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
@@ -203,7 +203,7 @@ export default function BrandModal({
                     (e.target as HTMLElement).style.display = "none";
                   }}
                 />
-                <span className="text-xs text-slate-500">พรีวิวโลโก้</span>
+                <span className="text-xs font-bold text-[#006e2f]">พรีวิวโลโก้</span>
               </div>
             )}
           </div>
@@ -214,14 +214,14 @@ export default function BrandModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
             >
               ยกเลิก
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4.5 py-2 text-xs font-semibold text-white bg-[#006e2f] hover:bg-[#005a26] active:scale-98 rounded-xl shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
