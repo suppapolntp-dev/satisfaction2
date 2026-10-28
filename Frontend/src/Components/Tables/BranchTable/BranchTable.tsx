@@ -116,24 +116,9 @@ export default function BranchTable({
               </button>
             )}
           </div>
-
-          {/* Add Branch Button (In-Table Toolbar) */}
-          {onAddBranch && (
-            <button
-              type="button"
-              onClick={onAddBranch}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] active:scale-95 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span>Add Branch</span>
-            </button>
-          )}
         </div>
 
-        {/* Counter Info & Reset Filter */}
+        {/* Counter Info, Reset Filter & Add Branch (Aligned Right) */}
         <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-slate-500">
           <span>
             Showing <strong className="font-semibold text-slate-700">{paginatedBranches.length}</strong> of{" "}
@@ -146,6 +131,21 @@ export default function BranchTable({
               className="text-[var(--primary-container)] hover:text-[var(--primary-hover)] font-medium transition-colors cursor-pointer"
             >
               Reset search
+            </button>
+          )}
+
+          {/* Add Branch Button (Pinned to Right) */}
+          {onAddBranch && (
+            <button
+              type="button"
+              onClick={onAddBranch}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] active:scale-95 rounded-xl shadow-xs transition-all cursor-pointer shrink-0 ml-1"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add Branch</span>
             </button>
           )}
         </div>
