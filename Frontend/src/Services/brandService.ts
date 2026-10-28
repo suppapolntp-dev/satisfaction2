@@ -3,64 +3,80 @@ import { BrandModel } from "@/Types/brand";
 
 export type { BrandModel };
 
-function mapBackendBrandToModel(b: any): BrandModel {
+interface BackendBrandDto {
+  id: string;
+  brandCode?: string;
+  brandName?: string;
+  parentCompanyName?: string;
+  category?: string;
+  brandLogoUrl?: string;
+  brandIconName?: string;
+  branchCount?: number;
+  status?: string;
+}
+
+function mapBackendBrandToModel(dto: BackendBrandDto): BrandModel {
   return {
-    id: b.id,
-    brandId: b.brandCode || b.id,
-    brandName: b.brandName || "",
-    parentCompanyName: b.parentCompanyName || "Enterprise Group",
-    category: b.category || "General",
-    brandLogoUrl: b.brandLogoUrl,
-    brandIconName: b.brandIconName || "restaurant",
-    totalBranchesCount: b.branchCount || 0,
+    id: dto.id,
+    brandId: dto.brandCode || dto.id,
+    brandName: dto.brandName || "",
+    parentCompanyName: dto.parentCompanyName || "Enterprise Group",
+    category: dto.category || "General",
+    brandLogoUrl: dto.brandLogoUrl,
+    brandIconName: dto.brandIconName || "store",
+    totalBranchesCount: dto.branchCount || 0,
     totalKiosksCount: 0,
     csatAverage: "0.0%",
-    status: b.status === "Inactive" ? "Inactive" : "Active",
+    status: dto.status === "Inactive" ? "Inactive" : "Active",
   };
 }
 
 export const brandService = {
+  // TODO: Connect API [get_brands]
   async getBrands(): Promise<BrandModel[]> {
     try {
-      const response = await apiClient.get<any[]>("/brands");
+      const response = await apiClient.get<BackendBrandDto[]>("/brands");
       if (response.success && Array.isArray(response.data)) {
         return response.data.map(mapBackendBrandToModel);
       }
-    } catch (err) {
-      console.error("[brandService.getBrands] error:", err);
+    } catch (error) {
+      console.error("[brandService.getBrands] error:", error);
     }
     return [];
   },
 
+  // TODO: Connect API [get_brand_by_id]
   async getBrandById(id: string): Promise<BrandModel | null> {
     try {
-      const response = await apiClient.get<any>(`/brands/${id}`);
+      const response = await apiClient.get<BackendBrandDto>(`/brands/${id}`);
       if (response.success && response.data) {
         return mapBackendBrandToModel(response.data);
       }
-    } catch (err) {
-      console.error("[brandService.getBrandById] error:", err);
+    } catch (error) {
+      console.error("[brandService.getBrandById] error:", error);
     }
     return null;
   },
 
+  // TODO: Connect API [create_brand]
   async createBrand(brandData: Omit<BrandModel, "id">): Promise<BrandModel> {
     const payload = {
       brandCode: brandData.brandId?.toUpperCase().trim() || `BRD_${Date.now()}`,
       brandName: brandData.brandName.trim(),
       category: brandData.category,
       brandLogoUrl: brandData.brandLogoUrl,
-      brandIconName: brandData.brandIconName || "restaurant",
+      brandIconName: brandData.brandIconName || "store",
     };
 
-    const response = await apiClient.post<any>("/brands", payload);
+    const response = await apiClient.post<BackendBrandDto>("/brands", payload);
     if (response.success && response.data) {
       return mapBackendBrandToModel(response.data);
     }
 
-    throw new Error(response.message || "ไม่สามารถสร้างแบรนด์ได้");
+    throw new Error(response.message || "Failed to create brand");
   },
 
+  // TODO: Connect API [update_brand]
   async updateBrand(id: string, brandData: Partial<BrandModel>): Promise<BrandModel> {
     const payload = {
       brandName: brandData.brandName,
@@ -70,19 +86,20 @@ export const brandService = {
       status: brandData.status || "Active",
     };
 
-    const response = await apiClient.put<any>(`/brands/${id}`, payload);
+    const response = await apiClient.put<BackendBrandDto>(`/brands/${id}`, payload);
     if (response.success) {
       return { ...brandData, id } as BrandModel;
     }
 
-    throw new Error(response.message || "ไม่สามารถอัปเดตข้อมูลแบรนด์ได้");
+    throw new Error(response.message || "Failed to update brand");
   },
 
+  // TODO: Connect API [delete_brand]
   async deleteBrand(id: string): Promise<boolean> {
-    const response = await apiClient.delete<any>(`/brands/${id}`);
+    const response = await apiClient.delete<boolean>(`/brands/${id}`);
     if (response.success) {
       return true;
     }
-    throw new Error(response.message || "ไม่สามารถลบแบรนด์ได้");
+    throw new Error(response.message || "Failed to delete brand");
   },
 };

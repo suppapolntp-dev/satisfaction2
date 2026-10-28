@@ -2,12 +2,15 @@
 
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
+import MetricCard from "@/Components/Cards/MetricCard";
 import { useBrandManagementScreen } from "./useBrandManagementScreen";
 
 export default function BrandManagementScreen() {
   const {
     activeTab,
     brandTabs,
+    brandMetrics,
+    branchMetrics,
     handleTabChange,
     handleAddAction,
   } = useBrandManagementScreen();
@@ -44,14 +47,39 @@ export default function BrandManagementScreen() {
         }}
       />
 
-      {/* ─── 2. ACTIVE TAB OUTLET PLACEHOLDER ─── */}
-      <div className="p-8 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50 flex flex-col items-center justify-center text-center">
-        <p className="text-sm font-medium text-slate-500">
-          {isBrandTab
-            ? "Ready for Brand Directory module"
-            : "Ready for Branch Directory module"}
-        </p>
-      </div>
+      {/* ─── TAB 1: BRANDS OVERVIEW & CARDS ─── */}
+      {activeTab === "brands" && (
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-4">
+            {brandMetrics.map((item) => (
+              <MetricCard key={item.id || item.label} item={item} />
+            ))}
+          </div>
+
+          <div className="p-8 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50 flex flex-col items-center justify-center text-center">
+            <p className="text-sm font-medium text-slate-500">
+              Ready for Brand Directory module
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: BRANCHES OVERVIEW & CARDS ─── */}
+      {activeTab === "branches" && (
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-4">
+            {branchMetrics.map((item) => (
+              <MetricCard key={item.id || item.label} item={item} />
+            ))}
+          </div>
+
+          <div className="p-8 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50 flex flex-col items-center justify-center text-center">
+            <p className="text-sm font-medium text-slate-500">
+              Ready for Branch Directory module
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

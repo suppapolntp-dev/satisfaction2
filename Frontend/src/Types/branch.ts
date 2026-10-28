@@ -12,3 +12,13 @@ export interface BranchModel {
   totalVotes?: number;
 }
 
+export interface BranchOverviewMetrics {
+  totalBranches: number;
+  activeBranches: number;
+  dualBrandBranches: number;
+  totalKiosks: number;
+  branchesChange?: string;
+  activeChange?: string;
+  dualBrandChange?: string;
+  kiosksChange?: string;
+}
