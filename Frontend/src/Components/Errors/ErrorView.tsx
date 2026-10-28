@@ -53,7 +53,7 @@ export function ErrorView({
       {/* Background Decorative Watermark */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
         <span
-          className="material-symbols-outlined text-[320px] md:text-[460px] text-blue-900"
+          className="material-symbols-outlined text-[320px] md:text-[460px] text-[var(--primary-container)]"
           style={{ fontVariationSettings: "'FILL' 0, 'wght' 200" }}
         >
           {is404 ? "route" : "warning"}
@@ -65,7 +65,7 @@ export function ErrorView({
         {/* SVG Illustration */}
         <div className="mb-6 md:mb-8 w-40 h-40 md:w-48 md:h-48 relative flex items-center justify-center">
           <svg
-            className="w-full h-full text-blue-900"
+            className="w-full h-full text-[var(--primary-container)]"
             fill="none"
             stroke="currentColor"
             strokeLinecap="round"
@@ -131,7 +131,7 @@ export function ErrorView({
           {reset ? (
             <button
               onClick={reset}
-              className="w-full sm:w-auto flex-1 bg-blue-900 text-white hover:bg-blue-800 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95 duration-150"
+              className="w-full sm:w-auto flex-1 bg-[var(--primary-container)] text-white hover:bg-[var(--primary-hover)] transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95 duration-150"
             >
               <span className="material-symbols-outlined text-[20px]">refresh</span>
               {primaryAction?.label || "ลองใหม่อีกครั้ง"}
@@ -139,15 +139,15 @@ export function ErrorView({
           ) : primaryAction?.onClick ? (
             <button
               onClick={primaryAction.onClick}
-              className="w-full sm:w-auto flex-1 bg-blue-900 text-white hover:bg-blue-800 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95 duration-150"
+              className="w-full sm:w-auto flex-1 bg-[var(--primary-container)] text-white hover:bg-[var(--primary-hover)] transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95 duration-150"
             >
               <span className="material-symbols-outlined text-[20px]">{primaryAction.icon || "arrow_back"}</span>
               {primaryAction.label}
             </button>
           ) : (
             <Link
-              href={primaryAction?.href || "/Dashboard"}
-              className="w-full sm:w-auto flex-1 bg-blue-900 text-white hover:bg-blue-800 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95 duration-150"
+              href={primaryAction?.href || "/dashboard"}
+              className="w-full sm:w-auto flex-1 bg-[var(--primary-container)] text-white hover:bg-[var(--primary-hover)] transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95 duration-150"
             >
               <span className="material-symbols-outlined text-[20px]">{primaryAction?.icon || "dashboard"}</span>
               {primaryAction?.label || "กลับสู่หน้า Dashboard"}
@@ -158,7 +158,7 @@ export function ErrorView({
           {secondaryAction?.onClick ? (
             <button
               onClick={secondaryAction.onClick}
-              className="w-full sm:w-auto flex-1 bg-transparent border border-slate-300 hover:border-blue-900 hover:text-blue-900 text-slate-600 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 duration-150"
+              className="w-full sm:w-auto flex-1 bg-transparent border border-slate-300 hover:border-[var(--primary-container)] hover:text-[var(--primary-container)] text-slate-600 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 duration-150"
             >
               <span className="material-symbols-outlined text-[20px]">{secondaryAction.icon || "support_agent"}</span>
               {secondaryAction.label}
@@ -166,7 +166,7 @@ export function ErrorView({
           ) : (
             <Link
               href={secondaryAction?.href || "/login"}
-              className="w-full sm:w-auto flex-1 bg-transparent border border-slate-300 hover:border-blue-900 hover:text-blue-900 text-slate-600 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 duration-150"
+              className="w-full sm:w-auto flex-1 bg-transparent border border-slate-300 hover:border-[var(--primary-container)] hover:text-[var(--primary-container)] text-slate-600 transition-all py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 duration-150"
             >
               <span className="material-symbols-outlined text-[20px]">{secondaryAction?.icon || "login"}</span>
               {secondaryAction?.label || "กลับสู่หน้าเข้าสู่ระบบ"}
@@ -202,7 +202,7 @@ export function ErrorView({
         {/* Card Footer */}
         <div className="mt-8 pt-5 border-t border-slate-100 w-full flex flex-col sm:flex-row items-center justify-between gap-2 text-[12px] text-slate-400 font-medium">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span className="w-2 h-2 rounded-full bg-[var(--success)]"></span>
             <span>Status: {systemStatus}</span>
           </div>
           <div>

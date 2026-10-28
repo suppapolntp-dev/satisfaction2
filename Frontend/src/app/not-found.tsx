@@ -11,7 +11,7 @@ export default function NotFound() {
       primaryAction={{
         label: "กลับสู่หน้า Dashboard",
         icon: "dashboard",
-        href: "/Dashboard",
+        href: "/dashboard",
       }}
       secondaryAction={{
         label: "เข้าสู่ระบบ",

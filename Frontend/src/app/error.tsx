@@ -30,7 +30,7 @@ export default function Error({
       secondaryAction={{
         label: "กลับสู่หน้า Dashboard",
         icon: "dashboard",
-        href: "/Dashboard",
+        href: "/dashboard",
       }}
     />
   );
