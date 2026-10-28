@@ -66,9 +66,6 @@ export default function BrandTable({
 }: BrandTableProps) {
   const {
     searchKeyword,
-    selectedCategory,
-    selectedStatus,
-    categoryOptions,
     sortField,
     sortDirection,
     currentPage,
@@ -78,15 +75,13 @@ export default function BrandTable({
     paginatedBrands,
     handleSort,
     handleSearchChange,
-    handleCategoryChange,
-    handleStatusChange,
     handlePageChange,
     handleResetFilters,
   } = useBrandTable({ brands, initialPageSize: 8 });
 
   return (
     <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {/* ─── 1. TOOLBAR: SEARCH & FILTER CONTROLS ─── */}
+      {/* ─── 1. TOOLBAR: SEARCH CONTROLS ─── */}
       <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex flex-1 items-center gap-2.5">
           {/* Search Input */}
@@ -118,45 +113,6 @@ export default function BrandTable({
               </button>
             )}
           </div>
-
-          {/* Category Dropdown */}
-          <div className="relative">
-            <select
-              value={selectedCategory}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="py-2 pl-3 pr-8 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 cursor-pointer appearance-none"
-            >
-              <option value="ALL">All Categories</option>
-              {categoryOptions.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-            <span className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </span>
-          </div>
-
-          {/* Status Dropdown */}
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="py-2 pl-3 pr-8 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 cursor-pointer appearance-none"
-            >
-              <option value="ALL">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-            <span className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </span>
-          </div>
         </div>
 
         {/* Counter Info & Reset Filter */}
@@ -165,13 +121,13 @@ export default function BrandTable({
             Showing <strong className="font-semibold text-slate-700">{paginatedBrands.length}</strong> of{" "}
             <strong className="font-semibold text-slate-700">{totalItems}</strong> brands
           </span>
-          {(searchKeyword || selectedCategory !== "ALL" || selectedStatus !== "ALL") && (
+          {searchKeyword && (
             <button
               type="button"
               onClick={handleResetFilters}
               className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
             >
-              Reset filters
+              Reset search
             </button>
           )}
         </div>
@@ -269,7 +225,7 @@ export default function BrandTable({
                     </div>
                     <p className="text-sm font-semibold text-slate-700">No brands found</p>
                     <p className="text-xs text-slate-500 mt-1">
-                      {searchKeyword || selectedCategory !== "ALL" || selectedStatus !== "ALL"
+                      {searchKeyword
                         ? "Try adjusting your search criteria or resetting filters."
                         : "No corporate brands registered yet."}
                     </p>

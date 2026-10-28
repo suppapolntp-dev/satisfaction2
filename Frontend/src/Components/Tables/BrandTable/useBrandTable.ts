@@ -16,23 +16,10 @@ export function useBrandTable({
   initialPageSize = 8,
 }: UseBrandTableOptions) {
   const [searchKeyword, setSearchKeyword] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [sortField, setSortField] = useState<BrandTableSortField>("brandName");
   const [sortDirection, setSortDirection] = useState<BrandTableSortDirection>("asc");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(initialPageSize);
-
-  // Extract distinct category options from current dataset
-  const categoryOptions = useMemo(() => {
-    const categoriesSet = new Set<string>();
-    brands.forEach((brand) => {
-      if (brand.category && brand.category.trim()) {
-        categoriesSet.add(brand.category.trim());
-      }
-    });
-    return Array.from(categoriesSet);
-  }, [brands]);
 
   // Handle sorting toggles
   const handleSort = useCallback((field: BrandTableSortField) => {
@@ -52,24 +39,14 @@ export function useBrandTable({
     const normalizedKeyword = searchKeyword.trim().toLowerCase();
 
     return brands.filter((brand) => {
-      // Search matching across Brand Name, Code, and Parent Company
-      const matchesSearch =
+      return (
         !normalizedKeyword ||
         (brand.brandName || "").toLowerCase().includes(normalizedKeyword) ||
         (brand.brandId || "").toLowerCase().includes(normalizedKeyword) ||
-        (brand.parentCompanyName || "").toLowerCase().includes(normalizedKeyword);
-
-      // Category matching
-      const matchesCategory =
-        selectedCategory === "ALL" || brand.category === selectedCategory;
-
-      // Status matching
-      const matchesStatus =
-        selectedStatus === "ALL" || brand.status === selectedStatus;
-
-      return matchesSearch && matchesCategory && matchesStatus;
+        (brand.parentCompanyName || "").toLowerCase().includes(normalizedKeyword)
+      );
     });
-  }, [brands, searchKeyword, selectedCategory, selectedStatus]);
+  }, [brands, searchKeyword]);
 
   const sortedBrands = useMemo(() => {
     return [...filteredBrands].sort((itemA, itemB) => {
@@ -112,28 +89,13 @@ export function useBrandTable({
     setCurrentPage(1);
   }, []);
 
-  const handleCategoryChange = useCallback((category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  }, []);
-
-  const handleStatusChange = useCallback((status: string) => {
-    setSelectedStatus(status);
-    setCurrentPage(1);
-  }, []);
-
   const handleResetFilters = useCallback(() => {
     setSearchKeyword("");
-    setSelectedCategory("ALL");
-    setSelectedStatus("ALL");
     setCurrentPage(1);
   }, []);
 
   return {
     searchKeyword,
-    selectedCategory,
-    selectedStatus,
-    categoryOptions,
     sortField,
     sortDirection,
     currentPage: safeCurrentPage,
@@ -143,8 +105,6 @@ export function useBrandTable({
     paginatedBrands,
     handleSort,
     handleSearchChange,
-    handleCategoryChange,
-    handleStatusChange,
     handlePageChange,
     handleResetFilters,
     setPageSize,
