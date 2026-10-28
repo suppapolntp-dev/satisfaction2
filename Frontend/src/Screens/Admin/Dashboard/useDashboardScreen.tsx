@@ -3,9 +3,26 @@
 import React, { useState } from "react";
 import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import { HierarchyScopeLevel, UserDataAccessRole } from "@/Types/dataAccess";
+import { SentimentTimelinePoint } from "@/Components/Charts/SentimentTimelineChart";
+
+// Sample telemetry for baseline overview visualization
+// TODO: Connect API [sentiment_timeline_hourly]
+export const INITIAL_TIMELINE_HOURLY: SentimentTimelinePoint[] = [
+  { time: "08:00", happy: 88, neutral: 9, sad: 3 },
+  { time: "09:00", happy: 85, neutral: 11, sad: 4 },
+  { time: "10:00", happy: 82, neutral: 13, sad: 5 },
+  { time: "11:00", happy: 80, neutral: 14, sad: 6 },
+  { time: "12:00", happy: 68, neutral: 21, sad: 11 },
+  { time: "13:00", happy: 74, neutral: 17, sad: 9 },
+  { time: "14:00", happy: 84, neutral: 12, sad: 4 },
+  { time: "15:00", happy: 87, neutral: 10, sad: 3 },
+  { time: "16:00", happy: 86, neutral: 11, sad: 3 },
+  { time: "17:00", happy: 89, neutral: 8, sad: 3 },
+];
 
 export interface DashboardScreenState {
   currentUserRole?: UserDataAccessRole;
+  initialTimelineData?: SentimentTimelinePoint[] | null;
 }
 
 export function useDashboardScreen(initialState: DashboardScreenState = {}) {
@@ -23,6 +40,12 @@ export function useDashboardScreen(initialState: DashboardScreenState = {}) {
 
   const canAccessAnalytics = currentUserRole.tierLevel !== undefined;
   const isSuperAdmin = currentUserRole.tierLevel === "SUPER_ADMIN";
+
+  const [timelineData, setTimelineData] = useState<SentimentTimelinePoint[] | null>(
+    initialState.initialTimelineData !== undefined
+      ? initialState.initialTimelineData
+      : INITIAL_TIMELINE_HOURLY
+  );
 
   const dashboardTabs: HeaderTabItem[] = [
     {
@@ -67,5 +90,7 @@ export function useDashboardScreen(initialState: DashboardScreenState = {}) {
     setCurrentUserRole,
     canAccessAnalytics,
     isSuperAdmin,
+    timelineData,
+    setTimelineData,
   };
 }
