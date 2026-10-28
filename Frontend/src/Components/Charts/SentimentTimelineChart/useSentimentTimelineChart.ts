@@ -56,6 +56,24 @@ export interface CurvePathResult {
 
 export type SentimentFocusSeries = "happy" | "neutral" | "sad" | null;
 
+export interface DonutSlice {
+  key: "happy" | "neutral" | "sad";
+  label: string;
+  value: number;
+  percentage: number;
+  color: string;
+  dashArray: string;
+  dashOffset: number;
+}
+
+export interface TimelineSummary {
+  avgHappy: string;
+  avgNeutral: string;
+  avgSad: string;
+  overallScore: string;
+  donutSlices: DonutSlice[];
+}
+
 export function useSentimentTimelineChart({
   data = null,
   ranges = DEFAULT_TIMELINE_RANGES,
@@ -115,13 +133,15 @@ export function useSentimentTimelineChart({
 
   const isEmpty = timelinePoints.length === 0;
 
-  // Calculate summary metrics with null safety
-  const summary = useMemo(() => {
+  // Calculate summary metrics & donut slices with null safety
+  const summary = useMemo<TimelineSummary>(() => {
     if (isEmpty) {
       return {
         avgHappy: "-",
         avgNeutral: "-",
         avgSad: "-",
+        overallScore: "-",
+        donutSlices: [],
       };
     }
 
@@ -130,10 +150,57 @@ export function useSentimentTimelineChart({
     const totalSad = timelinePoints.reduce((acc, p) => acc + (p.sad ?? 0), 0);
     const count = timelinePoints.length;
 
+    const avgHappyNum = totalHappy / count;
+    const avgNeutralNum = totalNeutral / count;
+    const avgSadNum = totalSad / count;
+    const sumAll = avgHappyNum + avgNeutralNum + avgSadNum || 1;
+
+    const happyPercent = (avgHappyNum / sumAll) * 100;
+    const neutralPercent = (avgNeutralNum / sumAll) * 100;
+    const sadPercent = (avgSadNum / sumAll) * 100;
+
+    // SVG Donut calculation with Radius = 46, Circumference = 2 * pi * 46 ≈ 289.027
+    const circumference = 2 * Math.PI * 46;
+    const happyLen = (happyPercent / 100) * circumference;
+    const neutralLen = (neutralPercent / 100) * circumference;
+    const sadLen = (sadPercent / 100) * circumference;
+
+    const donutSlices: DonutSlice[] = [
+      {
+        key: "happy",
+        label: "ดี",
+        value: Number(avgHappyNum.toFixed(1)),
+        percentage: Number(happyPercent.toFixed(1)),
+        color: "#059669",
+        dashArray: `${happyLen} ${circumference}`,
+        dashOffset: 0,
+      },
+      {
+        key: "neutral",
+        label: "ปานกลาง",
+        value: Number(avgNeutralNum.toFixed(1)),
+        percentage: Number(neutralPercent.toFixed(1)),
+        color: "#d97706",
+        dashArray: `${neutralLen} ${circumference}`,
+        dashOffset: -happyLen,
+      },
+      {
+        key: "sad",
+        label: "ปรับปรุง",
+        value: Number(avgSadNum.toFixed(1)),
+        percentage: Number(sadPercent.toFixed(1)),
+        color: "#dc2626",
+        dashArray: `${sadLen} ${circumference}`,
+        dashOffset: -(happyLen + neutralLen),
+      },
+    ];
+
     return {
-      avgHappy: (totalHappy / count).toFixed(1),
-      avgNeutral: (totalNeutral / count).toFixed(1),
-      avgSad: (totalSad / count).toFixed(1),
+      avgHappy: avgHappyNum.toFixed(1),
+      avgNeutral: avgNeutralNum.toFixed(1),
+      avgSad: avgSadNum.toFixed(1),
+      overallScore: `${avgHappyNum.toFixed(1)}%`,
+      donutSlices,
     };
   }, [timelinePoints, isEmpty]);
 

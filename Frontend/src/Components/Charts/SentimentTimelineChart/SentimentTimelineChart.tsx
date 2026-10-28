@@ -92,21 +92,19 @@ export default function SentimentTimelineChart({
     <div
       className={`bg-white p-6 rounded-3xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] flex flex-col justify-between ${className}`}
     >
-      {/* ─── Header ─── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+      {/* ─── Header: Title (Left) & Focus Buttons (Right - "วงซ้ายย้ายไปชิดขวา") ─── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-100">
         <div>
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
           <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
         </div>
-      </div>
 
-      {/* ─── Legend Focus Buttons & Summary Metrics ─── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-100 text-xs">
-        <div className="flex items-center gap-1.5">
+        {/* Legend Focus Buttons ("วงซ้ายย้ายไปชิดขวา") */}
+        <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
           <button
             type="button"
             onClick={() => toggleFocusSeries("happy")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "happy"
                 ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold shadow-xs"
                 : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 border-slate-200/70"
@@ -119,7 +117,7 @@ export default function SentimentTimelineChart({
           <button
             type="button"
             onClick={() => toggleFocusSeries("neutral")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "neutral"
                 ? "bg-amber-50 text-amber-800 border-amber-300 font-semibold shadow-xs"
                 : "text-slate-600 hover:text-amber-700 hover:bg-amber-50/50 border-slate-200/70"
@@ -132,7 +130,7 @@ export default function SentimentTimelineChart({
           <button
             type="button"
             onClick={() => toggleFocusSeries("sad")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "sad"
                 ? "bg-rose-50 text-rose-800 border-rose-300 font-semibold shadow-xs"
                 : "text-slate-600 hover:text-rose-700 hover:bg-rose-50/50 border-slate-200/70"
@@ -152,23 +150,12 @@ export default function SentimentTimelineChart({
             </button>
           )}
         </div>
-
-        <div className="text-[11px] text-slate-500">
-          Average Score:{" "}
-          <span className="text-emerald-600 font-semibold">
-            {summary.avgHappy}
-          </span>{" "}
-          /{" "}
-          <span className="text-amber-600 font-semibold">
-            {summary.avgNeutral}
-          </span>{" "}
-          /{" "}
-          <span className="text-rose-600 font-semibold">{summary.avgSad}</span>
-        </div>
       </div>
 
-      {/* ─── SVG Chart Area ─── */}
-      <div className="relative w-full overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100 p-2">
+      {/* ─── Main Content Grid: Line Chart (Left) + Donut Breakdown (Right) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* ─── Left: Multi-line Timeline Chart ─── */}
+        <div className="lg:col-span-8 xl:col-span-9 relative w-full overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100 p-2 flex flex-col justify-center">
         {isLoading ? (
           <div className="h-[230px] flex items-center justify-center text-xs text-slate-400">
             Loading timeline telemetry...
@@ -411,6 +398,118 @@ export default function SentimentTimelineChart({
             )}
           </>
         )}
+        </div>
+
+        {/* ─── Right: Donut Chart Breakdown ("วงขวาทำลงมาเป็นกราฟโดนัท แทน") ─── */}
+        <div className="lg:col-span-4 xl:col-span-3 flex flex-col justify-between p-4 rounded-2xl bg-slate-50/60 border border-slate-100/90">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-800">
+                คะแนนเฉลี่ยภาพรวม
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                CSAT Metric
+              </span>
+            </div>
+
+            {/* SVG Donut Centerpiece */}
+            <div className="relative flex items-center justify-center my-3">
+              <svg
+                width="130"
+                height="130"
+                viewBox="0 0 120 120"
+                className="transform -rotate-90 overflow-visible"
+              >
+                {/* Background Ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="46"
+                  fill="none"
+                  stroke="#e2e8f0"
+                  strokeWidth="10"
+                />
+
+                {/* Slices */}
+                {summary.donutSlices.map((slice) => {
+                  const isSliceFocused = focusedSeries === slice.key;
+                  const isAnyFocused = focusedSeries !== null;
+                  const sliceOpacity = isAnyFocused
+                    ? isSliceFocused
+                      ? 1
+                      : 0.2
+                    : 1;
+                  const sliceStrokeWidth = isSliceFocused ? 14 : 11;
+
+                  return (
+                    <circle
+                      key={`donut-${slice.key}`}
+                      cx="60"
+                      cy="60"
+                      r="46"
+                      fill="none"
+                      stroke={slice.color}
+                      strokeWidth={sliceStrokeWidth}
+                      strokeDasharray={slice.dashArray}
+                      strokeDashoffset={slice.dashOffset}
+                      strokeLinecap="round"
+                      opacity={sliceOpacity}
+                      className="transition-all duration-200 cursor-pointer"
+                      onClick={() => toggleFocusSeries(slice.key)}
+                    />
+                  );
+                })}
+              </svg>
+
+              {/* Centered CSAT Badge */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span className="text-lg font-bold text-slate-800 leading-tight tracking-tight">
+                  {summary.overallScore}
+                </span>
+                <span className="text-[10px] font-medium text-slate-400 mt-0.5">
+                  ความพึงพอใจ
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Breakdown Stat Rows */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-200/60 text-xs">
+            {summary.donutSlices.map((slice) => {
+              const isSelected = focusedSeries === slice.key;
+              return (
+                <div
+                  key={`stat-${slice.key}`}
+                  onClick={() => toggleFocusSeries(slice.key)}
+                  className={`flex items-center justify-between p-1.5 rounded-xl cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-white shadow-xs border border-slate-200/80 font-medium"
+                      : "hover:bg-slate-100/70 text-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: slice.color }}
+                    />
+                    <span className="text-xs font-medium text-slate-700">
+                      {slice.label}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-800 font-mono">
+                      {slice.value}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono px-1.5 py-0.5 rounded-md bg-slate-100">
+                      {slice.percentage}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
