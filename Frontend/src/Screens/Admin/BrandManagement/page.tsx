@@ -180,9 +180,19 @@ export default function BrandManagementScreen({
       <BranchModal
         isOpen={isBranchModalOpen}
         branch={editingBranch}
-        masterBrands={masterBrands}
+        currentScopeContext={{
+          brandName: selectedBrand?.name,
+          regionName: selectedRegion?.name,
+          provinceName: selectedProvince?.name,
+        }}
         onClose={handleCloseBranchModal}
-        onSave={handleSaveBranch}
+        onSave={(data) =>
+          handleSaveBranch(data, {
+            brand: selectedBrand?.name,
+            region: selectedRegion?.name,
+            province: selectedProvince?.name,
+          })
+        }
       />
     </div>
   );

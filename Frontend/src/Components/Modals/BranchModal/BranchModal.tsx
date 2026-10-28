@@ -7,16 +7,16 @@ import { useBranchModal } from "./useBranchModal";
 export interface BranchModalProps {
   isOpen: boolean;
   branch: BranchModel | null;
-  masterBrands?: string[];
+  currentScopeContext?: {
+    brandName?: string;
+    regionName?: string;
+    provinceName?: string;
+  };
   onClose: () => void;
   onSave: (branchData: {
     id?: string;
     code: string;
     name: string;
-    brand: string;
-    brands: string[];
-    region: string;
-    province: string;
     kioskCount: number;
     status: "Active" | "Inactive";
   }) => Promise<void> | void;
@@ -25,7 +25,7 @@ export interface BranchModalProps {
 export default function BranchModal({
   isOpen,
   branch,
-  masterBrands = [],
+  currentScopeContext,
   onClose,
   onSave,
 }: BranchModalProps) {
@@ -34,7 +34,6 @@ export default function BranchModal({
     isSubmitting,
     errorMessage,
     handleChange,
-    toggleBrand,
     handleSubmit,
   } = useBranchModal({
     isOpen,
@@ -145,89 +144,25 @@ export default function BranchModal({
             />
           </div>
 
-          {/* Multi-Brand Selection (Dual-Brand Support) */}
-          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold text-slate-800 block flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-[var(--primary-container)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
-                  <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-                  <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+          {/* Active Context Banner (Auto-derived from Selected Scope) */}
+          {(currentScopeContext?.brandName || currentScopeContext?.provinceName || currentScopeContext?.regionName || branch?.brand) && (
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-slate-600">
+                <svg className="w-4 h-4 text-[var(--primary-container)] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                  <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span>แบรนด์ประจำสาขา (เลือกได้มากกว่า 1 แบรนด์)</span>
-              </label>
-              <span className="text-[10px] font-bold text-[var(--primary-container)] bg-[var(--accent-bg)] px-2 py-0.5 rounded-full border border-[var(--accent-light)]">
-                เลือก {formData.brands.length} แบรนด์
-              </span>
-            </div>
-
-            {masterBrands.length === 0 ? (
-              <p className="text-xs text-slate-400 py-3 text-center">
-                ยังไม่มีข้อมูลแบรนด์ในระบบ
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                {masterBrands.map((brandName) => {
-                  const isChecked = formData.brands.includes(brandName);
-                  return (
-                    <label
-                      key={brandName}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none text-xs font-semibold ${
-                        isChecked
-                          ? "bg-[var(--accent-bg)]/80 border-[var(--accent-light)] text-[var(--primary-container)]"
-                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleBrand(brandName)}
-                        className="w-4 h-4 rounded border-slate-300 text-[var(--primary-container)] focus:ring-[var(--primary-container)]/20 cursor-pointer accent-[var(--primary-container)]"
-                      />
-                      <span className="truncate">{brandName}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Region & Province */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 block">ภูมิภาค (Region)</label>
-              <div className="relative">
-                <select
-                  value={formData.region}
-                  onChange={(e) => handleChange("region", e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]/20 focus:border-[var(--primary-container)] text-slate-800 cursor-pointer appearance-none transition-all pr-9"
-                >
-                  <option value="ภาคเหนือ">ภาคเหนือ</option>
-                  <option value="ภาคตะวันออก">ภาคตะวันออก</option>
-                  <option value="กรุงเทพฯ และปริมณฑล">กรุงเทพฯ และปริมณฑล</option>
-                  <option value="ภาคใต้">ภาคใต้</option>
-                  <option value="ภาคตะวันออกเฉียงเหนือ">ภาคตะวันออกเฉียงเหนือ</option>
-                </select>
-                <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
+                <span>
+                  {branch
+                    ? `${branch.brand || "-"} • ${branch.province || branch.region || "-"}`
+                    : `${currentScopeContext?.brandName || "แบรนด์ที่เลือก"} • ${currentScopeContext?.provinceName || currentScopeContext?.regionName || "พื้นที่ที่เลือก"}`}
                 </span>
               </div>
+              <span className="text-[10px] font-semibold text-[var(--primary-container)] bg-[var(--accent-bg)] px-2 py-0.5 rounded-full border border-[var(--accent-light)]">
+                กำหนดจาก Tree อัตโนมัติ
+              </span>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 block">จังหวัด (Province) <span className="text-rose-500">*</span></label>
-              <input
-                type="text"
-                required
-                value={formData.province}
-                onChange={(e) => handleChange("province", e.target.value)}
-                placeholder="e.g. เชียงใหม่"
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]/20 focus:border-[var(--primary-container)] text-slate-800 placeholder-slate-400 transition-all font-medium"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Kiosk Count & Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

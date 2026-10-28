@@ -344,17 +344,20 @@ export function useBrandManagementScreen({
     setEditingBranch(null);
   };
 
-  const handleSaveBranch = async (branchData: {
-    id?: string;
-    code: string;
-    name: string;
-    brand: string;
-    brands: string[];
-    region: string;
-    province: string;
-    kioskCount: number;
-    status: "Active" | "Inactive";
-  }) => {
+  const handleSaveBranch = async (
+    branchData: {
+      id?: string;
+      code: string;
+      name: string;
+      kioskCount: number;
+      status: "Active" | "Inactive";
+    },
+    scopeContext?: {
+      brand?: string;
+      region?: string;
+      province?: string;
+    }
+  ) => {
     try {
       if (branchData.id) {
         await branchService.updateBranch(branchData.id, branchData);
@@ -364,8 +367,16 @@ export function useBrandManagementScreen({
             : []
         );
       } else {
+        const brandName = scopeContext?.brand || "All Brands";
+        const regionName = scopeContext?.region || "ภาคกลาง";
+        const provinceName = scopeContext?.province || "กรุงเทพมหานคร";
+
         const created = await branchService.createBranch({
           ...branchData,
+          brand: brandName,
+          brands: [brandName],
+          region: regionName,
+          province: provinceName,
           satisfaction: 0,
         });
         setBranches((prev) => (prev ? [created, ...prev] : [created]));

@@ -6,9 +6,6 @@ import { BranchModel } from "@/Types/branch";
 export interface BranchFormData {
   name: string;
   code: string;
-  brands: string[];
-  region: string;
-  province: string;
   kioskCount: number;
   status: "Active" | "Inactive";
 }
@@ -20,10 +17,6 @@ export interface UseBranchModalOptions {
     id?: string;
     code: string;
     name: string;
-    brand: string;
-    brands: string[];
-    region: string;
-    province: string;
     kioskCount: number;
     status: "Active" | "Inactive";
   }) => Promise<void> | void;
@@ -39,9 +32,6 @@ export function useBranchModal({
   const [formData, setFormData] = useState<BranchFormData>({
     name: "",
     code: "",
-    brands: [],
-    region: "ภาคเหนือ",
-    province: "เชียงใหม่",
     kioskCount: 1,
     status: "Active",
   });
@@ -53,9 +43,6 @@ export function useBranchModal({
       setFormData({
         name: branch.name || "",
         code: branch.code || "",
-        brands: branch.brands && branch.brands.length > 0 ? branch.brands : (branch.brand ? [branch.brand] : []),
-        region: branch.region || "ภาคเหนือ",
-        province: branch.province || "",
         kioskCount: branch.kioskCount || 1,
         status: branch.status === "Inactive" ? "Inactive" : "Active",
       });
@@ -64,9 +51,6 @@ export function useBranchModal({
       setFormData({
         name: "",
         code: `CRG-BR-${Math.floor(10 + Math.random() * 80)}`,
-        brands: [],
-        region: "ภาคเหนือ",
-        province: "",
         kioskCount: 1,
         status: "Active",
       });
@@ -82,16 +66,6 @@ export function useBranchModal({
       ...prev,
       [field]: value,
     }));
-  }, []);
-
-  const toggleBrand = useCallback((brand: string) => {
-    setFormData((prev) => {
-      const exists = prev.brands.includes(brand);
-      return {
-        ...prev,
-        brands: exists ? prev.brands.filter((b) => b !== brand) : [...prev.brands, brand],
-      };
-    });
   }, []);
 
   const handleSubmit = useCallback(
@@ -113,15 +87,10 @@ export function useBranchModal({
       setErrorMessage(null);
 
       try {
-        const brandDisplay = formData.brands.join(" + ") || "CRG Brand";
         await onSave({
           id: branch?.id,
           code: trimmedCode,
           name: trimmedName,
-          brand: brandDisplay,
-          brands: formData.brands,
-          region: formData.region,
-          province: formData.province.trim(),
           kioskCount: formData.kioskCount,
           status: formData.status,
         });
@@ -141,7 +110,6 @@ export function useBranchModal({
     isSubmitting,
     errorMessage,
     handleChange,
-    toggleBrand,
     handleSubmit,
   };
 }
