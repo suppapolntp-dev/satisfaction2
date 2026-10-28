@@ -74,12 +74,11 @@ export function useBrandManagementScreen({
   // Compute Brand Metric Cards
   const brandMetrics: MetricCardItem[] = useMemo(() => {
     try {
-      const hasData = brands !== null;
-      const totalBrands = brands?.length ?? null;
-      const activeBrands = brands ? brands.filter((item) => item.status === "Active").length : null;
+      const totalBrands = brands ? brands.length : 0;
+      const activeBrands = brands ? brands.filter((item) => item.status === "Active").length : 0;
       const totalBranches = brands
         ? brands.reduce((sum, item) => sum + (item.totalBranchesCount || 0), 0)
-        : null;
+        : 0;
 
       // Calculate average CSAT across brands
       const validCsatBrands = brands?.filter((item) => Boolean(item.csatAverage)) || [];
@@ -91,21 +90,14 @@ export function useBrandManagementScreen({
                 0
               ) / validCsatBrands.length
             ).toFixed(1) + "%"
-          : null;
-
-      console.log("[useBrandManagementScreen] Computed brandMetrics successfully:", {
-        totalBrands,
-        activeBrands,
-        totalBranches,
-        avgCsat,
-      });
+          : "0.0%";
 
       return [
         {
           id: "total-brands",
           label: "Total Brands",
-          value: hasData && totalBrands !== null ? totalBrands.toLocaleString() : "-",
-          change: hasData ? "Portfolio overview" : undefined,
+          value: totalBrands.toLocaleString(),
+          change: brands ? "Portfolio overview" : undefined,
           trend: "neutral",
           customIcon: (
             <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -122,8 +114,8 @@ export function useBrandManagementScreen({
         {
           id: "active-brands",
           label: "Active Brands",
-          value: hasData && activeBrands !== null ? activeBrands.toLocaleString() : "-",
-          change: hasData ? "Operational brands" : undefined,
+          value: activeBrands.toLocaleString(),
+          change: brands ? "Operational brands" : undefined,
           trend: "up",
           tag: "Active",
           customIcon: (
@@ -136,8 +128,8 @@ export function useBrandManagementScreen({
         {
           id: "total-network-branches",
           label: "Network Branches",
-          value: hasData && totalBranches !== null ? totalBranches.toLocaleString() : "-",
-          change: hasData ? "Across all locations" : undefined,
+          value: totalBranches.toLocaleString(),
+          change: brands ? "Across all locations" : undefined,
           trend: "neutral",
           customIcon: (
             <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -149,8 +141,8 @@ export function useBrandManagementScreen({
         {
           id: "brand-avg-csat",
           label: "Avg. Brand CSAT",
-          value: hasData && avgCsat !== null ? avgCsat : "-",
-          change: hasData ? "Customer sentiment" : undefined,
+          value: avgCsat,
+          change: brands ? "Customer sentiment" : undefined,
           trend: "up",
           valueHighlight: true,
           iconType: "satisfaction",
@@ -165,77 +157,69 @@ export function useBrandManagementScreen({
   // Compute Branch Metric Cards
   const branchMetrics: MetricCardItem[] = useMemo(() => {
     try {
-      const hasData = branches !== null;
-      const totalBranches = branches?.length ?? null;
-      const activeBranches = branches ? branches.filter((item) => item.status === "Active").length : null;
+      const totalBranches = branches ? branches.length : 0;
+      const activeBranches = branches ? branches.filter((item) => item.status === "Active").length : 0;
       const dualBrandBranches = branches
         ? branches.filter(
             (item) =>
               (Array.isArray(item.brands) && item.brands.length > 1) ||
               (typeof item.brand === "string" && item.brand.includes("+"))
           ).length
-        : null;
+        : 0;
       const totalKiosks = branches
         ? branches.reduce((sum, item) => sum + (item.kioskCount || 0), 0)
-        : null;
-
-      console.log("[useBrandManagementScreen] Computed branchMetrics successfully:", {
-        totalBranches,
-        activeBranches,
-        dualBrandBranches,
-        totalKiosks,
-      });
+        : 0;
 
       return [
-      {
-        id: "total-branches",
-        label: "Total Branches",
-        value: hasData && totalBranches !== null ? totalBranches.toLocaleString() : "-",
-        change: hasData ? "Physical sites" : undefined,
-        trend: "neutral",
-        customIcon: (
-          <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        ),
-      },
-      {
-        id: "active-branches",
-        label: "Active Stores",
-        value: hasData && activeBranches !== null ? activeBranches.toLocaleString() : "-",
-        change: hasData ? "Currently open" : undefined,
-        trend: "up",
-        tag: "Operational",
-        customIcon: (
-          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        ),
-      },
-      {
-        id: "dual-brand-branches",
-        label: "Dual-Brand Stores",
-        value: hasData && dualBrandBranches !== null ? dualBrandBranches.toLocaleString() : "-",
-        change: hasData ? "Co-location spaces" : undefined,
-        trend: "neutral",
-        customIcon: (
-          <svg className="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2" />
-            <polyline points="2 17 12 22 22 17" />
-            <polyline points="2 12 12 17 22 12" />
-          </svg>
-        ),
-      },
-      {
-        id: "total-kiosks",
-        label: "Registered Kiosks",
-        value: hasData && totalKiosks !== null ? totalKiosks.toLocaleString() : "-",
-        change: hasData ? "Deployed devices" : undefined,
-        trend: "neutral",
-        iconType: "kiosks",
-      },
-    ];
+        {
+          id: "total-branches",
+          label: "Total Branches",
+          value: totalBranches.toLocaleString(),
+          change: branches ? "Physical sites" : undefined,
+          trend: "neutral",
+          customIcon: (
+            <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          ),
+        },
+        {
+          id: "active-branches",
+          label: "Active Stores",
+          value: activeBranches.toLocaleString(),
+          change: branches ? "Currently open" : undefined,
+          trend: "up",
+          tag: "Operational",
+          customIcon: (
+            <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          ),
+        },
+        {
+          id: "dual-brand-branches",
+          label: "Dual-Brand Stores",
+          value: dualBrandBranches.toLocaleString(),
+          change: branches ? "Co-location spaces" : undefined,
+          trend: "neutral",
+          customIcon: (
+            <svg className="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+          ),
+        },
+        {
+          id: "total-kiosks",
+          label: "Registered Kiosks",
+          value: totalKiosks.toLocaleString(),
+          change: branches ? "Deployed devices" : undefined,
+          trend: "neutral",
+          iconType: "kiosks",
+        },
+      ];
     } catch (err) {
       console.error("[useBrandManagementScreen] Error computing branchMetrics:", err);
       return [];
