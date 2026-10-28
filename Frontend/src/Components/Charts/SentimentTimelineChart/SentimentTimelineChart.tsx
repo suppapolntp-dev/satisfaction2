@@ -35,6 +35,8 @@ export default function SentimentTimelineChart({
     summary,
     hoveredPointIndex,
     setHoveredPointIndex,
+    focusedSeries,
+    toggleFocusSeries,
     getCoordinates,
   } = useSentimentTimelineChart({
     data,
@@ -90,50 +92,65 @@ export default function SentimentTimelineChart({
     <div
       className={`bg-white p-6 rounded-3xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] flex flex-col justify-between ${className}`}
     >
-      {/* ─── Header & Setting Controls ─── */}
+      {/* ─── Header ─── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
         <div>
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
           <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
         </div>
-
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/70 px-3 py-1.5 rounded-xl">
-          <label
-            htmlFor="timeline-range-select"
-            className="text-[11px] font-medium text-slate-500 shrink-0"
-          >
-            Operating Hours:
-          </label>
-          <select
-            id="timeline-range-select"
-            value={selectedRangeId}
-            onChange={(e) => setSelectedRangeId(e.target.value)}
-            className="text-xs font-semibold text-slate-700 bg-transparent border-none outline-none cursor-pointer pr-1"
-          >
-            {availableRanges.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      {/* ─── Legend & Summary Metrics ─── */}
+      {/* ─── Legend Focus Buttons & Summary Metrics ─── */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-100 text-xs">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 font-medium text-emerald-700">
-            <span className="w-4 h-0.5 rounded-full bg-emerald-600" />
-            <span>Happy (ดี)</span>
-          </div>
-          <div className="flex items-center gap-1.5 font-medium text-amber-700">
-            <span className="w-4 h-0.5 rounded-full bg-amber-500" />
-            <span>Neutral (ปานกลาง)</span>
-          </div>
-          <div className="flex items-center gap-1.5 font-medium text-rose-700">
-            <span className="w-4 h-0.5 rounded-full bg-rose-600" />
-            <span>Sad (ต้องปรับปรุง)</span>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => toggleFocusSeries("happy")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border ${
+              focusedSeries === "happy"
+                ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold shadow-xs"
+                : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 border-slate-200/70"
+            }`}
+          >
+            <span className="w-3.5 h-1 rounded-full bg-emerald-600" />
+            <span>ดี</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => toggleFocusSeries("neutral")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border ${
+              focusedSeries === "neutral"
+                ? "bg-amber-50 text-amber-800 border-amber-300 font-semibold shadow-xs"
+                : "text-slate-600 hover:text-amber-700 hover:bg-amber-50/50 border-slate-200/70"
+            }`}
+          >
+            <span className="w-3.5 h-1 rounded-full bg-amber-500" />
+            <span>ปานกลาง</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => toggleFocusSeries("sad")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border ${
+              focusedSeries === "sad"
+                ? "bg-rose-50 text-rose-800 border-rose-300 font-semibold shadow-xs"
+                : "text-slate-600 hover:text-rose-700 hover:bg-rose-50/50 border-slate-200/70"
+            }`}
+          >
+            <span className="w-3.5 h-1 rounded-full bg-rose-600" />
+            <span>ปรับปรุง</span>
+          </button>
+
+          {focusedSeries && (
+            <button
+              type="button"
+              onClick={() => toggleFocusSeries(focusedSeries)}
+              className="text-[11px] text-slate-400 hover:text-slate-600 underline ml-1 cursor-pointer"
+            >
+              แสดงทั้งหมด
+            </button>
+          )}
         </div>
 
         <div className="text-[11px] text-slate-500">
@@ -241,15 +258,19 @@ export default function SentimentTimelineChart({
                 );
               })}
 
-              {/* Multi-line Paths */}
+              {/* Multi-line Paths with Dynamic Series Focus */}
               {happyCurve.d && (
                 <path
                   d={happyCurve.d}
                   fill="none"
                   stroke="#059669"
-                  strokeWidth="2.5"
+                  strokeWidth={focusedSeries === "happy" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  opacity={
+                    !focusedSeries || focusedSeries === "happy" ? 1 : 0.15
+                  }
+                  className="transition-all duration-200"
                 />
               )}
               {neutralCurve.d && (
@@ -257,9 +278,13 @@ export default function SentimentTimelineChart({
                   d={neutralCurve.d}
                   fill="none"
                   stroke="#d97706"
-                  strokeWidth="2.5"
+                  strokeWidth={focusedSeries === "neutral" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  opacity={
+                    !focusedSeries || focusedSeries === "neutral" ? 1 : 0.15
+                  }
+                  className="transition-all duration-200"
                 />
               )}
               {sadCurve.d && (
@@ -267,9 +292,11 @@ export default function SentimentTimelineChart({
                   d={sadCurve.d}
                   fill="none"
                   stroke="#dc2626"
-                  strokeWidth="2.5"
+                  strokeWidth={focusedSeries === "sad" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  opacity={!focusedSeries || focusedSeries === "sad" ? 1 : 0.15}
+                  className="transition-all duration-200"
                 />
               )}
 
@@ -295,39 +322,42 @@ export default function SentimentTimelineChart({
                     />
 
                     {/* Point Circles */}
-                    {happyY !== undefined && (
-                      <circle
-                        cx={x}
-                        cy={happyY}
-                        r="3.5"
-                        fill="#ffffff"
-                        stroke="#059669"
-                        strokeWidth="2"
-                        className="pointer-events-none"
-                      />
-                    )}
-                    {neutralY !== undefined && (
-                      <circle
-                        cx={x}
-                        cy={neutralY}
-                        r="3.5"
-                        fill="#ffffff"
-                        stroke="#d97706"
-                        strokeWidth="2"
-                        className="pointer-events-none"
-                      />
-                    )}
-                    {sadY !== undefined && (
-                      <circle
-                        cx={x}
-                        cy={sadY}
-                        r="3.5"
-                        fill="#ffffff"
-                        stroke="#dc2626"
-                        strokeWidth="2"
-                        className="pointer-events-none"
-                      />
-                    )}
+                    {happyY !== undefined &&
+                      (!focusedSeries || focusedSeries === "happy") && (
+                        <circle
+                          cx={x}
+                          cy={happyY}
+                          r={focusedSeries === "happy" ? 4.5 : 3.5}
+                          fill="#ffffff"
+                          stroke="#059669"
+                          strokeWidth={focusedSeries === "happy" ? 2.5 : 2}
+                          className="pointer-events-none transition-all duration-200"
+                        />
+                      )}
+                    {neutralY !== undefined &&
+                      (!focusedSeries || focusedSeries === "neutral") && (
+                        <circle
+                          cx={x}
+                          cy={neutralY}
+                          r={focusedSeries === "neutral" ? 4.5 : 3.5}
+                          fill="#ffffff"
+                          stroke="#d97706"
+                          strokeWidth={focusedSeries === "neutral" ? 2.5 : 2}
+                          className="pointer-events-none transition-all duration-200"
+                        />
+                      )}
+                    {sadY !== undefined &&
+                      (!focusedSeries || focusedSeries === "sad") && (
+                        <circle
+                          cx={x}
+                          cy={sadY}
+                          r={focusedSeries === "sad" ? 4.5 : 3.5}
+                          fill="#ffffff"
+                          stroke="#dc2626"
+                          strokeWidth={focusedSeries === "sad" ? 2.5 : 2}
+                          className="pointer-events-none transition-all duration-200"
+                        />
+                      )}
                   </g>
                 );
               })}
@@ -349,14 +379,32 @@ export default function SentimentTimelineChart({
                   Time {activePoint.time}
                 </div>
                 <div className="flex flex-col gap-0.5 font-medium">
-                  <div className="text-emerald-400">
-                    Happy: {activePoint.happy ?? "-"}
+                  <div
+                    className={`text-emerald-400 transition-opacity ${
+                      focusedSeries && focusedSeries !== "happy"
+                        ? "opacity-40"
+                        : "opacity-100 font-semibold"
+                    }`}
+                  >
+                    ดี: {activePoint.happy ?? "-"}
                   </div>
-                  <div className="text-amber-400">
-                    Neutral: {activePoint.neutral ?? "-"}
+                  <div
+                    className={`text-amber-400 transition-opacity ${
+                      focusedSeries && focusedSeries !== "neutral"
+                        ? "opacity-40"
+                        : "opacity-100 font-semibold"
+                    }`}
+                  >
+                    ปานกลาง: {activePoint.neutral ?? "-"}
                   </div>
-                  <div className="text-rose-400">
-                    Sad: {activePoint.sad ?? "-"}
+                  <div
+                    className={`text-rose-400 transition-opacity ${
+                      focusedSeries && focusedSeries !== "sad"
+                        ? "opacity-40"
+                        : "opacity-100 font-semibold"
+                    }`}
+                  >
+                    ปรับปรุง: {activePoint.sad ?? "-"}
                   </div>
                 </div>
               </div>

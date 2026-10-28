@@ -54,6 +54,8 @@ export interface CurvePathResult {
   points: PointCoordinates[];
 }
 
+export type SentimentFocusSeries = "happy" | "neutral" | "sad" | null;
+
 export function useSentimentTimelineChart({
   data = null,
   ranges = DEFAULT_TIMELINE_RANGES,
@@ -62,6 +64,11 @@ export function useSentimentTimelineChart({
 }: UseSentimentTimelineChartProps = {}) {
   const [selectedRangeId, setSelectedRangeId] = useState<string>(defaultRangeId);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+  const [focusedSeries, setFocusedSeries] = useState<SentimentFocusSeries>(null);
+
+  const toggleFocusSeries = useCallback((series: "happy" | "neutral" | "sad") => {
+    setFocusedSeries((prev) => (prev === series ? null : series));
+  }, []);
 
   const activeRange = useMemo(() => {
     return (
@@ -186,6 +193,9 @@ export function useSentimentTimelineChart({
     summary,
     hoveredPointIndex,
     setHoveredPointIndex,
+    focusedSeries,
+    setFocusedSeries,
+    toggleFocusSeries,
     getCoordinates,
   };
 }
