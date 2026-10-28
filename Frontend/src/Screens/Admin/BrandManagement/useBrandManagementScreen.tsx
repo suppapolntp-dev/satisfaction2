@@ -321,6 +321,32 @@ export function useBrandManagementScreen({
     }
   };
 
+  const handleAddBranch = () => {
+    // TODO: Connect API or trigger branch creation modal
+    console.log("[useBrandManagementScreen] handleAddBranch clicked");
+  };
+
+  const handleEditBranch = (branch: BranchModel) => {
+    // TODO: Connect API or trigger branch edit modal
+    console.log("[useBrandManagementScreen] handleEditBranch clicked:", branch);
+  };
+
+  const handleDeleteBranch = async (branch: BranchModel) => {
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบสาขา "${branch.name}"?`)) {
+      return;
+    }
+
+    try {
+      await branchService.deleteBranch(branch.id);
+      setBranches((prevBranches) =>
+        prevBranches ? prevBranches.filter((b) => b.id !== branch.id) : []
+      );
+    } catch (err) {
+      console.error("[useBrandManagementScreen] Failed to delete branch:", err);
+      alert("เกิดข้อผิดพลาดในการลบสาขา");
+    }
+  };
+
   return {
     activeTab,
     brandTabs,
@@ -337,5 +363,8 @@ export function useBrandManagementScreen({
     handleCloseEditModal,
     handleSaveEditBrand,
     handleDeleteBrand,
+    handleAddBranch,
+    handleEditBranch,
+    handleDeleteBranch,
   };
 }

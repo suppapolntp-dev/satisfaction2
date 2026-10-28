@@ -4,7 +4,10 @@ import React, { useEffect } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
 import BrandTable from "@/Components/Tables/BrandTable";
+import BranchTable from "@/Components/Tables/BranchTable";
 import BrandModal from "@/Components/Modals/BrandModal";
+import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
+import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
 
 export interface BrandManagementScreenProps {
@@ -20,6 +23,7 @@ export default function BrandManagementScreen({
     brandMetrics,
     branchMetrics,
     brands,
+    branches,
     isLoading,
     isEditModalOpen,
     editingBrand,
@@ -29,7 +33,28 @@ export default function BrandManagementScreen({
     handleCloseEditModal,
     handleSaveEditBrand,
     handleDeleteBrand,
+    handleAddBranch,
+    handleEditBranch,
+    handleDeleteBranch,
   } = useBrandManagementScreen({ initialTab });
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    brandHierarchy,
+    selectedScopeLevel,
+    selectedBrand,
+    selectedRegion,
+    selectedProvince,
+    selectedBranch,
+    expandedNodes,
+    toggleNode,
+    selectSuperAdmin,
+    selectBrand,
+    selectRegion,
+    selectProvince,
+    selectBranch,
+  } = useOrgTree();
 
   useEffect(() => {
     console.log("[BrandManagementScreen] Mounted / Updated with activeTab:", activeTab, {
@@ -49,25 +74,29 @@ export default function BrandManagementScreen({
         tabs={brandTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        primaryAction={{
-          label: isBrandTab ? "Add Brand" : "Add Branch",
-          variant: "primary",
-          icon: (
-            <svg
-              className="w-4 h-4 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          ),
-          onClick: handleAddAction,
-        }}
+        primaryAction={
+          isBrandTab
+            ? {
+                label: "Add Brand",
+                variant: "primary",
+                icon: (
+                  <svg
+                    className="w-4 h-4 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                ),
+                onClick: handleAddAction,
+              }
+            : undefined
+        }
       />
 
       {/* ─── TAB 1: BRANDS OVERVIEW & CARDS ─── */}
@@ -88,7 +117,7 @@ export default function BrandManagementScreen({
         </div>
       )}
 
-      {/* ─── TAB 2: BRANCHES OVERVIEW & CARDS ─── */}
+      {/* ─── TAB 2: BRANCHES OVERVIEW, TREE SIDEBAR & TABLE ─── */}
       {activeTab === "branches" && (
         <div className="space-y-6">
           <div className="flex flex-wrap gap-4">
@@ -97,10 +126,38 @@ export default function BrandManagementScreen({
             ))}
           </div>
 
-          <div className="p-8 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50 flex flex-col items-center justify-center text-center">
-            <p className="text-sm font-medium text-slate-500">
-              Ready for Branch Directory module
-            </p>
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            {/* Left: Collapsible 5-Tier Organization Hierarchy Tree Navigation */}
+            <OrgHierarchyTreeSidebar
+              brandHierarchy={brandHierarchy}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              selectedScopeLevel={selectedScopeLevel}
+              selectedBrand={selectedBrand}
+              selectedRegion={selectedRegion}
+              selectedProvince={selectedProvince}
+              selectedBranch={selectedBranch}
+              expandedNodes={expandedNodes}
+              onToggleNode={toggleNode}
+              onSelectSuperAdmin={selectSuperAdmin}
+              onSelectBrand={selectBrand}
+              onSelectRegion={selectRegion}
+              onSelectProvince={selectProvince}
+              onSelectBranch={selectBranch}
+              collapsible={true}
+              defaultCollapsed={false}
+            />
+
+            {/* Right: Branch Directory Table with in-table Add Branch button */}
+            <div className="flex-1 w-full min-w-0">
+              <BranchTable
+                branches={branches}
+                isLoading={isLoading}
+                onAddBranch={handleAddBranch}
+                onEditBranch={handleEditBranch}
+                onDeleteBranch={handleDeleteBranch}
+              />
+            </div>
           </div>
         </div>
       )}
