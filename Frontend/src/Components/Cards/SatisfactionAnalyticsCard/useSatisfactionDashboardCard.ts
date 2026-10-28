@@ -1,53 +1,59 @@
 "use client";
 
-import { useState } from "react";
-import { SentimentLevel } from "@/Components/Buttons/SatifactionButton";
+import { useState, useEffect } from "react";
 
 export interface SentimentVoteSummary {
   sad: number;
   neutral: number;
   happy: number;
-  totalVotes: number;
-  csatPercentage: number;
+  totalVotes?: number;
 }
 
 export const INITIAL_ANALYTICS_VOTES: SentimentVoteSummary = {
-  sad: 24,
-  neutral: 82,
-  happy: 1142,
-  totalVotes: 1248,
-  csatPercentage: 94.2,
+  sad: 0,
+  neutral: 0,
+  happy: 0,
+  totalVotes: 0,
 };
 
-export function useSatisfactionDashboardCard(initialData: SentimentVoteSummary = INITIAL_ANALYTICS_VOTES) {
-  const [votes, setVotes] = useState<SentimentVoteSummary>(initialData);
-  const [activeSentiment, setActiveSentiment] = useState<SentimentLevel | null>(null);
+export function useSatisfactionDashboardCard(initialData?: Partial<SentimentVoteSummary>) {
+  const [votes, setVotes] = useState<SentimentVoteSummary>({
+    sad: initialData?.sad ? initialData.sad : 0,
+    neutral: initialData?.neutral ? initialData.neutral : 0,
+    happy: initialData?.happy ? initialData.happy : 0,
+    totalVotes: initialData?.totalVotes
+      ? initialData.totalVotes
+      : (initialData?.sad ? initialData.sad : 0) +
+        (initialData?.neutral ? initialData.neutral : 0) +
+        (initialData?.happy ? initialData.happy : 0),
+  });
 
-  const simulateVote = (level: SentimentLevel) => {
-    setActiveSentiment(level);
-    setVotes((prev) => {
-      const nextCounts = {
-        ...prev,
-        [level]: prev[level] + 1,
-        totalVotes: prev.totalVotes + 1,
-      };
-      const csat = (
-        ((nextCounts.happy + nextCounts.neutral * 0.5) / nextCounts.totalVotes) *
-        100
-      ).toFixed(1);
+  useEffect(() => {
+    if (initialData) {
+      setVotes({
+        sad: initialData.sad ? initialData.sad : 0,
+        neutral: initialData.neutral ? initialData.neutral : 0,
+        happy: initialData.happy ? initialData.happy : 0,
+        totalVotes: initialData.totalVotes
+          ? initialData.totalVotes
+          : (initialData.sad ? initialData.sad : 0) +
+            (initialData.neutral ? initialData.neutral : 0) +
+            (initialData.happy ? initialData.happy : 0),
+      });
+    }
+  }, [initialData?.sad, initialData?.neutral, initialData?.happy, initialData?.totalVotes]);
 
-      return {
-        ...nextCounts,
-        csatPercentage: parseFloat(csat),
-      };
-    });
-
-    setTimeout(() => setActiveSentiment(null), 400);
-  };
+  const totalVotes = votes.totalVotes
+    ? votes.totalVotes
+    : (votes.sad ? votes.sad : 0) + (votes.neutral ? votes.neutral : 0) + (votes.happy ? votes.happy : 0);
 
   return {
-    votes,
-    activeSentiment,
-    simulateVote,
+    votes: {
+      sad: votes.sad ? votes.sad : 0,
+      neutral: votes.neutral ? votes.neutral : 0,
+      happy: votes.happy ? votes.happy : 0,
+      totalVotes,
+    },
+    setVotes,
   };
 }

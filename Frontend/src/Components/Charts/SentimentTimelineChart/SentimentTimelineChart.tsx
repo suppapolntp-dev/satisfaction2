@@ -106,11 +106,11 @@ export default function SentimentTimelineChart({
             onClick={() => toggleFocusSeries("happy")}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "happy"
-                ? "bg-[var(--accent-bg)] text-[var(--primary-container)] border-[var(--accent-light)] font-semibold shadow-xs"
-                : "text-slate-600 hover:text-[var(--primary-container)] hover:bg-[var(--accent-bg)]/50 border-slate-200/70"
+                ? "bg-[var(--success-bg)] text-[var(--success)] border-[var(--success-border)] font-semibold shadow-xs"
+                : "text-slate-600 hover:text-[var(--success)] hover:bg-[var(--success-bg)]/50 border-slate-200/70"
             }`}
           >
-            <span className="w-3.5 h-1 rounded-full bg-[var(--primary-container)]" />
+            <span className="w-3.5 h-1 rounded-full bg-[var(--success)]" />
             <span>ดี</span>
           </button>
 
@@ -119,11 +119,11 @@ export default function SentimentTimelineChart({
             onClick={() => toggleFocusSeries("neutral")}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "neutral"
-                ? "bg-amber-50 text-amber-800 border-amber-300 font-semibold shadow-xs"
-                : "text-slate-600 hover:text-amber-700 hover:bg-amber-50/50 border-slate-200/70"
+                ? "bg-[var(--warning-bg)] text-[var(--warning)] border-[var(--warning-border)] font-semibold shadow-xs"
+                : "text-slate-600 hover:text-[var(--warning)] hover:bg-[var(--warning-bg)]/50 border-slate-200/70"
             }`}
           >
-            <span className="w-3.5 h-1 rounded-full bg-amber-500" />
+            <span className="w-3.5 h-1 rounded-full bg-[var(--warning)]" />
             <span>ปานกลาง</span>
           </button>
 
@@ -132,11 +132,11 @@ export default function SentimentTimelineChart({
             onClick={() => toggleFocusSeries("sad")}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "sad"
-                ? "bg-rose-50 text-rose-800 border-rose-300 font-semibold shadow-xs"
-                : "text-slate-600 hover:text-rose-700 hover:bg-rose-50/50 border-slate-200/70"
+                ? "bg-[var(--error-bg)] text-[var(--error)] border-[var(--error-border)] font-semibold shadow-xs"
+                : "text-slate-600 hover:text-[var(--error)] hover:bg-[var(--error-bg)]/50 border-slate-200/70"
             }`}
           >
-            <span className="w-3.5 h-1 rounded-full bg-rose-600" />
+            <span className="w-3.5 h-1 rounded-full bg-[var(--error)]" />
             <span>ปรับปรุง</span>
           </button>
 
@@ -221,10 +221,10 @@ export default function SentimentTimelineChart({
                 y1={paddingTop + chartHeight - 0.8 * chartHeight}
                 x2={width - paddingRight}
                 y2={paddingTop + chartHeight - 0.8 * chartHeight}
-                stroke="#10b981"
+                stroke="var(--success)"
                 strokeWidth="1"
                 strokeDasharray="4 4"
-                opacity="0.4"
+                opacity="0.5"
               />
 
               {/* X Time Labels */}
@@ -250,7 +250,7 @@ export default function SentimentTimelineChart({
                 <path
                   d={happyCurve.d}
                   fill="none"
-                  stroke="#16a34a"
+                  stroke="var(--success)"
                   strokeWidth={focusedSeries === "happy" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -264,7 +264,7 @@ export default function SentimentTimelineChart({
                 <path
                   d={neutralCurve.d}
                   fill="none"
-                  stroke="#d97706"
+                  stroke="var(--warning)"
                   strokeWidth={focusedSeries === "neutral" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -278,7 +278,7 @@ export default function SentimentTimelineChart({
                 <path
                   d={sadCurve.d}
                   fill="none"
-                  stroke="#dc2626"
+                  stroke="var(--error)"
                   strokeWidth={focusedSeries === "sad" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -316,7 +316,7 @@ export default function SentimentTimelineChart({
                           cy={happyY}
                           r={focusedSeries === "happy" ? 4.5 : 3.5}
                           fill="#ffffff"
-                          stroke="#16a34a"
+                          stroke="var(--success)"
                           strokeWidth={focusedSeries === "happy" ? 2.5 : 2}
                           className="pointer-events-none transition-all duration-200"
                         />
@@ -328,7 +328,7 @@ export default function SentimentTimelineChart({
                           cy={neutralY}
                           r={focusedSeries === "neutral" ? 4.5 : 3.5}
                           fill="#ffffff"
-                          stroke="#d97706"
+                          stroke="var(--warning)"
                           strokeWidth={focusedSeries === "neutral" ? 2.5 : 2}
                           className="pointer-events-none transition-all duration-200"
                         />
@@ -340,7 +340,7 @@ export default function SentimentTimelineChart({
                           cy={sadY}
                           r={focusedSeries === "sad" ? 4.5 : 3.5}
                           fill="#ffffff"
-                          stroke="#dc2626"
+                          stroke="var(--error)"
                           strokeWidth={focusedSeries === "sad" ? 2.5 : 2}
                           className="pointer-events-none transition-all duration-200"
                         />
@@ -367,7 +367,7 @@ export default function SentimentTimelineChart({
                 </div>
                 <div className="flex flex-col gap-0.5 font-medium">
                   <div
-                    className={`text-emerald-500 transition-opacity ${
+                    className={`text-[var(--success)] transition-opacity ${
                       focusedSeries && focusedSeries !== "happy"
                         ? "opacity-40"
                         : "opacity-100 font-semibold"
@@ -376,7 +376,7 @@ export default function SentimentTimelineChart({
                     ดี: {activePoint.happy ?? "-"}
                   </div>
                   <div
-                    className={`text-amber-400 transition-opacity ${
+                    className={`text-[var(--warning)] transition-opacity ${
                       focusedSeries && focusedSeries !== "neutral"
                         ? "opacity-40"
                         : "opacity-100 font-semibold"
@@ -385,7 +385,7 @@ export default function SentimentTimelineChart({
                     ปานกลาง: {activePoint.neutral ?? "-"}
                   </div>
                   <div
-                    className={`text-rose-400 transition-opacity ${
+                    className={`text-[var(--error)] transition-opacity ${
                       focusedSeries && focusedSeries !== "sad"
                         ? "opacity-40"
                         : "opacity-100 font-semibold"
