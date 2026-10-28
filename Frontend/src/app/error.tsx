@@ -12,7 +12,12 @@ export default function Error({
 }) {
   useEffect(() => {
     // บันทึก Error สำหรับการติดตาม (Logging / Telemetry)
-    console.error("App Router Caught Error:", error);
+    console.error("[App Router Error Boundary] Caught Error:", {
+      message: error?.message,
+      name: error?.name,
+      digest: error?.digest,
+      stack: error?.stack,
+    });
   }, [error]);
 
   return (

@@ -25,21 +25,32 @@ export function useBrandManagementScreen({
   // Fetch initial brand & branch data from service layer
   useEffect(() => {
     let isMounted = true;
+    console.log("[useBrandManagementScreen] Mounted - initializing loadData()...");
 
     async function loadData() {
       setIsLoading(true);
+      const startTime = performance.now();
       try {
+        console.log("[useBrandManagementScreen] Fetching brand & branch data in parallel...");
         const [brandData, branchData] = await Promise.all([
           brandService.getBrands(),
           branchService.getBranches(),
         ]);
+
+        const durationMs = Math.round(performance.now() - startTime);
+        console.log(`[useBrandManagementScreen] Fetched data in ${durationMs}ms:`, {
+          brandsCount: brandData?.length ?? 0,
+          branchesCount: branchData?.length ?? 0,
+          sampleBrand: brandData?.[0] ?? null,
+          sampleBranch: branchData?.[0] ?? null,
+        });
 
         if (isMounted) {
           setBrands(brandData || []);
           setBranches(branchData || []);
         }
       } catch (error) {
-        console.error("[useBrandManagementScreen] loadData failed:", error);
+        console.error("[useBrandManagementScreen] loadData encountered an error:", error);
         if (isMounted) {
           setBrands([]);
           setBranches([]);
@@ -47,6 +58,7 @@ export function useBrandManagementScreen({
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          console.log("[useBrandManagementScreen] loadData completed, isLoading set to false");
         }
       }
     }
@@ -55,103 +67,126 @@ export function useBrandManagementScreen({
 
     return () => {
       isMounted = false;
+      console.log("[useBrandManagementScreen] Unmounting cleanup");
     };
   }, []);
 
   // Compute Brand Metric Cards
   const brandMetrics: MetricCardItem[] = useMemo(() => {
-    const hasData = brands !== null;
-    const totalBrands = brands?.length ?? null;
-    const activeBrands = brands ? brands.filter((item) => item.status === "Active").length : null;
-    const totalBranches = brands
-      ? brands.reduce((sum, item) => sum + (item.totalBranchesCount || 0), 0)
-      : null;
-
-    // Calculate average CSAT across brands
-    const validCsatBrands = brands?.filter((item) => Boolean(item.csatAverage)) || [];
-    const avgCsat =
-      validCsatBrands.length > 0
-        ? (
-            validCsatBrands.reduce(
-              (sum, item) => sum + parseFloat(item.csatAverage.replace("%", "") || "0"),
-              0
-            ) / validCsatBrands.length
-          ).toFixed(1) + "%"
+    try {
+      const hasData = brands !== null;
+      const totalBrands = brands?.length ?? null;
+      const activeBrands = brands ? brands.filter((item) => item.status === "Active").length : null;
+      const totalBranches = brands
+        ? brands.reduce((sum, item) => sum + (item.totalBranchesCount || 0), 0)
         : null;
 
-    return [
-      {
-        id: "total-brands",
-        label: "Total Brands",
-        value: hasData && totalBrands !== null ? totalBrands.toLocaleString() : "-",
-        change: hasData ? "Portfolio overview" : undefined,
-        trend: "neutral",
-        customIcon: (
-          <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
-            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
-            <path d="M10 6h4" />
-            <path d="M10 10h4" />
-            <path d="M10 14h4" />
-            <path d="M10 18h4" />
-          </svg>
-        ),
-      },
-      {
-        id: "active-brands",
-        label: "Active Brands",
-        value: hasData && activeBrands !== null ? activeBrands.toLocaleString() : "-",
-        change: hasData ? "Operational brands" : undefined,
-        trend: "up",
-        tag: "Active",
-        customIcon: (
-          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-        ),
-      },
-      {
-        id: "total-network-branches",
-        label: "Network Branches",
-        value: hasData && totalBranches !== null ? totalBranches.toLocaleString() : "-",
-        change: hasData ? "Across all locations" : undefined,
-        trend: "neutral",
-        customIcon: (
-          <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        ),
-      },
-      {
-        id: "brand-avg-csat",
-        label: "Avg. Brand CSAT",
-        value: hasData && avgCsat !== null ? avgCsat : "-",
-        change: hasData ? "Customer sentiment" : undefined,
-        trend: "up",
-        valueHighlight: true,
-        iconType: "satisfaction",
-      },
-    ];
+      // Calculate average CSAT across brands
+      const validCsatBrands = brands?.filter((item) => Boolean(item.csatAverage)) || [];
+      const avgCsat =
+        validCsatBrands.length > 0
+          ? (
+              validCsatBrands.reduce(
+                (sum, item) => sum + parseFloat(String(item.csatAverage || "0").replace("%", "") || "0"),
+                0
+              ) / validCsatBrands.length
+            ).toFixed(1) + "%"
+          : null;
+
+      console.log("[useBrandManagementScreen] Computed brandMetrics successfully:", {
+        totalBrands,
+        activeBrands,
+        totalBranches,
+        avgCsat,
+      });
+
+      return [
+        {
+          id: "total-brands",
+          label: "Total Brands",
+          value: hasData && totalBrands !== null ? totalBrands.toLocaleString() : "-",
+          change: hasData ? "Portfolio overview" : undefined,
+          trend: "neutral",
+          customIcon: (
+            <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+              <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+              <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+              <path d="M10 6h4" />
+              <path d="M10 10h4" />
+              <path d="M10 14h4" />
+              <path d="M10 18h4" />
+            </svg>
+          ),
+        },
+        {
+          id: "active-brands",
+          label: "Active Brands",
+          value: hasData && activeBrands !== null ? activeBrands.toLocaleString() : "-",
+          change: hasData ? "Operational brands" : undefined,
+          trend: "up",
+          tag: "Active",
+          customIcon: (
+            <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          ),
+        },
+        {
+          id: "total-network-branches",
+          label: "Network Branches",
+          value: hasData && totalBranches !== null ? totalBranches.toLocaleString() : "-",
+          change: hasData ? "Across all locations" : undefined,
+          trend: "neutral",
+          customIcon: (
+            <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          ),
+        },
+        {
+          id: "brand-avg-csat",
+          label: "Avg. Brand CSAT",
+          value: hasData && avgCsat !== null ? avgCsat : "-",
+          change: hasData ? "Customer sentiment" : undefined,
+          trend: "up",
+          valueHighlight: true,
+          iconType: "satisfaction",
+        },
+      ];
+    } catch (err) {
+      console.error("[useBrandManagementScreen] Error computing brandMetrics:", err);
+      return [];
+    }
   }, [brands]);
 
   // Compute Branch Metric Cards
   const branchMetrics: MetricCardItem[] = useMemo(() => {
-    const hasData = branches !== null;
-    const totalBranches = branches?.length ?? null;
-    const activeBranches = branches ? branches.filter((item) => item.status === "Active").length : null;
-    const dualBrandBranches = branches
-      ? branches.filter(
-          (item) => (item.brands && item.brands.length > 1) || item.brand.includes("+")
-        ).length
-      : null;
-    const totalKiosks = branches
-      ? branches.reduce((sum, item) => sum + (item.kioskCount || 0), 0)
-      : null;
+    try {
+      const hasData = branches !== null;
+      const totalBranches = branches?.length ?? null;
+      const activeBranches = branches ? branches.filter((item) => item.status === "Active").length : null;
+      const dualBrandBranches = branches
+        ? branches.filter(
+            (item) =>
+              (Array.isArray(item.brands) && item.brands.length > 1) ||
+              (typeof item.brand === "string" && item.brand.includes("+"))
+          ).length
+        : null;
+      const totalKiosks = branches
+        ? branches.reduce((sum, item) => sum + (item.kioskCount || 0), 0)
+        : null;
 
-    return [
+      console.log("[useBrandManagementScreen] Computed branchMetrics successfully:", {
+        totalBranches,
+        activeBranches,
+        dualBrandBranches,
+        totalKiosks,
+      });
+
+      return [
       {
         id: "total-branches",
         label: "Total Branches",
@@ -201,6 +236,10 @@ export function useBrandManagementScreen({
         iconType: "kiosks",
       },
     ];
+    } catch (err) {
+      console.error("[useBrandManagementScreen] Error computing branchMetrics:", err);
+      return [];
+    }
   }, [branches]);
 
   const brandTabs: HeaderTabItem[] = [

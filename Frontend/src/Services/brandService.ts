@@ -35,10 +35,15 @@ export const brandService = {
   // TODO: Connect API [get_brands]
   async getBrands(): Promise<BrandModel[]> {
     try {
+      console.log("[brandService.getBrands] Requesting GET /brands...");
       const response = await apiClient.get<BackendBrandDto[]>("/brands");
+      console.log("[brandService.getBrands] Response received:", response);
       if (response.success && Array.isArray(response.data)) {
-        return response.data.map(mapBackendBrandToModel);
+        const mapped = response.data.map(mapBackendBrandToModel);
+        console.log(`[brandService.getBrands] Successfully mapped ${mapped.length} brands:`, mapped);
+        return mapped;
       }
+      console.warn("[brandService.getBrands] Response success is false or data is not array:", response);
     } catch (error) {
       console.error("[brandService.getBrands] error:", error);
     }

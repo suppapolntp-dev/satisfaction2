@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
@@ -20,6 +20,13 @@ export default function BrandManagementScreen({
     handleTabChange,
     handleAddAction,
   } = useBrandManagementScreen({ initialTab });
+
+  useEffect(() => {
+    console.log("[BrandManagementScreen] Mounted / Updated with activeTab:", activeTab, {
+      brandMetricsCount: brandMetrics.length,
+      branchMetricsCount: branchMetrics.length,
+    });
+  }, [activeTab, brandMetrics.length, branchMetrics.length]);
 
   const isBrandTab = activeTab === "brands";
 

@@ -42,10 +42,15 @@ export const branchService = {
   // TODO: Connect API [get_branches]
   async getBranches(): Promise<BranchModel[]> {
     try {
+      console.log("[branchService.getBranches] Requesting GET /branches...");
       const response = await apiClient.get<BackendBranchDto[]>("/branches");
+      console.log("[branchService.getBranches] Response received:", response);
       if (response.success && Array.isArray(response.data)) {
-        return response.data.map(mapBackendBranchToModel);
+        const mapped = response.data.map(mapBackendBranchToModel);
+        console.log(`[branchService.getBranches] Successfully mapped ${mapped.length} branches:`, mapped);
+        return mapped;
       }
+      console.warn("[branchService.getBranches] Response success is false or data is not array:", response);
     } catch (error) {
       console.error("[branchService.getBranches] error:", error);
     }

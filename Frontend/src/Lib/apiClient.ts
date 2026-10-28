@@ -56,14 +56,18 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
     try {
+        console.log(`[apiClient] Requesting: ${options.method || "GET"} ${url}`);
         const response = await fetch(url, {
             ...options,
             headers,
             credentials: "include", // ส่ง cookies ข้ามไปยัง Backend
         });
 
+        console.log(`[apiClient] Response: ${options.method || "GET"} ${url} -> HTTP ${response.status}`);
+
         // จัดการกรณี 401 Unauthorized (Token หมดอายุ หรือยังไม่ได้ Login)
         if (response.status === 401) {
+            console.warn(`[apiClient] 401 Unauthorized at ${endpoint} — clearing auth and redirecting to /login`);
             clearAuthCookies();
             if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
                 window.location.href = "/login";
@@ -88,10 +92,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
         return data;
     } catch (error: any) {
-        console.error(`[API Error] Request failed on ${endpoint}:`, error);
+        console.warn(`[API Connection] ไม่สามารถเชื่อมต่อกับ Backend (${endpoint}):`, error?.message || error);
         return {
             success: false,
-            message: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์หลังบ้านได้ (ตรวจสอบสถานะ Backend)",
+            message: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์หลังบ้านได้ กรุณาตรวจสอบว่า Backend (port 5005) เปิดอยู่หรือไม่",
             data: null as any,
             errors: [error.message || "Network Error"],
             timestamp: new Date().toISOString(),
