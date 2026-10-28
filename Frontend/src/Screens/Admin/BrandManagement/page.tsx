@@ -51,7 +51,7 @@ export default function BrandManagementScreen({
         onTabChange={handleTabChange}
         primaryAction={{
           label: isBrandTab ? "Add Brand" : "Add Branch",
-          variant: "emerald",
+          variant: "primary",
           icon: (
             <svg
               className="w-4 h-4 shrink-0"

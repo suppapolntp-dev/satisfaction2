@@ -250,7 +250,7 @@ export default function SentimentTimelineChart({
                 <path
                   d={happyCurve.d}
                   fill="none"
-                  stroke="#006e2f"
+                  stroke="#16a34a"
                   strokeWidth={focusedSeries === "happy" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -316,7 +316,7 @@ export default function SentimentTimelineChart({
                           cy={happyY}
                           r={focusedSeries === "happy" ? 4.5 : 3.5}
                           fill="#ffffff"
-                          stroke="#006e2f"
+                          stroke="#16a34a"
                           strokeWidth={focusedSeries === "happy" ? 2.5 : 2}
                           className="pointer-events-none transition-all duration-200"
                         />
@@ -367,7 +367,7 @@ export default function SentimentTimelineChart({
                 </div>
                 <div className="flex flex-col gap-0.5 font-medium">
                   <div
-                    className={`text-[#006e2f] transition-opacity ${
+                    className={`text-emerald-500 transition-opacity ${
                       focusedSeries && focusedSeries !== "happy"
                         ? "opacity-40"
                         : "opacity-100 font-semibold"

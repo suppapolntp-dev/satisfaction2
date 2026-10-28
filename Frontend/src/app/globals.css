@@ -6,22 +6,22 @@
    ใช้สำหรับควบคุมโทนสีและระยะห่างของระบบ Admin และ Kiosk ให้เป็นมาตรฐานเดียวกัน
    ========================================================================== */
 :root {
-  /* โทนสีหลักของระบบองค์กร (Corporate Green Brand Identity) */
+  /* โทนสีหลักของระบบองค์กร (Corporate Blue Brand Identity) */
   --primary: #0F172A;               /* Slate 900: ข้อความหลักและ Header สำคัญ */
-  --primary-container: #006e2f;     /* Corporate Green: สีปุ่มกดหลัก แถบนำทาง และไอคอนหลัก */
-  --primary-hover: #005a26;         /* Dark Corporate Green: สีเมื่อ Hover ปุ่มหลัก */
+  --primary-container: #2563EB;     /* Blue 600: สีปุ่มกดหลัก แถบนำทาง และไอคอนหลัก */
+  --primary-hover: #1d4ed8;         /* Blue 700: สีเมื่อ Hover ปุ่มหลัก */
   --on-primary: #ffffff;            /* สีข้อความบนพื้นหลังสีหลัก */
   --on-primary-container: #ffffff;
 
-  /* สี Accent / ไฮไลต์ (Brand Light Tint) */
-  --accent: #006e2f;                /* Corporate Green */
-  --accent-light: #a7f3d0;          /* Mint Green Tint */
-  --accent-bg: #D7F4DF;             /* Brand Green Soft Background */
+  /* สี Accent / ไฮไลต์ (Modern Blue) */
+  --accent: #2563EB;                /* Blue 600 */
+  --accent-light: #93C5FD;          /* Blue 300 */
+  --accent-bg: #EFF6FF;             /* Blue 50 Soft Background */
 
   /* สีสถานะระบบ (Feedback & Status Tokens) */
-  --success: #006e2f;               /* Corporate Green */
-  --success-bg: #D7F4DF;            /* Brand Green Soft Background */
-  --success-border: #a7f3d0;        /* Brand Green Soft Border */
+  --success: #16a34a;               /* Green 600 */
+  --success-bg: #f0fdf4;            /* Green 50 */
+  --success-border: #bbf7d0;        /* Green 200 */
 
   --warning: #d97706;               /* Amber 600 */
   --warning-bg: #fffbeb;            /* Amber 50 */
