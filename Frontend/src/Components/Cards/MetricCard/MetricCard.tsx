@@ -83,7 +83,7 @@ export default function MetricCard({ item, className = "" }: MetricCardProps) {
   return (
     <article
       onClick={onClick}
-      className={`group relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_24px_-4px_rgba(15,23,42,0.08)] hover:-translate-y-0.5 transition-all duration-300 select-none ${
+      className={`group relative flex-1 min-w-[200px] flex flex-col justify-between p-5 rounded-2xl bg-white border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_24px_-4px_rgba(15,23,42,0.08)] hover:-translate-y-0.5 transition-all duration-300 select-none ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
     >
@@ -117,33 +117,6 @@ export default function MetricCard({ item, className = "" }: MetricCardProps) {
           {value}
         </span>
       </div>
-
-      {/* ─── Bottom Row: Trend & Subtext ─── */}
-      {change && (
-        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-          {trend === "up" && (
-            <span className="inline-flex items-center font-medium text-emerald-700 gap-1">
-              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="18 15 12 9 6 15" />
-              </svg>
-              <span>{change}</span>
-            </span>
-          )}
-          {trend === "down" && (
-            <span className="inline-flex items-center font-medium text-rose-600 gap-1">
-              <svg className="w-3.5 h-3.5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-              <span>{change}</span>
-            </span>
-          )}
-          {trend === "neutral" && (
-            <span className="text-slate-500 font-normal truncate">
-              {change}
-            </span>
-          )}
-        </div>
-      )}
     </article>
   );
 }

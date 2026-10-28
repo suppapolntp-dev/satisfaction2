@@ -83,8 +83,8 @@ export default function DashboardScreen() {
       {/* ─── TAB 1: OVERVIEW VIEW ─── */}
       {activeTab === "overview" && (
         <div className="space-y-6">
-          {/* Top Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Top Metric Cards (Auto-Flex Layout) */}
+          <div className="flex flex-wrap gap-4">
             {metrics.map((item) => (
               <MetricCard key={item.id || item.label} item={item} />
             ))}

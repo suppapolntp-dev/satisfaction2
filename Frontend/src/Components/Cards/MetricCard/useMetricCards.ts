@@ -3,52 +3,65 @@
 import { useMemo } from "react";
 import { MetricCardItem } from "./MetricCard";
 
-export interface UseMetricCardsOptions {
-  data?: MetricCardItem[];
+export interface DashboardMetricsData {
+  totalVotes?: number;
+  csatScore?: number | string;
+  activeKiosks?: number | string;
+  totalKiosks?: number | string;
+  avgResponseTime?: number | string;
+  votesChange?: string;
+  csatChange?: string;
+  kiosksStatus?: string;
+  responseStatus?: string;
 }
 
-export const DEFAULT_DASHBOARD_METRICS: MetricCardItem[] = [
-  {
-    id: "total-votes",
-    label: "Total Votes Today",
-    value: "1,248",
-    change: "+12.4% vs yesterday",
-    trend: "up",
-    iconType: "votes",
-  },
-  {
-    id: "csat-score",
-    label: "Satisfaction Score (CSAT)",
-    value: "94.2%",
-    change: "+2.1% target exceeded",
-    trend: "up",
-    valueHighlight: true,
-    iconType: "satisfaction",
-  },
-  {
-    id: "active-kiosks",
-    label: "Active Kiosks",
-    value: "18 / 18",
-    change: "100% online & healthy",
-    trend: "neutral",
-    iconType: "kiosks",
-  },
-  {
-    id: "avg-response-time",
-    label: "Avg. Response Time",
-    value: "1.8s",
-    change: "Sub-second local sync",
-    trend: "neutral",
-    iconType: "speed",
-  },
-];
+export interface UseMetricCardsOptions {
+  data?: MetricCardItem[];
+  metricsData?: DashboardMetricsData;
+}
+
+export function buildDashboardMetrics(data?: DashboardMetricsData): MetricCardItem[] {
+  const totalVotes = data?.totalVotes ? data.totalVotes : 0;
+  const csat = data?.csatScore ? data.csatScore : 0;
+  const activeKiosks = data?.activeKiosks ? data.activeKiosks : 0;
+  const totalKiosks = data?.totalKiosks ? data.totalKiosks : 0;
+  const responseTime = data?.avgResponseTime ? data.avgResponseTime : 0;
+
+  return [
+    {
+      id: "total-votes",
+      label: "Total Votes Today",
+      value: totalVotes ? totalVotes.toLocaleString() : "0",
+      change: data?.votesChange ? data.votesChange : "-",
+      trend: "up",
+      iconType: "votes",
+    },
+    {
+      id: "active-kiosks",
+      label: "Active Kiosks",
+      value: totalKiosks ? `${activeKiosks} / ${totalKiosks}` : `${activeKiosks}`,
+      change: data?.kiosksStatus ? data.kiosksStatus : "-",
+      trend: "neutral",
+      iconType: "kiosks",
+    },
+    {
+      id: "avg-response-time",
+      label: "Avg. Response Time",
+      value: typeof responseTime === "number" ? `${responseTime}s` : responseTime,
+      change: data?.responseStatus ? data.responseStatus : "-",
+      trend: "neutral",
+      iconType: "speed",
+    },
+  ];
+}
 
 export function useMetricCards(options: UseMetricCardsOptions = {}) {
   const metrics = useMemo(() => {
-    return options.data && options.data.length > 0
-      ? options.data
-      : DEFAULT_DASHBOARD_METRICS;
-  }, [options.data]);
+    if (options.data && options.data.length > 0) {
+      return options.data;
+    }
+    return buildDashboardMetrics(options.metricsData);
+  }, [options.data, options.metricsData]);
 
   return {
     metrics,
