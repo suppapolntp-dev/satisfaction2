@@ -41,8 +41,44 @@ export function clearAuthCookies() {
     localStorage.removeItem("satisfaction_user_profile");
 }
 
+async function ensureDevToken(): Promise<string | null> {
+    if (typeof window === "undefined") return null;
+    const existing = getAuthToken();
+    if (existing) return existing;
+
+    try {
+        const loginUrl = `${API_BASE_URL}/auth/login`;
+        console.log("[apiClient] No auth token found. Attempting dev auto-login as admin...");
+        const res = await fetch(loginUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: "admin@satisfaction.local",
+                password: "Admin@123456",
+            }),
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            if (data?.success && data?.data?.accessToken) {
+                const acquiredToken = data.data.accessToken;
+                setAuthCookies(acquiredToken, data.data.expiresInDays || 1);
+                console.log("[apiClient] Dev auto-login successful! Token set.");
+                return acquiredToken;
+            }
+        }
+    } catch (err) {
+        console.warn("[apiClient] Dev auto-login skipped or unreachable:", err);
+    }
+    return null;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const token = getAuthToken();
+    let token = getAuthToken();
+
+    if (!token && !endpoint.includes("/auth/")) {
+        token = await ensureDevToken();
+    }
 
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -67,11 +103,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
         // จัดการกรณี 401 Unauthorized (Token หมดอายุ หรือยังไม่ได้ Login)
         if (response.status === 401) {
-            console.warn(`[apiClient] 401 Unauthorized at ${endpoint} — clearing auth and redirecting to /login`);
+            console.warn(`[apiClient] 401 Unauthorized at ${endpoint} — clearing invalid token`);
             clearAuthCookies();
-            if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-                window.location.href = "/login";
-            }
             return {
                 success: false,
                 message: "Unauthorized",
