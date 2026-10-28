@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
 import Sidebar from "@/Components/Sidebars/Sidebar";
+import ProfileDropdown from "./ProfileDropdown";
 import { useCommandPalette } from "./useCommandPalette";
 
 interface AdminLayoutShellProps {
@@ -89,31 +89,9 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
             </button>
           </div>
 
-          {/* Header Right Utility Actions */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <Link
-              href="/test"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200/90 bg-white text-slate-700 hover:text-slate-900 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <polyline points="16 18 22 12 16 6" />
-                <polyline points="8 6 2 12 8 18" />
-              </svg>
-              <span className="hidden md:inline">Dev Playground</span>
-            </Link>
-
-            <Link
-              href="/satisfaction"
-              target="_blank"
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--primary-container)] text-[var(--on-primary-container)] text-xs font-semibold hover:bg-[var(--primary-hover)] shadow-sm transition-colors cursor-pointer"
-            >
-              <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              <span className="hidden sm:inline">Open Kiosk</span>
-            </Link>
+          {/* Header Right Profile Actions */}
+          <div className="flex items-center shrink-0">
+            <ProfileDropdown />
           </div>
         </header>
 
