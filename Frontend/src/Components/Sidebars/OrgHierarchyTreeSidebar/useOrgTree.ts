@@ -189,34 +189,34 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
       return {
         title: selectedBranch.name,
         code: selectedBranch.code,
-        tier: "Tier 5 (Branch)",
+        tier: "Branch",
       };
     }
     if (selectedScopeLevel === "PROVINCE" && selectedProvince) {
       return {
         title: `จ.${selectedProvince.name}`,
         code: selectedBrand?.code,
-        tier: "Tier 4 (Province)",
+        tier: "Province",
       };
     }
     if (selectedScopeLevel === "REGION" && selectedRegion) {
       return {
         title: selectedRegion.name,
         code: selectedBrand?.code,
-        tier: "Tier 3 (Region)",
+        tier: "Region",
       };
     }
     if (selectedScopeLevel === "BRAND" && selectedBrand) {
       return {
         title: selectedBrand.name,
         code: selectedBrand.code,
-        tier: "Tier 2 (Brand)",
+        tier: "Brand",
       };
     }
     return {
       title: "All Organization",
       code: "HQ",
-      tier: "Tier 1 (SuperAdmin)",
+      tier: "SuperAdmin",
     };
   }, [selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
 

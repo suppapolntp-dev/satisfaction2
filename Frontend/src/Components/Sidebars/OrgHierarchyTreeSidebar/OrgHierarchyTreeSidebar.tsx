@@ -89,14 +89,9 @@ export default function OrgHierarchyTreeSidebar({
       {/* ─── Header: Scope Search, Collapse Action & Root Action ─── */}
       <div className="p-3.5 border-b border-slate-100 space-y-2.5 bg-slate-50/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Scope Hierarchy
-            </span>
-            <span className="text-[10px] font-semibold text-[var(--primary-container)] bg-[var(--accent-bg)] px-2 py-0.5 rounded-full border border-[var(--accent-light)]">
-              5 Tiers
-            </span>
-          </div>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Scope Hierarchy
+          </span>
 
           {collapsible && (
             <button
@@ -142,7 +137,6 @@ export default function OrgHierarchyTreeSidebar({
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           </svg>
           <span className="truncate flex-1 text-left">All Organizations</span>
-          <span className="text-[10px] opacity-70">Tier 1</span>
         </button>
       </div>
 
@@ -185,10 +179,9 @@ export default function OrgHierarchyTreeSidebar({
                 </div>
 
                 <span className="truncate flex-1 font-medium">{brand.name}</span>
-                <span className="text-[10px] text-slate-400 shrink-0">Tier 2</span>
               </div>
 
-              {/* Tier 3: Regions */}
+              {/* Regions */}
               {isBrandExpanded && (
                 <div className="pl-4 ml-2 border-l border-slate-200 space-y-0.5">
                   {brand.regions.map((region) => {
@@ -222,10 +215,9 @@ export default function OrgHierarchyTreeSidebar({
                             </svg>
                           </button>
                           <span className="truncate flex-1">{region.name}</span>
-                          <span className="text-[10px] text-slate-400">Tier 3</span>
                         </div>
 
-                        {/* Tier 4: Provinces */}
+                        {/* Provinces */}
                         {isRegionExpanded && (
                           <div className="pl-4 ml-2 border-l border-slate-200 space-y-0.5">
                             {region.provinces.map((prov) => {
@@ -260,10 +252,9 @@ export default function OrgHierarchyTreeSidebar({
                                       </svg>
                                     </button>
                                     <span className="truncate flex-1">{prov.name}</span>
-                                    <span className="text-[10px] text-slate-400">Tier 4</span>
                                   </div>
 
-                                  {/* Tier 5: Branches */}
+                                  {/* Branches */}
                                   {isProvExpanded && (
                                     <div className="pl-4 ml-2 border-l border-slate-200 space-y-0.5">
                                       {prov.branches.map((branch) => {
@@ -284,13 +275,15 @@ export default function OrgHierarchyTreeSidebar({
                                             }`}
                                           >
                                             <span className="truncate">{branch.name}</span>
-                                            <span
-                                              className={`text-[10px] font-mono shrink-0 ml-1 ${
-                                                isBranchSelected ? "text-white" : "text-[var(--primary-container)] font-semibold"
-                                              }`}
-                                            >
-                                              {branch.csatScore || "Tier 5"}
-                                            </span>
+                                            {branch.csatScore && (
+                                              <span
+                                                className={`text-[10px] font-mono shrink-0 ml-1 ${
+                                                  isBranchSelected ? "text-white" : "text-[var(--primary-container)] font-semibold"
+                                                }`}
+                                              >
+                                                {branch.csatScore}
+                                              </span>
+                                            )}
                                           </div>
                                         );
                                       })}

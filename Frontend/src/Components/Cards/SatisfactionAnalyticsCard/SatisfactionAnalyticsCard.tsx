@@ -112,9 +112,11 @@ export default function SatisfactionAnalyticsCard({
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--accent-bg)] text-[var(--primary-container)] border border-[var(--accent-light)]">
             {scopeTitle}
           </span>
-          <span className="text-[11px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
-            {scopeTier}
-          </span>
+          {scopeTier && (
+            <span className="text-[11px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+              {scopeTier.replace(/Tier\s*\d+\s*\((.*?)\)/, "$1").replace(/Tier\s*\d+/, "").trim() || scopeTier}
+            </span>
+          )}
         </div>
       </div>
 
