@@ -6,6 +6,7 @@ import MetricCard from "@/Components/Cards/MetricCard";
 import BrandTable from "@/Components/Tables/BrandTable";
 import BranchTable from "@/Components/Tables/BranchTable";
 import BrandModal from "@/Components/Modals/BrandModal";
+import BranchModal from "@/Components/Modals/BranchModal";
 import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
 import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
@@ -27,6 +28,9 @@ export default function BrandManagementScreen({
     isLoading,
     isEditModalOpen,
     editingBrand,
+    isBranchModalOpen,
+    editingBranch,
+    masterBrands,
     handleTabChange,
     handleAddAction,
     handleOpenEditModal,
@@ -35,6 +39,8 @@ export default function BrandManagementScreen({
     handleDeleteBrand,
     handleAddBranch,
     handleEditBranch,
+    handleCloseBranchModal,
+    handleSaveBranch,
     handleDeleteBranch,
   } = useBrandManagementScreen({ initialTab });
 
@@ -168,6 +174,15 @@ export default function BrandManagementScreen({
         brand={editingBrand}
         onClose={handleCloseEditModal}
         onSave={handleSaveEditBrand}
+      />
+
+      {/* ─── MODAL: ADD / EDIT BRANCH ─── */}
+      <BranchModal
+        isOpen={isBranchModalOpen}
+        branch={editingBranch}
+        masterBrands={masterBrands}
+        onClose={handleCloseBranchModal}
+        onSave={handleSaveBranch}
       />
     </div>
   );

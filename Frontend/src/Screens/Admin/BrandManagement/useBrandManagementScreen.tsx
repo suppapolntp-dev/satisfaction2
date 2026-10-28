@@ -321,14 +321,59 @@ export function useBrandManagementScreen({
     }
   };
 
+  const [editingBranch, setEditingBranch] = useState<BranchModel | null>(null);
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState<boolean>(false);
+
+  const masterBrands = useMemo(() => {
+    if (!brands) return [];
+    return brands.map((b) => b.brandName).filter(Boolean);
+  }, [brands]);
+
   const handleAddBranch = () => {
-    // TODO: Connect API or trigger branch creation modal
-    console.log("[useBrandManagementScreen] handleAddBranch clicked");
+    setEditingBranch(null);
+    setIsBranchModalOpen(true);
   };
 
   const handleEditBranch = (branch: BranchModel) => {
-    // TODO: Connect API or trigger branch edit modal
-    console.log("[useBrandManagementScreen] handleEditBranch clicked:", branch);
+    setEditingBranch(branch);
+    setIsBranchModalOpen(true);
+  };
+
+  const handleCloseBranchModal = () => {
+    setIsBranchModalOpen(false);
+    setEditingBranch(null);
+  };
+
+  const handleSaveBranch = async (branchData: {
+    id?: string;
+    code: string;
+    name: string;
+    brand: string;
+    brands: string[];
+    region: string;
+    province: string;
+    kioskCount: number;
+    status: "Active" | "Inactive";
+  }) => {
+    try {
+      if (branchData.id) {
+        await branchService.updateBranch(branchData.id, branchData);
+        setBranches((prev) =>
+          prev
+            ? prev.map((b) => (b.id === branchData.id ? { ...b, ...branchData } : b))
+            : []
+        );
+      } else {
+        const created = await branchService.createBranch({
+          ...branchData,
+          satisfaction: 0,
+        });
+        setBranches((prev) => (prev ? [created, ...prev] : [created]));
+      }
+    } catch (err) {
+      console.error("[useBrandManagementScreen] Failed to save branch:", err);
+      throw err;
+    }
   };
 
   const handleDeleteBranch = async (branch: BranchModel) => {
@@ -357,6 +402,9 @@ export function useBrandManagementScreen({
     isLoading,
     isEditModalOpen,
     editingBrand,
+    isBranchModalOpen,
+    editingBranch,
+    masterBrands,
     handleTabChange,
     handleAddAction,
     handleOpenEditModal,
@@ -365,6 +413,8 @@ export function useBrandManagementScreen({
     handleDeleteBrand,
     handleAddBranch,
     handleEditBranch,
+    handleCloseBranchModal,
+    handleSaveBranch,
     handleDeleteBranch,
   };
 }
