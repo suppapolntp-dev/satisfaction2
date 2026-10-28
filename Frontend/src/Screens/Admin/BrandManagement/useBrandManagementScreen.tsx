@@ -283,6 +283,8 @@ export function useBrandManagementScreen({
     brandTabs,
     brandMetrics,
     branchMetrics,
+    brands: brands ?? [],
+    branches: branches ?? [],
     isLoading,
     handleTabChange,
     handleAddAction,

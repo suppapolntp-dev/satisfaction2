@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
+import BrandTable from "@/Components/Tables/BrandTable";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
 
 export interface BrandManagementScreenProps {
@@ -17,6 +18,8 @@ export default function BrandManagementScreen({
     brandTabs,
     brandMetrics,
     branchMetrics,
+    brands,
+    isLoading,
     handleTabChange,
     handleAddAction,
   } = useBrandManagementScreen({ initialTab });
@@ -69,11 +72,16 @@ export default function BrandManagementScreen({
             ))}
           </div>
 
-          <div className="p-8 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50 flex flex-col items-center justify-center text-center">
-            <p className="text-sm font-medium text-slate-500">
-              Ready for Brand Directory module
-            </p>
-          </div>
+          <BrandTable
+            brands={brands}
+            isLoading={isLoading}
+            onEditBrand={(brand) => {
+              console.log("[BrandManagementScreen] onEditBrand clicked:", brand);
+            }}
+            onViewBrand={(brand) => {
+              console.log("[BrandManagementScreen] onViewBrand clicked:", brand);
+            }}
+          />
         </div>
       )}
 
