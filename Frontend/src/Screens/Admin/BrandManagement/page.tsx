@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
 import BrandTable from "@/Components/Tables/BrandTable";
+import BrandModal from "@/Components/Modals/BrandModal";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
 
 export interface BrandManagementScreenProps {
@@ -20,8 +21,14 @@ export default function BrandManagementScreen({
     branchMetrics,
     brands,
     isLoading,
+    isEditModalOpen,
+    editingBrand,
     handleTabChange,
     handleAddAction,
+    handleOpenEditModal,
+    handleCloseEditModal,
+    handleSaveEditBrand,
+    handleDeleteBrand,
   } = useBrandManagementScreen({ initialTab });
 
   useEffect(() => {
@@ -75,12 +82,8 @@ export default function BrandManagementScreen({
           <BrandTable
             brands={brands}
             isLoading={isLoading}
-            onEditBrand={(brand) => {
-              console.log("[BrandManagementScreen] onEditBrand clicked:", brand);
-            }}
-            onViewBrand={(brand) => {
-              console.log("[BrandManagementScreen] onViewBrand clicked:", brand);
-            }}
+            onEditBrand={handleOpenEditModal}
+            onDeleteBrand={handleDeleteBrand}
           />
         </div>
       )}
@@ -101,6 +104,14 @@ export default function BrandManagementScreen({
           </div>
         </div>
       )}
+
+      {/* ─── MODAL: EDIT BRAND ─── */}
+      <BrandModal
+        isOpen={isEditModalOpen}
+        brand={editingBrand}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveEditBrand}
+      />
     </div>
   );
 }

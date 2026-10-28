@@ -270,12 +270,55 @@ export function useBrandManagementScreen({
     },
   ];
 
+  const [editingBrand, setEditingBrand] = useState<BrandModel | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId as BrandManagementTab);
   };
 
   const handleAddAction = () => {
     // TODO: Connect API or trigger creation modal based on activeTab
+  };
+
+  const handleOpenEditModal = (brand: BrandModel) => {
+    setEditingBrand(brand);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingBrand(null);
+  };
+
+  const handleSaveEditBrand = async (id: string, updatedData: Partial<BrandModel>) => {
+    try {
+      await brandService.updateBrand(id, updatedData);
+      setBrands((prevBrands) =>
+        prevBrands
+          ? prevBrands.map((b) => (b.id === id ? { ...b, ...updatedData } : b))
+          : []
+      );
+    } catch (err) {
+      console.error("[useBrandManagementScreen] Failed to update brand:", err);
+      throw err;
+    }
+  };
+
+  const handleDeleteBrand = async (brand: BrandModel) => {
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบแบรนด์ "${brand.brandName}"?`)) {
+      return;
+    }
+
+    try {
+      await brandService.deleteBrand(brand.id);
+      setBrands((prevBrands) =>
+        prevBrands ? prevBrands.filter((b) => b.id !== brand.id) : []
+      );
+    } catch (err) {
+      console.error("[useBrandManagementScreen] Failed to delete brand:", err);
+      alert("เกิดข้อผิดพลาดในการลบแบรนด์");
+    }
   };
 
   return {
@@ -286,7 +329,13 @@ export function useBrandManagementScreen({
     brands: brands ?? [],
     branches: branches ?? [],
     isLoading,
+    isEditModalOpen,
+    editingBrand,
     handleTabChange,
     handleAddAction,
+    handleOpenEditModal,
+    handleCloseEditModal,
+    handleSaveEditBrand,
+    handleDeleteBrand,
   };
 }
