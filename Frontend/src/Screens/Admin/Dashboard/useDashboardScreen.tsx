@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import { HierarchyScopeLevel, UserDataAccessRole } from "@/Types/dataAccess";
 import { SentimentTimelinePoint } from "@/Components/Charts/SentimentTimelineChart";
+import { DateSelectionRange } from "@/Components/Modals/DateModal";
 
 // Sample telemetry for baseline overview visualization
 // TODO: Connect API [sentiment_timeline_hourly]
@@ -73,12 +74,35 @@ export function useDashboardScreen(initialState: DashboardScreenState = {}) {
     },
   ];
 
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateSelectionRange | null>(null);
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    setSelectedDateRange({
+      startDate: today,
+      endDate: today,
+      label: "filter",
+      viewMode: "day",
+    });
+  }, []);
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
   };
 
   const handleFilterClick = () => {
-    // Reserved for filter range dialog
+    setIsDateModalOpen(true);
+  };
+
+  const handleCloseDateModal = () => {
+    setIsDateModalOpen(false);
+  };
+
+  const handleApplyDateRange = (range: DateSelectionRange) => {
+    setSelectedDateRange(range);
+    setIsDateModalOpen(false);
+    // TODO: Connect API [filter_date_range]
   };
 
   return {
@@ -86,6 +110,10 @@ export function useDashboardScreen(initialState: DashboardScreenState = {}) {
     dashboardTabs,
     handleTabChange,
     handleFilterClick,
+    isDateModalOpen,
+    handleCloseDateModal,
+    handleApplyDateRange,
+    selectedDateRange,
     currentUserRole,
     setCurrentUserRole,
     canAccessAnalytics,

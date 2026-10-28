@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
 import { useMetricCards } from "@/Components/Cards/MetricCard/useMetricCards";
@@ -8,6 +8,7 @@ import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSideb
 import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
 import SatisfactionAnalyticsCard from "@/Components/Cards/SatisfactionAnalyticsCard";
 import SentimentTimelineChart from "@/Components/Charts/SentimentTimelineChart";
+import DateModal from "@/Components/Modals/DateModal";
 import { useDashboardScreen } from "./useDashboardScreen";
 
 export default function DashboardScreen() {
@@ -16,6 +17,10 @@ export default function DashboardScreen() {
     dashboardTabs,
     handleTabChange,
     handleFilterClick,
+    isDateModalOpen,
+    handleCloseDateModal,
+    handleApplyDateRange,
+    selectedDateRange,
     currentUserRole,
     canAccessAnalytics,
     isSuperAdmin,
@@ -49,24 +54,11 @@ export default function DashboardScreen() {
       <PageHeader
         title="Dashboard"
         description="Real-time CSAT Pulse, Multi-Tier Operations & Cross-Brand Experience Intelligence"
-        badges={
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live Telemetry Active
-            </span>
-            {currentUserRole && (
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase bg-blue-50 text-blue-700 border border-blue-200/80">
-                {currentUserRole.tierLevel}
-              </span>
-            )}
-          </div>
-        }
         tabs={dashboardTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         primaryAction={{
-          label: "Filter Range",
+          label: selectedDateRange?.label || "fillter",
           variant: "emerald",
           icon: (
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -126,6 +118,16 @@ export default function DashboardScreen() {
           </div>
         </div>
       )}
+
+      {/* ─── SUBSCRIPTIONS CALENDAR STYLE DATE MODAL (FROM BACKUP) ─── */}
+      <Suspense fallback={null}>
+        <DateModal
+          isOpen={isDateModalOpen}
+          onClose={handleCloseDateModal}
+          onApply={handleApplyDateRange}
+          currentRange={selectedDateRange || undefined}
+        />
+      </Suspense>
     </div>
   );
 }

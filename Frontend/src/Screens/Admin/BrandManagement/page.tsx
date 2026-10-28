@@ -3,9 +3,15 @@
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
-import { useBrandManagementScreen } from "./useBrandManagementScreen";
+import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
 
-export default function BrandManagementScreen() {
+export interface BrandManagementScreenProps {
+  initialTab?: BrandManagementTab;
+}
+
+export default function BrandManagementScreen({
+  initialTab = "brands",
+}: BrandManagementScreenProps = {}) {
   const {
     activeTab,
     brandTabs,
@@ -13,7 +19,7 @@ export default function BrandManagementScreen() {
     branchMetrics,
     handleTabChange,
     handleAddAction,
-  } = useBrandManagementScreen();
+  } = useBrandManagementScreen({ initialTab });
 
   const isBrandTab = activeTab === "brands";
 

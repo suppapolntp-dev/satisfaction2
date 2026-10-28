@@ -1,5 +1,5 @@
-import BranchManagementScreen from "@/Screens/Admin/BranchManagement/page";
+import BrandManagementScreen from "@/Screens/Admin/BrandManagement/page";
 
-export default function BranchManagementPage() {
-  return <BranchManagementScreen />;
+export default function BranchPage() {
+  return <BrandManagementScreen initialTab="branches" />;
 }
