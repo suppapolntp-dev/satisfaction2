@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { BrandModel } from "@/Types/brand";
 
-export type BrandTableSortField = "brandName" | "brandId" | "totalBranchesCount" | "csatAverage" | "status";
+export type BrandTableSortField = "brandName" | "brandId" | "totalBranchesCount" | "status";
 export type BrandTableSortDirection = "asc" | "desc";
 
 export interface UseBrandTableOptions {
@@ -58,10 +58,6 @@ export function useBrandTable({
         comparison = (itemA.brandId || "").localeCompare(itemB.brandId || "");
       } else if (sortField === "totalBranchesCount") {
         comparison = (itemA.totalBranchesCount || 0) - (itemB.totalBranchesCount || 0);
-      } else if (sortField === "csatAverage") {
-        const csatA = parseFloat(String(itemA.csatAverage || "0").replace("%", "")) || 0;
-        const csatB = parseFloat(String(itemB.csatAverage || "0").replace("%", "")) || 0;
-        comparison = csatA - csatB;
       } else if (sortField === "status") {
         comparison = (itemA.status || "").localeCompare(itemB.status || "");
       }

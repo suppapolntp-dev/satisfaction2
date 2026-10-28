@@ -164,14 +164,6 @@ export default function BrandTable({
                 align="right"
               />
               <SortHeaderCell
-                label="CSAT"
-                field="csatAverage"
-                activeField={sortField}
-                direction={sortDirection}
-                onSort={handleSort}
-                align="right"
-              />
-              <SortHeaderCell
                 label="Status"
                 field="status"
                 activeField={sortField}
@@ -203,7 +195,6 @@ export default function BrandTable({
                     <td className="px-5 py-4"><div className="w-16 h-3 bg-slate-200 rounded" /></td>
                     <td className="px-5 py-4"><div className="w-24 h-5 bg-slate-200 rounded-full" /></td>
                     <td className="px-5 py-4 text-right"><div className="w-10 h-3 bg-slate-200 rounded ml-auto" /></td>
-                    <td className="px-5 py-4 text-right"><div className="w-12 h-3 bg-slate-200 rounded ml-auto" /></td>
                     <td className="px-5 py-4"><div className="w-16 h-5 bg-slate-200 rounded-full mx-auto" /></td>
                     <td className="px-5 py-4 text-right"><div className="w-8 h-8 bg-slate-200 rounded-lg ml-auto" /></td>
                   </tr>
@@ -214,7 +205,7 @@ export default function BrandTable({
             {/* Empty State */}
             {!isLoading && paginatedBrands.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-14 text-center">
+                <td colSpan={6} className="px-5 py-14 text-center">
                   <div className="max-w-xs mx-auto flex flex-col items-center">
                     <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
                       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -287,13 +278,6 @@ export default function BrandTable({
                     {/* Total Branches */}
                     <td className="px-5 py-3.5 whitespace-nowrap text-right font-medium text-slate-700">
                       {(brand.totalBranchesCount || 0).toLocaleString()}
-                    </td>
-
-                    {/* CSAT Average */}
-                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                      <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                        {brand.csatAverage || "0.0%"}
-                      </span>
                     </td>
 
                     {/* Status */}
