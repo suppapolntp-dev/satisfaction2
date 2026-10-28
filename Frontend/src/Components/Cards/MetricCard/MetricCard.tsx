@@ -95,12 +95,12 @@ export default function MetricCard({ item, className = "" }: MetricCardProps) {
 
         <div className="flex items-center gap-1.5 shrink-0">
           {tag && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[var(--accent-bg)] text-[var(--primary-container)] border border-[var(--accent-light)]">
               {tag}
             </span>
           )}
           {(iconType || customIcon) && (
-            <div className="w-7 h-7 rounded-xl bg-slate-50 border border-slate-100/90 text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50/70 group-hover:border-emerald-200/60 flex items-center justify-center transition-colors">
+            <div className="w-7 h-7 rounded-xl bg-slate-50 border border-slate-100/90 text-slate-400 group-hover:text-[var(--primary-container)] group-hover:bg-[var(--accent-bg)]/70 group-hover:border-[var(--accent-light)] flex items-center justify-center transition-colors">
               <MetricIcon iconType={iconType} customIcon={customIcon} />
             </div>
           )}
@@ -111,7 +111,7 @@ export default function MetricCard({ item, className = "" }: MetricCardProps) {
       <div className="my-1">
         <span
           className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
-            valueHighlight ? "text-emerald-700" : "text-slate-900"
+            valueHighlight ? "text-[var(--primary-container)]" : "text-slate-900"
           }`}
         >
           {value}

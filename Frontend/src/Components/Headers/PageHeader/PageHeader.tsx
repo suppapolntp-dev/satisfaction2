@@ -82,10 +82,10 @@ export default function PageHeader({
               const action = primaryAction as PrimaryActionConfig;
               const btnBg =
                 action.variant === "emerald" || !action.variant
-                  ? "bg-[#006e2f] hover:bg-[#005a26] text-white shadow-xs"
+                  ? "bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white shadow-xs"
                   : action.variant === "dark"
                   ? "bg-slate-900 hover:bg-slate-800 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white";
+                  : "bg-slate-700 hover:bg-slate-800 text-white";
 
               return (
                 <button

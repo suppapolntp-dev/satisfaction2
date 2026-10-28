@@ -171,7 +171,7 @@ export function useSentimentTimelineChart({
         label: "ดี",
         value: Number(avgHappyNum.toFixed(1)),
         percentage: Number(happyPercent.toFixed(1)),
-        color: "#059669",
+        color: "#006e2f",
         dashArray: `${happyLen} ${circumference}`,
         dashOffset: 0,
       },

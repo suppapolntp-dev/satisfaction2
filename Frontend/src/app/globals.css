@@ -1,25 +1,27 @@
-﻿@import "tailwindcss";
+﻿@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block");
+@import "tailwindcss";
 
 /* ==========================================================================
    🎨 C4 DESIGN SYSTEM: DESIGN TOKENS (CSS VARIABLES)
    ใช้สำหรับควบคุมโทนสีและระยะห่างของระบบ Admin และ Kiosk ให้เป็นมาตรฐานเดียวกัน
    ========================================================================== */
 :root {
-  /* โทนสีหลักของระบบองค์กร (Corporate Slate & Navy) */
-  --primary: #0f172a;               /* Slate 900: ข้อความหลักและ Header สำคัญ */
-  --primary-container: #1e3a8a;     /* Blue 900: สีปุ่มกดหลัก แถบนำทาง และไอคอนหลัก */
-  --primary-hover: #172554;         /* Blue 950: สีเมื่อ Hover ปุ่มหลัก */
+  /* โทนสีหลักของระบบองค์กร (Corporate Green Brand Identity) */
+  --primary: #0F172A;               /* Slate 900: ข้อความหลักและ Header สำคัญ */
+  --primary-container: #006e2f;     /* Corporate Green: สีปุ่มกดหลัก แถบนำทาง และไอคอนหลัก */
+  --primary-hover: #005a26;         /* Dark Corporate Green: สีเมื่อ Hover ปุ่มหลัก */
   --on-primary: #ffffff;            /* สีข้อความบนพื้นหลังสีหลัก */
   --on-primary-container: #ffffff;
 
-  /* สี Accent / ไฮไลต์ (Modern Indigo) */
-  --accent: #4f46e5;                /* Indigo 600 */
-  --accent-light: #e0e7ff;          /* Indigo 100 */
+  /* สี Accent / ไฮไลต์ (Brand Light Tint) */
+  --accent: #006e2f;                /* Corporate Green */
+  --accent-light: #a7f3d0;          /* Mint Green Tint */
+  --accent-bg: #D7F4DF;             /* Brand Green Soft Background */
 
   /* สีสถานะระบบ (Feedback & Status Tokens) */
-  --success: #16a34a;               /* Green 600 */
-  --success-bg: #f0fdf4;            /* Green 50 */
-  --success-border: #bbf7d0;        /* Green 200 */
+  --success: #006e2f;               /* Corporate Green */
+  --success-bg: #D7F4DF;            /* Brand Green Soft Background */
+  --success-border: #a7f3d0;        /* Brand Green Soft Border */
 
   --warning: #d97706;               /* Amber 600 */
   --warning-bg: #fffbeb;            /* Amber 50 */
@@ -123,7 +125,7 @@
   }
 
   .btn-primary {
-    @apply bg-blue-900 hover:bg-blue-950 text-white shadow-xs;
+    @apply bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white shadow-xs;
   }
 
   .btn-secondary {
@@ -131,7 +133,7 @@
   }
 
   .btn-ghost {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-blue-900 hover:bg-slate-100 transition-colors outline-none cursor-pointer select-none;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[var(--primary-container)] hover:bg-slate-100 transition-colors outline-none cursor-pointer select-none;
   }
 
   .btn-danger {
@@ -157,16 +159,16 @@
 
   /* ─── Status Badges ─── */
   .badge-live {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 select-none;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[var(--success-bg)] text-[var(--success)] border border-[var(--success-border)] select-none;
   }
 
   .badge-live::before {
     content: "";
-    @apply w-1.5 h-1.5 bg-emerald-600 rounded-full animate-pulse;
+    @apply w-1.5 h-1.5 bg-[var(--success)] rounded-full animate-pulse;
   }
 
   .badge-upcoming {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 select-none;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[var(--accent-bg)] text-[var(--primary-container)] border border-[var(--accent-light)] select-none;
   }
 
   .badge-completed {
@@ -174,7 +176,7 @@
   }
 
   .badge-active {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 select-none;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[var(--success-bg)] text-[var(--success)] border border-[var(--success-border)] select-none;
   }
 
   .badge-inactive {
@@ -187,11 +189,11 @@
 
   /* ─── Form Inputs ─── */
   .input-select {
-    @apply border border-slate-200 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 outline-none cursor-pointer transition-all;
+    @apply border border-slate-200 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-[var(--primary-container)]/20 focus:border-[var(--primary-container)] outline-none cursor-pointer transition-all;
   }
 
   .input-text {
-    @apply border border-slate-200 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 outline-none transition-all placeholder:text-slate-400;
+    @apply border border-slate-200 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-[var(--primary-container)]/20 focus:border-[var(--primary-container)] outline-none transition-all placeholder:text-slate-400;
   }
 
   /* ─── Calendar ─── */
@@ -249,7 +251,7 @@
   }
 
   .modal-button-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white rounded-lg text-xs font-semibold transition-colors outline-none active:scale-95 cursor-pointer select-none;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white rounded-lg text-xs font-semibold transition-colors outline-none active:scale-95 cursor-pointer select-none;
   }
 
   .modal-button-secondary {

@@ -106,11 +106,11 @@ export default function SentimentTimelineChart({
             onClick={() => toggleFocusSeries("happy")}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all border cursor-pointer ${
               focusedSeries === "happy"
-                ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold shadow-xs"
-                : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 border-slate-200/70"
+                ? "bg-[var(--accent-bg)] text-[var(--primary-container)] border-[var(--accent-light)] font-semibold shadow-xs"
+                : "text-slate-600 hover:text-[var(--primary-container)] hover:bg-[var(--accent-bg)]/50 border-slate-200/70"
             }`}
           >
-            <span className="w-3.5 h-1 rounded-full bg-emerald-600" />
+            <span className="w-3.5 h-1 rounded-full bg-[var(--primary-container)]" />
             <span>ดี</span>
           </button>
 
@@ -250,7 +250,7 @@ export default function SentimentTimelineChart({
                 <path
                   d={happyCurve.d}
                   fill="none"
-                  stroke="#059669"
+                  stroke="#006e2f"
                   strokeWidth={focusedSeries === "happy" ? 3.5 : 2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -316,7 +316,7 @@ export default function SentimentTimelineChart({
                           cy={happyY}
                           r={focusedSeries === "happy" ? 4.5 : 3.5}
                           fill="#ffffff"
-                          stroke="#059669"
+                          stroke="#006e2f"
                           strokeWidth={focusedSeries === "happy" ? 2.5 : 2}
                           className="pointer-events-none transition-all duration-200"
                         />
@@ -367,7 +367,7 @@ export default function SentimentTimelineChart({
                 </div>
                 <div className="flex flex-col gap-0.5 font-medium">
                   <div
-                    className={`text-emerald-400 transition-opacity ${
+                    className={`text-[#006e2f] transition-opacity ${
                       focusedSeries && focusedSeries !== "happy"
                         ? "opacity-40"
                         : "opacity-100 font-semibold"

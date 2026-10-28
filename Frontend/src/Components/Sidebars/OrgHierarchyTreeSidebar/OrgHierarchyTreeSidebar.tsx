@@ -56,7 +56,7 @@ export default function OrgHierarchyTreeSidebar({
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             Scope Hierarchy
           </span>
-          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
+          <span className="text-[10px] font-semibold text-[var(--primary-container)] bg-[var(--accent-bg)] px-2 py-0.5 rounded-full border border-[var(--accent-light)]">
             5 Tiers
           </span>
         </div>
@@ -72,7 +72,7 @@ export default function OrgHierarchyTreeSidebar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Filter brand / branch..."
-            className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-slate-200/80 rounded-xl outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-slate-800 placeholder:text-slate-400"
+            className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-slate-200/80 rounded-xl outline-none focus:border-[var(--primary-container)] focus:ring-1 focus:ring-[var(--primary-container)] text-slate-800 placeholder:text-slate-400"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function OrgHierarchyTreeSidebar({
           onClick={onSelectSuperAdmin}
           className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             selectedScopeLevel === "SUPER_ADMIN"
-              ? "bg-[#D7F4DF] text-[#006e2f] shadow-xs"
+              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] shadow-xs"
               : "text-slate-700 hover:bg-slate-100/80"
           }`}
         >
@@ -108,7 +108,7 @@ export default function OrgHierarchyTreeSidebar({
                 onClick={() => onSelectBrand(brand)}
                 className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-xl cursor-pointer transition-colors ${
                   isBrandSelected
-                    ? "bg-[#D7F4DF] text-[#006e2f] font-semibold"
+                    ? "bg-[var(--accent-bg)] text-[var(--primary-container)] font-semibold"
                     : "text-slate-800 hover:bg-slate-100"
                 }`}
               >
@@ -128,7 +128,7 @@ export default function OrgHierarchyTreeSidebar({
                   </svg>
                 </button>
 
-                <div className="w-5 h-5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center font-bold text-[10px] shrink-0">
+                <div className="w-5 h-5 rounded-lg bg-[var(--accent-bg)] text-[var(--primary-container)] border border-[var(--accent-light)] flex items-center justify-center font-bold text-[10px] shrink-0">
                   {brand.code?.[0] || "B"}
                 </div>
 
@@ -150,7 +150,7 @@ export default function OrgHierarchyTreeSidebar({
                           onClick={(e) => onSelectRegion(brand, region, e)}
                           className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl cursor-pointer transition-colors ${
                             isRegionSelected
-                              ? "bg-[#D7F4DF] text-[#006e2f] font-semibold"
+                              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] font-semibold"
                               : "text-slate-700 hover:bg-slate-100"
                           }`}
                         >
@@ -188,7 +188,7 @@ export default function OrgHierarchyTreeSidebar({
                                     onClick={(e) => onSelectProvince(brand, region, prov, e)}
                                     className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl cursor-pointer transition-colors ${
                                       isProvSelected
-                                        ? "bg-[#D7F4DF] text-[#006e2f] font-semibold"
+                                        ? "bg-[var(--accent-bg)] text-[var(--primary-container)] font-semibold"
                                         : "text-slate-600 hover:bg-slate-100"
                                     }`}
                                   >
@@ -227,14 +227,14 @@ export default function OrgHierarchyTreeSidebar({
                                             }
                                             className={`flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-colors ${
                                               isBranchSelected
-                                                ? "bg-emerald-600 text-white font-medium shadow-xs"
+                                                ? "bg-[var(--primary-container)] text-white font-medium shadow-xs"
                                                 : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                                             }`}
                                           >
                                             <span className="truncate">{branch.name}</span>
                                             <span
                                               className={`text-[10px] font-mono shrink-0 ml-1 ${
-                                                isBranchSelected ? "text-white" : "text-emerald-700 font-semibold"
+                                                isBranchSelected ? "text-white" : "text-[var(--primary-container)] font-semibold"
                                               }`}
                                             >
                                               {branch.csatScore || "Tier 5"}
