@@ -23,3 +23,12 @@ export interface EventItem {
   targetBranchIds?: string[];
   targetBranchNames?: string[];
 }
+
+export interface CalendarCell {
+  date: Date;
+  dateString: string; // YYYY-MM-DD
+  dayNumber: number;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  events: EventItem[];
+}

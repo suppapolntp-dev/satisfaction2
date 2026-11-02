@@ -2,6 +2,7 @@
 
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
+import EventCalendar from "@/Components/Calendars/EventCalendar";
 import {
   useEventManagementScreen,
   EventManagementTab,
@@ -12,12 +13,16 @@ export interface EventManagementScreenProps {
 }
 
 export default function EventManagementScreen({
-  initialTab = "events",
+  initialTab = "calendar",
 }: EventManagementScreenProps = {}) {
   const {
     activeTab,
     eventTabs,
+    events,
+    isLoading,
     handleTabChange,
+    handleSelectDate,
+    handleSelectEvent,
     handleCreateEvent,
   } = useEventManagementScreen({ initialTab });
 
@@ -50,6 +55,16 @@ export default function EventManagementScreen({
           onClick: handleCreateEvent,
         }}
       />
+
+      {/* ─── TAB 1: CALENDAR VIEW ─── */}
+      {(activeTab === "calendar" || activeTab === "events") && (
+        <EventCalendar
+          events={events}
+          isLoading={isLoading}
+          onSelectDate={handleSelectDate}
+          onSelectEvent={handleSelectEvent}
+        />
+      )}
     </div>
   );
 }

@@ -1,64 +1,36 @@
 import { apiClient } from "./apiClient";
-import { ScheduledEventItem } from "@/Types/event";
+import { EventItem } from "@/Types/event";
 
-export type { ScheduledEventItem };
+export interface GetEventsParams {
+  brand?: string;
+  category?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}
 
 export const eventService = {
-  async getEvents(): Promise<ScheduledEventItem[]> {
+  // TODO: Connect API [get_events]
+  async getEvents(params?: GetEventsParams): Promise<EventItem[]> {
     try {
-      const response = await apiClient.get<ScheduledEventItem[]>("/events");
+      let url = "/events";
+      if (params) {
+        const searchParams = new URLSearchParams();
+        if (params.brand) searchParams.set("brand", params.brand);
+        if (params.category) searchParams.set("category", params.category);
+        if (params.status) searchParams.set("status", params.status);
+        if (params.startDate) searchParams.set("startDate", params.startDate);
+        if (params.endDate) searchParams.set("endDate", params.endDate);
+        const query = searchParams.toString();
+        if (query) url += `?${query}`;
+      }
+      const response = await apiClient.get<EventItem[]>(url);
       if (response.success && Array.isArray(response.data)) {
         return response.data;
       }
-    } catch {}
+    } catch (error) {
+      console.error("[eventService.getEvents] error:", error);
+    }
     return [];
-  },
-
-  async getEventById(id: string): Promise<ScheduledEventItem | null> {
-    try {
-      const response = await apiClient.get<ScheduledEventItem>(`/events/${id}`);
-      if (response.success && response.data) {
-        return response.data;
-      }
-    } catch {}
-    return null;
-  },
-
-  async createEvent(eventData: Omit<ScheduledEventItem, "eventId">): Promise<ScheduledEventItem> {
-    const newEvent: ScheduledEventItem = {
-      ...eventData,
-      eventId: `EVT-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
-    };
-
-    try {
-      const response = await apiClient.post<ScheduledEventItem>("/events", newEvent);
-      if (response.success && response.data) {
-        return response.data;
-      }
-    } catch {}
-
-    return newEvent;
-  },
-
-  async updateEvent(eventId: string, eventData: Partial<ScheduledEventItem>): Promise<ScheduledEventItem> {
-    try {
-      const response = await apiClient.put<ScheduledEventItem>(`/events/${eventId}`, eventData);
-      if (response.success && response.data) {
-        return response.data;
-      }
-    } catch {}
-
-    return { ...eventData, eventId } as ScheduledEventItem;
-  },
-
-  async deleteEvent(eventId: string): Promise<boolean> {
-    try {
-      const response = await apiClient.delete<boolean>(`/events/${eventId}`);
-      if (response.success) {
-        return true;
-      }
-    } catch {}
-
-    return true;
   },
 };
