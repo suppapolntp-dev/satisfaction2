@@ -67,11 +67,15 @@ export function useEventCard({ event, brandLogoUrl, onClick }: UseEventCardProps
     }
   };
 
+  const effectiveBrandLogoUrl = useMemo(() => {
+    return brandLogoUrl || "/images/brands/mister-donut.svg";
+  }, [brandLogoUrl]);
+
   return {
     statusConfig,
     brandInitial,
     timeRangeLabel,
-    brandLogoUrl,
+    brandLogoUrl: effectiveBrandLogoUrl,
     handleClick,
   };
 }

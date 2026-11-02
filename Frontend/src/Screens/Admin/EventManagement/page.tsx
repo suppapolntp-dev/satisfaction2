@@ -91,37 +91,10 @@ export default function EventManagementScreen({
               <EventCard
                 key={event.eventId}
                 event={event}
+                brandLogoUrl="/images/brands/mister-donut.svg"
                 onClick={handleSelectEvent}
               />
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* ─── EVENT DETAIL PREVIEW MODAL ─── */}
-      {selectedEvent && (
-        <div
-          onClick={handleCloseSelectedEvent}
-          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative flex flex-col items-center"
-          >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={handleCloseSelectedEvent}
-              className="absolute -top-12 right-0 sm:-right-10 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md cursor-pointer transition-all active:scale-95"
-              aria-label="Close Preview"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-
-            <EventCard event={selectedEvent} onClick={handleCloseSelectedEvent} />
           </div>
         </div>
       )}
