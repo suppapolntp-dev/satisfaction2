@@ -36,6 +36,23 @@ export const MONTH_NAMES = [
 
 export const CALENDAR_WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+export const THAI_MONTH_NAMES = [
+  "มกราคม",
+  "กุมภาพันธ์",
+  "มีนาคม",
+  "เมษายน",
+  "พฤษภาคม",
+  "มิถุนายน",
+  "กรกฎาคม",
+  "สิงหาคม",
+  "กันยายน",
+  "ตุลาคม",
+  "พฤศจิกายน",
+  "ธันวาคม",
+];
+
+export const MINI_WEEKDAYS_TH = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
 export const THAI_DAY_NAMES: Record<number, { full: string; short: string }> = {
   0: { full: "วันอาทิตย์", short: "อาทิตย์" },
   1: { full: "วันจันทร์", short: "จันทร์" },
@@ -53,12 +70,93 @@ export function useEventCalendar({
   onSelectEvent,
 }: UseEventCalendarProps = {}) {
   const [currentDate, setCurrentDate] = useState<Date>(() => initialDate || new Date());
-  const [viewMode, setViewMode] = useState<CalendarViewMode>("Month");
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("Day");
+  const [miniDate, setMiniDate] = useState<Date>(() => initialDate || new Date());
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   const safeEvents = useMemo(() => events || [], [events]);
 
   const todayStr = useMemo(() => formatToYYYYMMDD(new Date()), []);
   const currentDateStr = useMemo(() => formatToYYYYMMDD(currentDate), [currentDate]);
+
+  // ─── Mini Calendar Calculations (Google Calendar Sidebar) ───
+  const miniYear = miniDate.getFullYear();
+  const miniMonth = miniDate.getMonth();
+
+  const miniMonthYearThLabel = useMemo(() => {
+    return `${THAI_MONTH_NAMES[miniMonth]} ${miniYear}`;
+  }, [miniMonth, miniYear]);
+
+  const handlePrevMiniMonth = useCallback(() => {
+    setMiniDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  }, []);
+
+  const handleNextMiniMonth = useCallback(() => {
+    setMiniDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
+
+  const miniCalendarCells = useMemo(() => {
+    const daysInMonth = new Date(miniYear, miniMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(miniYear, miniMonth, 0).getDate();
+    const firstDayOfWeek = new Date(miniYear, miniMonth, 1).getDay(); // 0 is Sunday
+
+    const cells: {
+      date: Date;
+      dateString: string;
+      dayNumber: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      isSelected: boolean;
+    }[] = [];
+
+    // Prev month trailing days
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const dNum = daysInPrevMonth - i;
+      const d = new Date(miniYear, miniMonth - 1, dNum);
+      const dStr = formatToYYYYMMDD(d);
+      cells.push({
+        date: d,
+        dateString: dStr,
+        dayNumber: dNum,
+        isCurrentMonth: false,
+        isToday: dStr === todayStr,
+        isSelected: dStr === currentDateStr,
+      });
+    }
+
+    // Current month days
+    for (let dNum = 1; dNum <= daysInMonth; dNum++) {
+      const d = new Date(miniYear, miniMonth, dNum);
+      const dStr = formatToYYYYMMDD(d);
+      cells.push({
+        date: d,
+        dateString: dStr,
+        dayNumber: dNum,
+        isCurrentMonth: true,
+        isToday: dStr === todayStr,
+        isSelected: dStr === currentDateStr,
+      });
+    }
+
+    // Next month trailing days (pad to 35 or 42)
+    const targetTotal = cells.length <= 35 ? 35 : 42;
+    const remaining = targetTotal - cells.length;
+    for (let dNum = 1; dNum <= remaining; dNum++) {
+      const d = new Date(miniYear, miniMonth + 1, dNum);
+      const dStr = formatToYYYYMMDD(d);
+      cells.push({
+        date: d,
+        dateString: dStr,
+        dayNumber: dNum,
+        isCurrentMonth: false,
+        isToday: dStr === todayStr,
+        isSelected: dStr === currentDateStr,
+      });
+    }
+
+    return cells;
+  }, [miniYear, miniMonth, todayStr, currentDateStr]);
 
   // ─── 1. Month View Cells Calculation ───
   const monthCalendarCells = useMemo<CalendarCell[]>(() => {
@@ -144,10 +242,27 @@ export function useEventCalendar({
     return days;
   }, [currentDate, safeEvents, todayStr]);
 
-  // ─── 3. Day View Events ───
+  // ─── 3. Day View Events (Filtered by Search Query & Category) ───
   const dayEvents = useMemo(() => {
-    return safeEvents.filter((e) => e.eventDate === currentDateStr);
-  }, [safeEvents, currentDateStr]);
+    let list = safeEvents.filter((e) => e.eventDate === currentDateStr);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (e) =>
+          e.eventName.toLowerCase().includes(q) ||
+          e.brandScope.toLowerCase().includes(q) ||
+          (e.eventLocation && e.eventLocation.toLowerCase().includes(q)) ||
+          (e.description && e.description.toLowerCase().includes(q))
+      );
+    }
+
+    if (selectedCategory !== "ALL") {
+      list = list.filter((e) => e.eventCategory.toUpperCase() === selectedCategory);
+    }
+
+    return list;
+  }, [safeEvents, currentDateStr, searchQuery, selectedCategory]);
 
   // ─── Navigation Handlers ───
   const handlePrev = useCallback(() => {
@@ -179,7 +294,9 @@ export function useEventCalendar({
   }, [viewMode]);
 
   const handleToday = useCallback(() => {
-    setCurrentDate(new Date());
+    const now = new Date();
+    setCurrentDate(now);
+    setMiniDate(now);
   }, []);
 
   const monthYearLabel = useMemo(() => {
@@ -208,7 +325,9 @@ export function useEventCalendar({
     (dateString: string) => {
       const [y, m, d] = dateString.split("-").map(Number);
       if (y && m && d) {
-        setCurrentDate(new Date(y, m - 1, d));
+        const nextDate = new Date(y, m - 1, d);
+        setCurrentDate(nextDate);
+        setMiniDate(new Date(y, m - 1, 1));
         setViewMode("Day");
       }
       if (onSelectDate) onSelectDate(dateString);
@@ -223,6 +342,14 @@ export function useEventCalendar({
     currentDayInfo,
     viewMode,
     setViewMode,
+    miniMonthYearThLabel,
+    miniCalendarCells,
+    handlePrevMiniMonth,
+    handleNextMiniMonth,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
     monthCalendarCells,
     weekCalendarDays,
     dayEvents,
