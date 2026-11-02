@@ -12,31 +12,24 @@ export interface UseEventManagementScreenProps {
   initialTab?: EventManagementTab;
 }
 
-// Helper สร้างข้อมูลจำลอง (1 วัน มีได้เพียง 1 งานตามกฎระบบ)
+// Helper สร้างข้อมูลจำลอง (รองรับหลายแบรนด์จัดกิจกรรมในวันเดียวกันได้ โดยแยกคอลัมน์/แถวประจำแบรนด์)
 function createSampleEvents(): EventItem[] {
   const today = new Date();
-
-  // 1. วันวานนี้ (Completed - สีเขียว)
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const yesterdayStr = formatToYYYYMMDD(yesterday);
-
-  // 2. วันนี้ (Upcoming - สีเหลือง)
   const todayStr = formatToYYYYMMDD(today);
 
-  // 3. วันพรุ่งนี้ (Upcoming - สีเหลือง)
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
   const tomorrowStr = formatToYYYYMMDD(tomorrow);
 
   return [
+    // ─── วันนี้: 3 แบรนด์จัดกิจกรรมพร้อมกัน (แยกตามแถว/คอลัมน์ของแบรนด์) ───
     {
-      eventId: "EVT-YESTERDAY-001",
+      eventId: "EVT-TODAY-001",
       eventName: "อัปเดต Firmware ระบบตู้ Kiosk ประจำสาขา",
-      eventDate: yesterdayStr,
-      startTime: "09:00",
-      endTime: "12:00",
-      brandScope: "Mister Donut",
+      eventDate: todayStr,
+      startTime: "08:30",
+      endTime: "11:30",
+      brandScope: "The Coffee Club",
       brandId: null,
       brandLogoUrl: "/images/brands/mister-donut.svg",
       eventLocation: "Central World ชั้น 3",
@@ -65,12 +58,12 @@ function createSampleEvents(): EventItem[] {
       targetBranchNames: ["Central World", "Siam Paragon"],
     },
     {
-      eventId: "EVT-TOMORROW-003",
+      eventId: "EVT-TODAY-003",
       eventName: "ตรวจมาตรฐานความสะอาดและสุขอนามัย Q1",
-      eventDate: tomorrowStr,
+      eventDate: todayStr,
       startTime: "13:00",
       endTime: "17:00",
-      brandScope: "Mister Donut",
+      brandScope: "Swensen's",
       brandId: null,
       brandLogoUrl: "/images/brands/mister-donut.svg",
       eventLocation: "สาขาโซนภาคกลางและนนทบุรี",
@@ -80,6 +73,24 @@ function createSampleEvents(): EventItem[] {
       kioskThemeOverride: null,
       targetBranchIds: [],
       targetBranchNames: ["Mega Bangna"],
+    },
+    // ─── วันพรุ่งนี้ ───
+    {
+      eventId: "EVT-TOMORROW-004",
+      eventName: "แคมเปญแลกรับเครื่องดื่มต้อนรับสมาชิกใหม่",
+      eventDate: tomorrowStr,
+      startTime: "09:00",
+      endTime: "15:00",
+      brandScope: "The Coffee Club",
+      brandId: null,
+      brandLogoUrl: "/images/brands/mister-donut.svg",
+      eventLocation: "Siam Paragon ชั้น G",
+      eventCategory: "CAMPAIGN",
+      eventStatus: "Upcoming",
+      description: "ประเมินระดับความพึงพอใจและรับกาแฟฟรี 1 แก้ว",
+      kioskThemeOverride: null,
+      targetBranchIds: [],
+      targetBranchNames: ["Siam Paragon"],
     },
   ];
 }

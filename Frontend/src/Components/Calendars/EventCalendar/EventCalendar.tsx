@@ -135,6 +135,13 @@ export default function EventCalendar({
     return CATEGORY_STYLES[category.toUpperCase()] || DEFAULT_CATEGORY_STYLE;
   };
 
+  // แถว/คอลัมน์ประจำแบรนด์สำหรับแสดงกิจกรรมแยกเลน (ตีเส้นแถวแบรนด์)
+  const brandLanes = useMemo(() => {
+    const fromEvents = dayEvents.map((e) => e.brandScope).filter(Boolean);
+    const defaults = ["Mister Donut", "The Coffee Club", "Swensen's"];
+    return Array.from(new Set([...defaults, ...fromEvents]));
+  }, [dayEvents]);
+
   // คำนวณตำแหน่งและจัดการการซ้อนทับของอีเวนต์ใน Day View (Google Calendar Style)
   const positionedDayEvents = useMemo(() => {
     if (!dayEvents || dayEvents.length === 0) return [];
@@ -488,26 +495,19 @@ export default function EventCalendar({
             </div>
           )}
 
-          {/* ─── DAY VIEW (Google Calendar Time Grid Layout) ─── */}
+          {/* ─── DAY VIEW (Google Calendar Multi-Brand Timeline Grid Layout) ─── */}
           {viewMode === "Day" && (
             <div className="flex-1 flex flex-col overflow-hidden bg-white">
               {/* Day View Sticky Header */}
-              <div className="flex border-b border-slate-200 bg-white sticky top-0 z-20">
-                {/* Left Timezone Label */}
-                <div className="w-16 sm:w-20 shrink-0 flex items-end justify-end pb-2 pr-3 border-r border-slate-200/80">
-                  <span className="text-[11px] font-medium text-slate-400 select-none">
-                    GMT+7
-                  </span>
-                </div>
-
-                {/* Day of Week & Date Number (Google Calendar Day Header) */}
-                <div className="flex-1 py-2.5 px-4 flex items-center gap-3">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <div className="border-b border-slate-200 bg-white sticky top-0 z-20">
+                {/* 1. Date Information Row */}
+                <div className="flex items-center justify-between py-2.5 px-4 sm:px-5">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       {currentDayInfo.dayOfWeekThShort || currentDayInfo.dayOfWeekEn}
                     </span>
                     <div
-                      className={`mt-0.5 text-2xl sm:text-3xl font-bold flex items-center justify-center leading-none ${
+                      className={`text-2xl sm:text-3xl font-bold flex items-center justify-center leading-none ${
                         currentDayInfo.isToday
                           ? "w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0b57d0] text-white shadow-xs"
                           : "text-[#1f1f1f]"
@@ -515,16 +515,49 @@ export default function EventCalendar({
                     >
                       {currentDayInfo.dayNumber}
                     </div>
+                    <div className="hidden sm:block pl-3 border-l border-slate-200 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-700">{currentDayInfo.dayOfWeekThFull}</span>
+                      <span className="mx-2 text-slate-300">&bull;</span>
+                      <span>
+                        {dayEvents.length === 0
+                          ? "ไม่มีกิจกรรมในวันนี้"
+                          : `${dayEvents.length} กิจกรรมตามแถวแบรนด์`}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="hidden sm:block pl-3 border-l border-slate-200 text-xs text-slate-500">
-                    <span className="font-semibold text-slate-700">{currentDayInfo.dayOfWeekThFull}</span>
-                    <span className="mx-2 text-slate-300">&bull;</span>
-                    <span>
-                      {dayEvents.length === 0
-                        ? "ไม่มีกิจกรรมในวันนี้"
-                        : `${dayEvents.length} กิจกรรม`}
-                    </span>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    ตารางกิจกรรมแบ่งตามแบรนด์
+                  </span>
+                </div>
+
+                {/* 2. Brand Column Track Headers (ตีเส้นแถวหัวแบรนด์) */}
+                <div className="flex border-t border-slate-200/80 bg-slate-50/70 overflow-x-auto [scrollbar-width:none]">
+                  <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 py-2 pr-3 text-right">
+                    <span className="text-[10px] font-bold text-slate-400 select-none">GMT+7</span>
+                  </div>
+                  <div className="flex-1 flex divide-x divide-slate-200/80 min-w-[750px]">
+                    {brandLanes.map((brandName) => {
+                      const count = dayEvents.filter((e) => e.brandScope === brandName).length;
+                      return (
+                        <div
+                          key={brandName}
+                          className="flex-1 min-w-[250px] max-w-[320px] px-3.5 py-2 flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                            <span className="text-xs font-bold text-slate-800 truncate">
+                              {brandName}
+                            </span>
+                          </div>
+                          {count > 0 && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
+                              {count} งาน
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -548,18 +581,9 @@ export default function EventCalendar({
                     ))}
                   </div>
 
-                  {/* Right Column: Timeline Grid Lines & Events Canvas */}
-                  <div className="flex-1 relative">
-                    {/* Hourly Horizontal Rules */}
-                    {HOURS_24.map((hour) => (
-                      <div
-                        key={hour}
-                        className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
-                        style={{ top: `${hour * HOUR_HEIGHT}px` }}
-                      />
-                    ))}
-
-                    {/* Live Current Time Line (Google Calendar style red marker) */}
+                  {/* Multi-Brand Column Lanes Container (ตีเส้นแถวคอลัมน์แนวตั้ง divide-x) */}
+                  <div className="flex-1 flex divide-x divide-slate-200/80 relative min-w-[750px] overflow-x-auto">
+                    {/* Live Current Time Line running across all brand lanes */}
                     {isCurrentDateToday && (
                       <div
                         className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
@@ -570,120 +594,129 @@ export default function EventCalendar({
                       </div>
                     )}
 
-                    {/* Event Blocks Placed on Grid (Flight Destination Card UI Style - ขนาดเดียวเท่ากันทุกการ์ด) */}
-                    {positionedDayEvents.map((item) => {
-                      const { event, startMin, colIndex, totalCols } = item;
-                      const colWidthPercent = 100 / totalCols;
-                      const leftPercent = colIndex * colWidthPercent;
-
-                      const isCompleted =
-                        (event.eventStatus || "").toUpperCase() === "COMPLETED";
+                    {brandLanes.map((brandName) => {
+                      const laneEvents = dayEvents.filter((e) => e.brandScope === brandName);
 
                       return (
                         <div
-                          key={event.eventId}
-                          onClick={() => onSelectEvent && onSelectEvent(event)}
-                          style={{
-                            top: `${startMin}px`,
-                            height: `${UNIFORM_CARD_HEIGHT}px`,
-                          }}
-                          className="absolute z-10 left-3 right-3 sm:left-4 sm:max-w-[400px] rounded-[24px] sm:rounded-[28px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-xl hover:border-slate-300/90 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col bg-white text-slate-900 group select-none"
-                          title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
+                          key={brandName}
+                          className="flex-1 min-w-[250px] max-w-[320px] relative"
                         >
-                          {/* ─── 1. TOP MEDIA SECTION: Brand Logo (Mister Donut) Frame ─── */}
-                          <div className="relative w-full h-[105px] bg-[#fff6ee] flex items-center justify-center p-3.5 border-b border-slate-100 overflow-hidden shrink-0">
-                            <img
-                              src={event.brandLogoUrl || "/images/brands/mister-donut.svg"}
-                              alt={event.brandScope || "Brand Logo"}
-                              className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                          {/* Hourly Horizontal Rules for each brand lane */}
+                          {HOURS_24.map((hour) => (
+                            <div
+                              key={hour}
+                              className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
+                              style={{ top: `${hour * HOUR_HEIGHT}px` }}
                             />
-                            {/* Brand Scope Tag on Top Left */}
-                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-2xs border border-slate-200/60 text-[9px] font-bold text-slate-700 uppercase tracking-wider">
-                              {event.brandScope || "Mister Donut"}
-                            </div>
-                          </div>
+                          ))}
 
-                          {/* ─── 2. CONTENT BODY (Flight Destination Card Style) ─── */}
-                          <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-1 bg-white">
-                            <div>
-                              {/* Title ("หัวข้อ") */}
-                              <h4 className="font-bold text-xs sm:text-sm text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-amber-600 transition-colors">
-                                {event.eventName}
-                              </h4>
+                          {/* Event Cards placed inside this Brand Lane (แกน Y ยาว 270px เท่าเดิม, แกน X กะทัดรัดพอดีแถว) */}
+                          {laneEvents.map((event) => {
+                            const startMin = parseTimeToMinutes(event.startTime, 540);
+                            const isCompleted =
+                              (event.eventStatus || "").toUpperCase() === "COMPLETED";
 
-                              {/* Details ("รายละเอียด") */}
-                              <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
-                                {event.description ||
-                                  (event.eventLocation
-                                    ? `สถานที่: ${event.eventLocation}`
-                                    : "ไม่มีรายละเอียดเพิ่มเติม")}
-                              </p>
+                            return (
+                              <div
+                                key={event.eventId}
+                                onClick={() => onSelectEvent && onSelectEvent(event)}
+                                style={{
+                                  top: `${startMin}px`,
+                                  height: `${UNIFORM_CARD_HEIGHT}px`,
+                                }}
+                                className="absolute z-10 left-2 right-2 rounded-[22px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-xl hover:border-slate-300/90 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col bg-white text-slate-900 group select-none"
+                                title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
+                              >
+                                {/* ─── 1. TOP MEDIA SECTION: Brand Logo Frame ─── */}
+                                <div className="relative w-full h-[105px] bg-[#fff6ee] flex items-center justify-center p-3 border-b border-slate-100 overflow-hidden shrink-0">
+                                  <img
+                                    src={event.brandLogoUrl || "/images/brands/mister-donut.svg"}
+                                    alt={event.brandScope || "Brand Logo"}
+                                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                                  />
+                                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-2xs border border-slate-200/60 text-[9px] font-bold text-slate-700 uppercase tracking-wider">
+                                    {event.brandScope || "Brand"}
+                                  </div>
+                                </div>
 
-                              {/* Badges Row (Status Pill + Time Pill) */}
-                              <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                                {/* Status Badge: เขียว (ทำเสร็จแล้ว) vs เหลือง (รอทำ / รอถึงวัน) */}
-                                {isCompleted ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <span>ทำเสร็จแล้ว</span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                    <span>รอถึงวัน</span>
-                                  </span>
-                                )}
+                                {/* ─── 2. CONTENT BODY (Flight Destination Card Style) ─── */}
+                                <div className="p-3 flex flex-col justify-between flex-1 bg-white">
+                                  <div>
+                                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-amber-600 transition-colors">
+                                      {event.eventName}
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
+                                      {event.description ||
+                                        (event.eventLocation
+                                          ? `สถานที่: ${event.eventLocation}`
+                                          : "ไม่มีรายละเอียดเพิ่มเติม")}
+                                    </p>
 
-                                {/* Time Pill */}
-                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-                                  <svg className="w-3 h-3 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <polyline points="12 6 12 12 16 14" />
-                                  </svg>
-                                  <span>{event.startTime} - {event.endTime}</span>
-                                </span>
+                                    {/* Badges Row */}
+                                    <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                                      {isCompleted ? (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                          <span>ทำเสร็จแล้ว</span>
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                          <span>รอถึงวัน</span>
+                                        </span>
+                                      )}
+
+                                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                                        <svg className="w-3 h-3 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <circle cx="12" cy="12" r="10" />
+                                          <polyline points="12 6 12 12 16 14" />
+                                        </svg>
+                                        <span>{event.startTime} - {event.endTime}</span>
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* ─── 3. BOTTOM ACTIONS ROW ─── */}
+                                  <div className="flex items-center gap-1.5 mt-2">
+                                    <button
+                                      type="button"
+                                      className="flex-1 h-9 rounded-full bg-[#111111] hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                    >
+                                      {isCompleted ? (
+                                        <>
+                                          <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          <span>เสร็จสิ้นกิจกรรม</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                            <line x1="16" y1="2" x2="16" y2="6" />
+                                            <line x1="8" y1="2" x2="8" y2="6" />
+                                            <line x1="3" y1="10" x2="21" y2="10" />
+                                          </svg>
+                                          <span>รอจัดกิจกรรม</span>
+                                        </>
+                                      )}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      aria-label="Bookmark"
+                                      className="w-9 h-9 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-rose-500 shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                    >
+                                      <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-
-                            {/* ─── 3. BOTTOM ACTIONS ROW (Black Pill Button + Circular Heart Button) ─── */}
-                            <div className="flex items-center gap-2 mt-2">
-                              {/* Primary Action: Black Pill Button */}
-                              <button
-                                type="button"
-                                className="flex-1 h-9 rounded-full bg-[#111111] hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                              >
-                                {isCompleted ? (
-                                  <>
-                                    <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    <span>เสร็จสิ้นกิจกรรม</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                      <line x1="16" y1="2" x2="16" y2="6" />
-                                      <line x1="8" y1="2" x2="8" y2="6" />
-                                      <line x1="3" y1="10" x2="21" y2="10" />
-                                    </svg>
-                                    <span>รอจัดกิจกรรม</span>
-                                  </>
-                                )}
-                              </button>
-
-                              {/* Secondary Action: Circular Heart Button */}
-                              <button
-                                type="button"
-                                aria-label="Bookmark"
-                                className="w-9 h-9 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-rose-500 shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                              >
-                                <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
-                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
