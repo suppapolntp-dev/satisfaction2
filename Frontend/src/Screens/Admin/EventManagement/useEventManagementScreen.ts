@@ -12,19 +12,30 @@ export interface UseEventManagementScreenProps {
   initialTab?: EventManagementTab;
 }
 
-// Helper สร้างข้อมูลจำลองสำหรับวันพรุ่งนี้ เพื่อให้ทดสอบและปรับแต่ง UI ได้ทันที
-function createTomorrowSampleEvents(): EventItem[] {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+// Helper สร้างข้อมูลจำลอง (1 วัน มีได้เพียง 1 งานตามกฎระบบ)
+function createSampleEvents(): EventItem[] {
+  const today = new Date();
+
+  // 1. วันวานนี้ (Completed - สีเขียว)
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const yesterdayStr = formatToYYYYMMDD(yesterday);
+
+  // 2. วันนี้ (Upcoming - สีเหลือง)
+  const todayStr = formatToYYYYMMDD(today);
+
+  // 3. วันพรุ่งนี้ (Upcoming - สีเหลือง)
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
   const tomorrowStr = formatToYYYYMMDD(tomorrow);
 
   return [
     {
-      eventId: "EVT-COMPLETED-003",
+      eventId: "EVT-YESTERDAY-001",
       eventName: "อัปเดต Firmware ระบบตู้ Kiosk ประจำสาขา",
-      eventDate: tomorrowStr,
-      startTime: "08:00",
-      endTime: "10:00",
+      eventDate: yesterdayStr,
+      startTime: "09:00",
+      endTime: "12:00",
       brandScope: "Mister Donut",
       brandId: null,
       brandLogoUrl: "/images/brands/mister-donut.svg",
@@ -37,9 +48,9 @@ function createTomorrowSampleEvents(): EventItem[] {
       targetBranchNames: ["Central World"],
     },
     {
-      eventId: "EVT-TOMORROW-001",
+      eventId: "EVT-TODAY-002",
       eventName: "แคมเปญวันเด็ก แจกโดนัทและของขวัญ",
-      eventDate: tomorrowStr,
+      eventDate: todayStr,
       startTime: "10:00",
       endTime: "16:00",
       brandScope: "Mister Donut",
@@ -54,11 +65,11 @@ function createTomorrowSampleEvents(): EventItem[] {
       targetBranchNames: ["Central World", "Siam Paragon"],
     },
     {
-      eventId: "EVT-TOMORROW-002",
+      eventId: "EVT-TOMORROW-003",
       eventName: "ตรวจมาตรฐานความสะอาดและสุขอนามัย Q1",
       eventDate: tomorrowStr,
-      startTime: "14:00",
-      endTime: "17:30",
+      startTime: "13:00",
+      endTime: "17:00",
       brandScope: "Mister Donut",
       brandId: null,
       brandLogoUrl: "/images/brands/mister-donut.svg",
@@ -97,20 +108,19 @@ export function useEventManagementScreen({
       try {
         setIsLoading(true);
         const data = await eventService.getEvents();
-        const tomorrowSamples = createTomorrowSampleEvents();
+        const samples = createSampleEvents();
 
         if (isMounted) {
           if (data && data.length > 0) {
-            // รวมอีเวนต์จาก API กับตัวแปรจำลองวันพรุ่งนี้
-            setEvents([...data, ...tomorrowSamples]);
+            setEvents([...data, ...samples]);
           } else {
-            setEvents(tomorrowSamples);
+            setEvents(samples);
           }
         }
       } catch (error) {
         console.error("[useEventManagementScreen] loadEvents error:", error);
         if (isMounted) {
-          setEvents(createTomorrowSampleEvents());
+          setEvents(createSampleEvents());
         }
       } finally {
         if (isMounted) {

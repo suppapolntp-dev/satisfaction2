@@ -586,10 +586,8 @@ export default function EventCalendar({
                           style={{
                             top: `${startMin}px`,
                             height: `${UNIFORM_CARD_HEIGHT}px`,
-                            left: `calc(${leftPercent}% + 6px)`,
-                            width: `calc(${colWidthPercent}% - 12px)`,
                           }}
-                          className="absolute z-10 rounded-[24px] sm:rounded-[28px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-xl hover:border-slate-300/90 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col bg-white text-slate-900 group select-none"
+                          className="absolute z-10 left-3 right-3 sm:left-4 sm:max-w-[400px] rounded-[24px] sm:rounded-[28px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-xl hover:border-slate-300/90 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col bg-white text-slate-900 group select-none"
                           title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
                         >
                           {/* ─── 1. TOP MEDIA SECTION: Brand Logo (Mister Donut) Frame ─── */}
