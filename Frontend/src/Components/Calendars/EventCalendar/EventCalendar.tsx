@@ -176,6 +176,8 @@ export default function EventCalendar({
     return parsed;
   }, [dayEvents]);
 
+  const showSidebar = viewMode === "Day" || viewMode === "Week";
+
   return (
     <div
       className={`bg-white rounded-3xl border border-slate-200/90 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] overflow-hidden flex flex-col ${className}`}
@@ -247,144 +249,119 @@ export default function EventCalendar({
         </div>
       )}
 
-      {/* ─── 2. GOOGLE CALENDAR SPLIT LAYOUT (LEFT SIDEBAR + RIGHT CANVAS) ─── */}
+      {/* ─── 2. CALENDAR LAYOUT (SIDEBAR FOR DAY & WEEK VIEWS) ─── */}
       {!isLoading && (
-        <div className="flex flex-col lg:flex-row flex-1 min-h-[640px] bg-white divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80">
-          {/* ─── LEFT SIDEBAR: MINI CALENDAR & SEARCH (Google Calendar Style) ─── */}
-          <aside className="w-full lg:w-64 xl:w-72 p-4 sm:p-5 flex flex-col gap-5 bg-white shrink-0 select-none">
-            {/* 1. Mini Datepicker Header & Grid */}
-            <div>
-              <div className="flex items-center justify-between mb-3 px-1">
-                <span className="text-sm font-bold text-slate-800">
-                  {miniMonthYearThLabel}
-                </span>
-                <div className="flex items-center gap-0.5">
-                  <button
-                    type="button"
-                    onClick={handlePrevMiniMonth}
-                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-                    aria-label="Previous Month"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleNextMiniMonth}
-                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-                    aria-label="Next Month"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Weekday Abbreviations (อา - ส) */}
-              <div className="grid grid-cols-7 text-center mb-1 text-[11px] font-semibold text-slate-500">
-                {MINI_WEEKDAYS_TH.map((dayName, idx) => (
-                  <div key={idx} className="h-6 flex items-center justify-center">
-                    {dayName}
-                  </div>
-                ))}
-              </div>
-
-              {/* Days Matrix */}
-              <div className="grid grid-cols-7 text-center gap-y-1 text-xs">
-                {miniCalendarCells.map((cell, idx) => {
-                  const isSel = cell.isSelected;
-                  const isTod = cell.isToday;
-                  let cellBtnStyle = "text-slate-700 hover:bg-slate-100";
-
-                  if (!cell.isCurrentMonth) {
-                    cellBtnStyle = "text-slate-400 hover:bg-slate-50";
-                  }
-                  if (isTod && !isSel) {
-                    cellBtnStyle = "bg-[#0b57d0] text-white font-bold";
-                  }
-                  if (isSel) {
-                    cellBtnStyle = "bg-[#c2e7ff] text-[#001d35] font-bold shadow-xs";
-                  }
-
-                  return (
-                    <div key={idx} className="flex items-center justify-center">
+        <div
+          className={`flex flex-col ${
+            showSidebar
+              ? "lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80"
+              : ""
+          } flex-1 min-h-[640px] bg-white`}
+        >
+            {/* ─── LEFT SIDEBAR: MINI CALENDAR & SEARCH (ONLY FOR DAY & WEEK) ─── */}
+            {showSidebar && (
+              <aside className="w-full lg:w-64 xl:w-72 p-4 sm:p-5 flex flex-col gap-4 bg-white shrink-0 select-none">
+                {/* 1. Mini Datepicker Header & Grid */}
+                <div>
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <span className="text-sm font-bold text-slate-800">
+                      {miniMonthYearThLabel}
+                    </span>
+                    <div className="flex items-center gap-0.5">
                       <button
                         type="button"
-                        onClick={() => selectDate(cell.dateString)}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all cursor-pointer ${cellBtnStyle}`}
+                        onClick={handlePrevMiniMonth}
+                        className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                        aria-label="Previous Month"
                       >
-                        {cell.dayNumber}
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNextMiniMonth}
+                        className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                        aria-label="Next Month"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
                       </button>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
 
-            {/* 2. Search Pill ("ค้นหาผู้คน" -> "ค้นหากิจกรรม") */}
-            <div>
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#edf2fa] hover:bg-[#e4ebf7] text-slate-600 transition-colors border border-transparent focus-within:border-blue-400 focus-within:bg-white">
-                <svg className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ค้นหากิจกรรม หรือ สาขา..."
-                  className="bg-transparent border-none outline-none text-xs w-full text-slate-800 placeholder-slate-400 font-normal"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
+                  {/* Weekday Abbreviations (อา - ส) */}
+                  <div className="grid grid-cols-7 text-center mb-1 text-[11px] font-semibold text-slate-500">
+                    {MINI_WEEKDAYS_TH.map((dayName, idx) => (
+                      <div key={idx} className="h-6 flex items-center justify-center">
+                        {dayName}
+                      </div>
+                    ))}
+                  </div>
 
-            {/* 3. Category Filter List */}
-            <div className="pt-2 border-t border-slate-100 space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
-                หมวดหมู่กิจกรรม
-              </span>
-              <div className="space-y-1">
-                {[
-                  { id: "ALL", label: "ทุกกิจกรรม", dot: "bg-slate-400" },
-                  { id: "CAMPAIGN", label: "แคมเปญการประเมิน", dot: "bg-amber-500" },
-                  { id: "AUDIT", label: "ตรวจสอบคุณภาพ CSAT", dot: "bg-emerald-500" },
-                  { id: "FIRMWARE", label: "อัปเดตระบบ Kiosk", dot: "bg-blue-500" },
-                  { id: "MAINTENANCE", label: "ซ่อมบำรุงฮาร์ดแวร์", dot: "bg-rose-500" },
-                ].map((cat) => {
-                  const isActive = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all text-left cursor-pointer ${
-                        isActive
-                          ? "bg-slate-100 text-slate-900 font-bold"
-                          : "text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      <span className={`w-2.5 h-2.5 rounded-full ${cat.dot}`} />
-                      <span className="truncate">{cat.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </aside>
+                  {/* Days Matrix */}
+                  <div className="grid grid-cols-7 text-center gap-y-1 text-xs">
+                    {miniCalendarCells.map((cell, idx) => {
+                      const isSel = cell.isSelected;
+                      const isTod = cell.isToday;
+                      let cellBtnStyle = "text-slate-700 hover:bg-slate-100";
 
-          {/* ─── RIGHT CANVAS: Main Calendar Views ─── */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+                      if (!cell.isCurrentMonth) {
+                        cellBtnStyle = "text-slate-400 hover:bg-slate-50";
+                      }
+                      if (isTod && !isSel) {
+                        cellBtnStyle = "bg-[#0b57d0] text-white font-bold";
+                      }
+                      if (isSel) {
+                        cellBtnStyle = "bg-[#c2e7ff] text-[#001d35] font-bold shadow-xs";
+                      }
+
+                      return (
+                        <div key={idx} className="flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => selectDate(cell.dateString)}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all cursor-pointer ${cellBtnStyle}`}
+                          >
+                            {cell.dayNumber}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Search Pill ("ค้นหาผู้คน" -> "ค้นหากิจกรรม") */}
+                <div>
+                  <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#edf2fa] hover:bg-[#e4ebf7] text-slate-600 transition-colors border border-transparent focus-within:border-blue-400 focus-within:bg-white">
+                    <svg className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="ค้นหากิจกรรม หรือ สาขา..."
+                      className="bg-transparent border-none outline-none text-xs w-full text-slate-800 placeholder-slate-400 font-normal"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </aside>
+            )}
+
+            {/* ─── RIGHT CANVAS: Main Calendar Views ─── */}
+            <div className="flex-1 flex flex-col overflow-hidden bg-white">
             {/* ─── MONTH VIEW ─── */}
             {viewMode === "Month" && (
               <div className="flex-1 flex flex-col overflow-x-auto">
