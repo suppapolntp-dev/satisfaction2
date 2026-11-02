@@ -62,37 +62,27 @@ export default function EventCard({
                 : "ไม่มีรายละเอียดเพิ่มเติม")}
           </p>
 
-          {/* Metadata Row: Status Badge & Time */}
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
-            {/* Status Badge */}
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${statusConfig.pillClass}`}
-            >
-              <span className={`w-2 h-2 rounded-full ${statusConfig.dotClass}`} />
-              <span>{statusConfig.badgeLabel}</span>
-            </span>
-
-            {/* Time / Location */}
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
+          {/* Location Line */}
+          {event.eventLocation && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100 truncate">
               <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
               </svg>
-              <span>{timeRangeLabel}</span>
-            </span>
-          </div>
+              <span className="truncate">{event.eventLocation}</span>
+            </div>
+          )}
         </div>
 
-        {/* ─── 3. BOTTOM ACTIONS ROW (Black Pill Button + Circular Action Button) ─── */}
-        <div className="flex items-center gap-2.5 mt-5">
-          {/* Primary Action: Black Pill Button */}
+        {/* ─── 3. BOTTOM ACTION BUTTON (Full Width) ─── */}
+        <div className="mt-5">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleClick();
             }}
-            className="flex-1 h-11 rounded-full bg-[#111111] hover:bg-black text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-xs"
+            className="w-full h-11 rounded-full bg-[#111111] hover:bg-black text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-xs"
           >
             {statusConfig.variant === "completed" ? (
               <>
@@ -112,17 +102,6 @@ export default function EventCard({
                 <span>{statusConfig.buttonLabel}</span>
               </>
             )}
-          </button>
-
-          {/* Secondary Action: Circular Button with Heart / Bookmark Icon (like image_c15745.png) */}
-          <button
-            type="button"
-            aria-label="Bookmark Event"
-            className="w-11 h-11 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-rose-500 shrink-0 transition-all active:scale-95 shadow-2xs cursor-pointer"
-          >
-            <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
           </button>
         </div>
       </div>

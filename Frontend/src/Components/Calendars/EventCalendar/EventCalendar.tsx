@@ -641,58 +641,41 @@ export default function EventCalendar({
                                 </div>
 
                                 {/* ─── 2. CONTENT BODY (Flight Destination Card Style) ─── */}
-                                <div className="p-3 flex flex-col justify-between flex-1 bg-white">
+                                <div className="p-3.5 flex flex-col justify-between flex-1 bg-white">
                                   <div>
                                     <h4 className="font-bold text-xs sm:text-sm text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-amber-600 transition-colors">
                                       {event.eventName}
                                     </h4>
-                                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
-                                      {event.description ||
-                                        (event.eventLocation
-                                          ? `สถานที่: ${event.eventLocation}`
-                                          : "ไม่มีรายละเอียดเพิ่มเติม")}
+                                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                                      {event.description || "ไม่มีรายละเอียดเพิ่มเติม"}
                                     </p>
-
-                                    {/* Badges Row */}
-                                    <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                                      {isCompleted ? (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                          <span>ทำเสร็จแล้ว</span>
-                                        </span>
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                          <span>รอถึงวัน</span>
-                                        </span>
-                                      )}
-
-                                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-                                        <svg className="w-3 h-3 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                          <circle cx="12" cy="12" r="10" />
-                                          <polyline points="12 6 12 12 16 14" />
+                                    {event.eventLocation && (
+                                      <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-2 truncate">
+                                        <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                          <circle cx="12" cy="10" r="3" />
                                         </svg>
-                                        <span>{event.startTime} - {event.endTime}</span>
-                                      </span>
-                                    </div>
+                                        <span className="truncate">{event.eventLocation}</span>
+                                      </div>
+                                    )}
                                   </div>
 
-                                  {/* ─── 3. BOTTOM ACTIONS ROW ─── */}
-                                  <div className="flex items-center gap-1.5 mt-2">
+                                  {/* ─── 3. BOTTOM ACTION BUTTON (Full Width) ─── */}
+                                  <div className="mt-2.5">
                                     <button
                                       type="button"
-                                      className="flex-1 h-9 rounded-full bg-[#111111] hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                      className="w-full h-10 rounded-full bg-[#111111] hover:bg-black text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
                                     >
                                       {isCompleted ? (
                                         <>
-                                          <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                          <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                             <polyline points="20 6 9 17 4 12" />
                                           </svg>
                                           <span>เสร็จสิ้นกิจกรรม</span>
                                         </>
                                       ) : (
                                         <>
-                                          <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                                             <line x1="16" y1="2" x2="16" y2="6" />
                                             <line x1="8" y1="2" x2="8" y2="6" />
@@ -701,16 +684,6 @@ export default function EventCalendar({
                                           <span>รอจัดกิจกรรม</span>
                                         </>
                                       )}
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      aria-label="Bookmark"
-                                      className="w-9 h-9 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-rose-500 shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                    >
-                                      <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                      </svg>
                                     </button>
                                   </div>
                                 </div>
