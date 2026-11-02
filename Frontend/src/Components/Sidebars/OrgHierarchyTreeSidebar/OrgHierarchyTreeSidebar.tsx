@@ -142,7 +142,13 @@ export default function OrgHierarchyTreeSidebar({
 
       {/* ─── Tree Navigation Body ─── */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1 text-xs select-none max-h-[560px] [scrollbar-width:thin]">
-        {brandHierarchy.map((brand) => {
+        {brandHierarchy.length === 0 ? (
+          <div className="py-8 text-center text-slate-400">
+            <p className="text-xs">ไม่มีข้อมูลโครงสร้างองค์กร</p>
+            <p className="text-[11px] text-slate-400 mt-1">รอการเชื่อมต่อ API</p>
+          </div>
+        ) : (
+          brandHierarchy.map((brand) => {
           const isBrandExpanded = !!expandedNodes[brand.id];
           const isBrandSelected =
             selectedScopeLevel === "BRAND" && selectedBrand?.id === brand.id;
@@ -268,22 +274,13 @@ export default function OrgHierarchyTreeSidebar({
                                             onClick={(e) =>
                                               onSelectBranch(brand, region, prov, branch, e)
                                             }
-                                            className={`flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-colors ${
+                                            className={`flex items-center px-2 py-1 rounded-lg cursor-pointer transition-colors ${
                                               isBranchSelected
                                                 ? "bg-[var(--primary-container)] text-white font-medium shadow-xs"
                                                 : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                                             }`}
                                           >
                                             <span className="truncate">{branch.name}</span>
-                                            {branch.csatScore && (
-                                              <span
-                                                className={`text-[10px] font-mono shrink-0 ml-1 ${
-                                                  isBranchSelected ? "text-white" : "text-[var(--primary-container)] font-semibold"
-                                                }`}
-                                              >
-                                                {branch.csatScore}
-                                              </span>
-                                            )}
                                           </div>
                                         );
                                       })}
@@ -301,7 +298,7 @@ export default function OrgHierarchyTreeSidebar({
               )}
             </div>
           );
-        })}
+        }))}
       </nav>
     </aside>
   );

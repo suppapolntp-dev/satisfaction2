@@ -9,99 +9,15 @@ import {
   HierarchyScopeLevel,
 } from "@/Types/dataAccess";
 
-export const MOCK_BRAND_HIERARCHY: BrandItem[] = [
-  {
-    id: "b-kfc",
-    name: "KFC Thailand",
-    code: "KFC",
-    regions: [
-      {
-        id: "r-central",
-        name: "Central Region",
-        provinces: [
-          {
-            id: "p-bkk",
-            name: "Bangkok",
-            branches: [
-              { id: "br-siam", code: "BKK-01", name: "Siam Paragon", kiosksCount: 4, csatScore: "95.5%" },
-              { id: "br-ctw", code: "BKK-02", name: "CentralWorld", kiosksCount: 3, csatScore: "93.8%" },
-              { id: "br-ladprao", code: "BKK-03", name: "Central Ladprao", kiosksCount: 2, csatScore: "96.1%" },
-            ],
-          },
-          {
-            id: "p-nbi",
-            name: "Nonthaburi",
-            branches: [
-              { id: "br-westgate", code: "NBI-01", name: "Central Westgate", kiosksCount: 3, csatScore: "92.4%" },
-            ],
-          },
-        ],
-      },
-      {
-        id: "r-north",
-        name: "Northern Region",
-        provinces: [
-          {
-            id: "p-cmi",
-            name: "Chiang Mai",
-            branches: [
-              { id: "br-cmi-fest", code: "CMI-01", name: "Central Festival Chiangmai", kiosksCount: 2, csatScore: "94.0%" },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "b-misterdonut",
-    name: "Mister Donut",
-    code: "MDN",
-    regions: [
-      {
-        id: "r-bkk-met",
-        name: "Bangkok Metro",
-        provinces: [
-          {
-            id: "p-bkk-2",
-            name: "Bangkok",
-            branches: [
-              { id: "br-mbk", code: "MDN-01", name: "MBK Center", kiosksCount: 2, csatScore: "91.2%" },
-              { id: "br-silom", code: "MDN-02", name: "Silom Complex", kiosksCount: 2, csatScore: "94.8%" },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "b-auntieannes",
-    name: "Auntie Anne's",
-    code: "ANN",
-    regions: [
-      {
-        id: "r-east",
-        name: "Eastern Region",
-        provinces: [
-          {
-            id: "p-chon",
-            name: "Chonburi",
-            branches: [
-              { id: "br-pattaya", code: "PTY-01", name: "Central Pattaya Beach", kiosksCount: 2, csatScore: "96.7%" },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-];
-
 export interface UseOrgTreeOptions {
   data?: BrandItem[];
   initialScopeLevel?: HierarchyScopeLevel;
+  initialExpandedNodes?: Record<string, boolean>;
 }
 
 export function useOrgTree(options: UseOrgTreeOptions = {}) {
-  const brandHierarchy = options.data || MOCK_BRAND_HIERARCHY;
+  // TODO: Connect API [organization_hierarchy_tree]
+  const brandHierarchy = options.data ?? [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedScopeLevel, setSelectedScopeLevel] = useState<HierarchyScopeLevel>(
@@ -112,11 +28,9 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
   const [selectedProvince, setSelectedProvince] = useState<ProvinceItem | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<BranchItem | null>(null);
 
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
-    "b-kfc": true,
-    "r-central": true,
-    "p-bkk": true,
-  });
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(
+    options.initialExpandedNodes || {}
+  );
 
   const toggleNode = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
