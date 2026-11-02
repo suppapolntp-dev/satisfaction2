@@ -51,6 +51,22 @@ function createTomorrowSampleEvents(): EventItem[] {
       targetBranchIds: [],
       targetBranchNames: ["Mega Bangna"],
     },
+    {
+      eventId: "EVT-COMPLETED-003",
+      eventName: "อัปเดต Firmware ระบบตู้ Kiosk ประจำสาขา",
+      eventDate: tomorrowStr,
+      startTime: "08:00",
+      endTime: "10:00",
+      brandScope: "Sizzler",
+      brandId: null,
+      eventLocation: "Central World ชั้น 3",
+      eventCategory: "FIRMWARE",
+      eventStatus: "Completed",
+      description: "อัปเกรดระบบสัมผัสและปรับปรุงเซนเซอร์วัดความพึงพอใจ",
+      kioskThemeOverride: null,
+      targetBranchIds: [],
+      targetBranchNames: ["Central World"],
+    },
   ];
 }
 
@@ -121,6 +137,10 @@ export function useEventManagementScreen({
     setSelectedEvent(event);
   }, []);
 
+  const handleCloseSelectedEvent = useCallback(() => {
+    setSelectedEvent(null);
+  }, []);
+
   const handleCreateEvent = useCallback(() => {
     console.log("[useEventManagementScreen] handleCreateEvent triggered");
     // TODO: Connect API / Modal for creating an event
@@ -136,6 +156,7 @@ export function useEventManagementScreen({
     handleTabChange,
     handleSelectDate,
     handleSelectEvent,
+    handleCloseSelectedEvent,
     handleCreateEvent,
   };
 }
