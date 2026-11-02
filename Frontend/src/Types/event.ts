@@ -15,6 +15,7 @@ export interface EventItem {
   endTime: string; // HH:mm
   brandScope: string;
   brandId?: string | null;
+  brandLogoUrl?: string | null;
   eventLocation: string;
   eventCategory: EventCategory | string;
   eventStatus: EventStatus;

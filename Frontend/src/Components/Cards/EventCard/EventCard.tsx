@@ -24,44 +24,32 @@ export default function EventCard({
   return (
     <article
       onClick={handleClick}
-      className={`relative w-full max-w-[340px] h-[450px] rounded-[32px] overflow-hidden border border-slate-700/40 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.35)] flex flex-col justify-between p-6 bg-gradient-to-b from-slate-800 via-slate-900 to-[#0c100a] group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] select-none ${className}`}
+      className={`relative w-full max-w-[340px] h-[450px] rounded-[32px] overflow-hidden border border-slate-700/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.4)] flex flex-col justify-end group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.55)] select-none bg-[#fff5ea] ${className}`}
     >
-      {/* ─── Ambient Glow Gradients ─── */}
-      <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-blue-500/15 blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -right-12 w-48 h-48 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-
-      {/* ─── 1. TOP HERO AREA: Brand Logo & Scope ─── */}
-      <div className="relative z-10 flex flex-col items-center pt-2">
-        <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 p-2.5 shadow-inner flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-          {brandLogoUrl ? (
-            <img
-              src={brandLogoUrl}
-              alt={event.brandScope || "Brand"}
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="w-full h-full rounded-xl bg-white/5 flex items-center justify-center">
-              <span className="text-2xl font-black text-white/90">
-                {brandInitial}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <span className="text-[11px] font-semibold text-white/70 uppercase tracking-widest mt-2.5 truncate max-w-[200px]">
-          {event.brandScope || "Enterprise Brand"}
-        </span>
+      {/* ─── 1. FULL CARD BACKGROUND: Brand Logo Image ─── */}
+      <div className="absolute inset-0 flex items-center justify-center p-8 bg-[#fff5ea] overflow-hidden">
+        {brandLogoUrl ? (
+          <img
+            src={brandLogoUrl}
+            alt={event.brandScope || "Brand Logo"}
+            className="w-full h-full object-contain -translate-y-10 opacity-95 group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-3xl bg-slate-200 flex items-center justify-center">
+            <span className="text-4xl font-black text-slate-700">{brandInitial}</span>
+          </div>
+        )}
       </div>
 
-      {/* ─── 2. BOTTOM CONTENT AREA (Cabin Booking Card UI Style) ─── */}
-      <div className="relative z-10 flex flex-col">
+      {/* ─── 2. BOTTOM SCRIM: Blurred Gradient Overlay (Cabin Booking Style) ─── */}
+      <div className="relative z-10 p-6 backdrop-blur-md bg-gradient-to-t from-black/95 via-black/75 to-transparent pt-12 flex flex-col justify-end">
         {/* Title ("หัวข้อ") */}
-        <h3 className="text-xl sm:text-[22px] font-bold text-white tracking-tight leading-snug line-clamp-2 mb-2 group-hover:text-amber-200 transition-colors">
+        <h3 className="text-xl sm:text-[22px] font-bold text-white tracking-tight leading-snug line-clamp-2 mb-2 group-hover:text-amber-200 transition-colors drop-shadow-sm">
           {event.eventName}
         </h3>
 
         {/* Details ("รายละเอียด") */}
-        <p className="text-xs text-white/70 line-clamp-2 leading-relaxed mb-4">
+        <p className="text-xs text-white/80 line-clamp-2 leading-relaxed mb-4">
           {event.description ||
             (event.eventLocation
               ? `สถานที่จัดกิจกรรม: ${event.eventLocation}`
@@ -72,14 +60,14 @@ export default function EventCard({
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {/* Status Badge: เขียว (ทำเสร็จแล้ว) vs เหลือง (รอทำ / รอถึงวัน) */}
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-md transition-all ${statusConfig.pillClass}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-md shadow-xs transition-all ${statusConfig.pillClass}`}
           >
             <span className={`w-2 h-2 rounded-full ${statusConfig.dotClass}`} />
             <span>{statusConfig.badgeLabel}</span>
           </span>
 
           {/* Time Span Badge */}
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-white/15 text-white/90 border border-white/20 backdrop-blur-md">
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-white/15 text-white/90 border border-white/20 backdrop-blur-md shadow-xs">
             <svg
               className="w-3.5 h-3.5 text-white/70 shrink-0"
               viewBox="0 0 24 24"
@@ -94,19 +82,19 @@ export default function EventCard({
           </span>
         </div>
 
-        {/* Action Button: ทรง Pill เต็มความกว้าง ปรับสีตามสถานะ */}
+        {/* Action Button: ปุ่มสีขาวตามตัวแปรดีไซน์ Dribbble */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             handleClick();
           }}
-          className={`w-full h-11 rounded-full font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 ${statusConfig.buttonClass}`}
+          className="w-full h-11 rounded-full bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-lg shadow-black/40"
         >
           {statusConfig.variant === "completed" ? (
             <>
               <svg
-                className="w-4 h-4 shrink-0"
+                className="w-4 h-4 text-emerald-600 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -121,7 +109,7 @@ export default function EventCard({
           ) : (
             <>
               <svg
-                className="w-4 h-4 shrink-0"
+                className="w-4 h-4 text-amber-600 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

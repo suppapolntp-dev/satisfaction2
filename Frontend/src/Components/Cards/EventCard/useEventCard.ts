@@ -21,7 +21,7 @@ export interface UseEventCardProps {
 }
 
 export function useEventCard({ event, brandLogoUrl, onClick }: UseEventCardProps) {
-  // วิเคราะห์สถานะ: เขียว (ทำเสร็จแล้ว) vs เหลือง (รอทำ / รอถึงวัน)
+  // วิเคราะห์สถานะจากตัวแปร: เขียว (ทำเสร็จแล้ว) vs เหลือง (รอทำ / รอถึงวัน)
   const statusConfig = useMemo<StatusConfig>(() => {
     const rawStatus = (event.eventStatus || "").toUpperCase();
     const isCompleted = rawStatus === "COMPLETED";
@@ -31,22 +31,20 @@ export function useEventCard({ event, brandLogoUrl, onClick }: UseEventCardProps
         variant: "completed",
         badgeLabel: "ทำเสร็จแล้ว",
         buttonLabel: "เสร็จสิ้นกิจกรรม",
-        pillClass: "bg-emerald-500/20 text-emerald-300 border-emerald-400/40",
-        dotClass: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]",
-        buttonClass:
-          "bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-950/40",
+        pillClass: "bg-emerald-500/25 text-emerald-200 border-emerald-400/40",
+        dotClass: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]",
+        buttonClass: "bg-white hover:bg-slate-100 text-slate-950",
       };
     }
 
-    // Default เป็นรอทำหรือรอถึงวัน (สีเหลือง)
+    // Default: รอทำหรือรอถึงวัน (สีเหลือง)
     return {
       variant: "upcoming",
       badgeLabel: "รอถึงวัน",
       buttonLabel: "รอจัดกิจกรรม",
-      pillClass: "bg-amber-500/20 text-amber-300 border-amber-400/40",
-      dotClass: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse",
-      buttonClass:
-        "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-950/30",
+      pillClass: "bg-amber-500/25 text-amber-200 border-amber-400/40",
+      dotClass: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] animate-pulse",
+      buttonClass: "bg-white hover:bg-slate-100 text-slate-950",
     };
   }, [event.eventStatus]);
 
@@ -68,8 +66,8 @@ export function useEventCard({ event, brandLogoUrl, onClick }: UseEventCardProps
   };
 
   const effectiveBrandLogoUrl = useMemo(() => {
-    return brandLogoUrl || "/images/brands/mister-donut.svg";
-  }, [brandLogoUrl]);
+    return event.brandLogoUrl || brandLogoUrl || "/images/brands/mister-donut.svg";
+  }, [event.brandLogoUrl, brandLogoUrl]);
 
   return {
     statusConfig,
