@@ -25,6 +25,7 @@ export default function DashboardScreen() {
     canAccessAnalytics,
     isSuperAdmin,
     timelineData,
+    isLoadingTimeline,
   } = useDashboardScreen();
 
   const { metrics } = useMetricCards();
@@ -83,7 +84,10 @@ export default function DashboardScreen() {
           </div>
 
           {/* Main Canvas: Sentiment Score Timeline */}
-          <SentimentTimelineChart data={timelineData} />
+          <SentimentTimelineChart
+            data={timelineData}
+            isLoading={isLoadingTimeline}
+          />
         </div>
       )}
 

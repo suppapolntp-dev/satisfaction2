@@ -475,39 +475,45 @@ export default function SentimentTimelineChart({
 
           {/* Breakdown Stat Rows */}
           <div className="space-y-1.5 pt-2 border-t border-slate-200/60 text-xs">
-            {summary.donutSlices.map((slice) => {
-              const isSelected = focusedSeries === slice.key;
-              return (
-                <div
-                  key={`stat-${slice.key}`}
-                  onClick={() => toggleFocusSeries(slice.key)}
-                  className={`flex items-center justify-between p-1.5 rounded-xl cursor-pointer transition-all ${
-                    isSelected
-                      ? "bg-white shadow-xs border border-slate-200/80 font-medium"
-                      : "hover:bg-slate-100/70 text-slate-600"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: slice.color }}
-                    />
-                    <span className="text-xs font-medium text-slate-700">
-                      {slice.label}
-                    </span>
-                  </div>
+            {summary.donutSlices.length > 0 ? (
+              summary.donutSlices.map((slice) => {
+                const isSelected = focusedSeries === slice.key;
+                return (
+                  <div
+                    key={`stat-${slice.key}`}
+                    onClick={() => toggleFocusSeries(slice.key)}
+                    className={`flex items-center justify-between p-1.5 rounded-xl cursor-pointer transition-all ${
+                      isSelected
+                        ? "bg-white shadow-xs border border-slate-200/80 font-medium"
+                        : "hover:bg-slate-100/70 text-slate-600"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: slice.color }}
+                      />
+                      <span className="text-xs font-medium text-slate-700">
+                        {slice.label}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-800 font-mono">
-                      {slice.value}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono px-1.5 py-0.5 rounded-md bg-slate-100">
-                      {slice.percentage}%
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-800 font-mono">
+                        {slice.value}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono px-1.5 py-0.5 rounded-md bg-slate-100">
+                        {slice.percentage}%
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="py-3 text-center text-xs text-slate-400">
+                ไม่มีข้อมูลแสดงผล
+              </div>
+            )}
           </div>
         </div>
       </div>
