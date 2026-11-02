@@ -1,5 +1,5 @@
 import EventManagementScreen from "@/Screens/Admin/EventManagement/page";
 
-export default function EventManagementPage() {
+export default function EventPage() {
   return <EventManagementScreen />;
 }
