@@ -8,6 +8,7 @@ import {
   CALENDAR_WEEK_DAYS,
   CalendarViewMode,
   MINI_WEEKDAYS_TH,
+  MONTH_NAMES,
 } from "./useEventCalendar";
 
 export interface EventCalendarProps extends UseEventCalendarProps {
@@ -49,9 +50,49 @@ const DEFAULT_CATEGORY_STYLE = {
   dotClass: "bg-slate-400",
 };
 
+// ─── FIREART CALENDAR BOOKING APP DESIGN SYSTEM TOKENS ───
+const FIREART_CATEGORY_STYLES: Record<
+  string,
+  { bg: string; border: string; text: string; dot: string }
+> = {
+  CAMPAIGN: {
+    bg: "bg-[#FFF7ED]",
+    border: "border-[#F97316]/50",
+    text: "text-[#C2410C]",
+    dot: "bg-[#F97316]",
+  },
+  AUDIT: {
+    bg: "bg-[#F0FDF4]",
+    border: "border-[#10B981]/50",
+    text: "text-[#047857]",
+    dot: "bg-[#10B981]",
+  },
+  FIRMWARE: {
+    bg: "bg-[#EEF2FF]",
+    border: "border-[#6366F1]/50",
+    text: "text-[#4338CA]",
+    dot: "bg-[#6366F1]",
+  },
+  MAINTENANCE: {
+    bg: "bg-[#F8FAFC]",
+    border: "border-[#1F2937]/30",
+    text: "text-[#0F0F0E]",
+    dot: "bg-[#334155]",
+  },
+};
+
+const WEEKDAY_NAMES_EN = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
 const HOURS_24 = Array.from({ length: 24 }, (_, i) => i);
-const HOUR_HEIGHT = 60; // 60px ต่อชั่วโมง (1 นาที = 1px)
-const UNIFORM_CARD_HEIGHT = 270; // ขนาดเดียวเท่ากันทุกการ์ด (Uniform Fixed Height)
+const HOUR_HEIGHT = 65; // 65px ต่อชั่วโมงในสเกลสัปดาห์ Fireart Grid
 
 function parseTimeToMinutes(timeStr?: string, defaultMinutes = 540): number {
   if (!timeStr) return defaultMinutes;
@@ -79,6 +120,7 @@ export default function EventCalendar({
   isLoading = false,
 }: EventCalendarProps) {
   const {
+    currentDate,
     currentDateStr,
     isCurrentDateToday,
     currentDayInfo,
@@ -94,6 +136,7 @@ export default function EventCalendar({
     setSelectedCategory,
     monthCalendarCells,
     weekCalendarDays,
+    weekRangeLabel,
     dayEvents,
     monthYearLabel,
     handlePrev,
@@ -123,81 +166,47 @@ export default function EventCalendar({
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-scroll timeline to daytime (~8 AM) when switching into Day view
+  // Auto-scroll timeline to daytime (~8 AM) in Week view
   useEffect(() => {
-    if (viewMode === "Day" && timelineRef.current) {
-      timelineRef.current.scrollTop = 8 * HOUR_HEIGHT - 30; // 8:00 AM offset
+    if (viewMode === "Week" && timelineRef.current) {
+      timelineRef.current.scrollTop = 8 * HOUR_HEIGHT - 20; // 8:00 AM offset
     }
-  }, [viewMode, currentDateStr]);
+  }, [viewMode]);
 
   const getCategoryStyle = (category?: string) => {
     if (!category) return DEFAULT_CATEGORY_STYLE;
     return CATEGORY_STYLES[category.toUpperCase()] || DEFAULT_CATEGORY_STYLE;
   };
 
-  // แถว/คอลัมน์ประจำแบรนด์สำหรับแสดงกิจกรรมแยกเลน (ตีเส้นแถวแบรนด์)
-  const brandLanes = useMemo(() => {
-    const fromEvents = dayEvents.map((e) => e.brandScope).filter(Boolean);
-    const defaults = ["Mister Donut", "The Coffee Club", "Swensen's"];
-    return Array.from(new Set([...defaults, ...fromEvents]));
-  }, [dayEvents]);
-
-  // คำนวณตำแหน่งและจัดการการซ้อนทับของอีเวนต์ใน Day View (Google Calendar Style)
-  const positionedDayEvents = useMemo(() => {
-    if (!dayEvents || dayEvents.length === 0) return [];
-
-    const parsed = dayEvents.map((evt) => {
-      const startMin = parseTimeToMinutes(evt.startTime, 540);
-      let endMin = parseTimeToMinutes(evt.endTime, startMin + 60);
-      if (endMin <= startMin) endMin = startMin + 60;
-      return {
-        event: evt,
-        startMin,
-        endMin,
-        duration: Math.max(endMin - startMin, 35),
-        colIndex: 0,
-        totalCols: 1,
-      };
-    });
-
-    parsed.sort((a, b) => a.startMin - b.startMin);
-
-    for (let i = 0; i < parsed.length; i++) {
-      const group = [parsed[i]];
-      for (let j = 0; j < parsed.length; j++) {
-        if (i !== j) {
-          if (parsed[i].startMin < parsed[j].endMin && parsed[i].endMin > parsed[j].startMin) {
-            group.push(parsed[j]);
-          }
-        }
-      }
-      const totalCols = group.length;
-      group.sort(
-        (a, b) => a.startMin - b.startMin || a.event.eventId.localeCompare(b.event.eventId)
-      );
-      group.forEach((item, idx) => {
-        item.colIndex = Math.max(item.colIndex, idx);
-        item.totalCols = Math.max(item.totalCols, totalCols);
-      });
-    }
-
-    return parsed;
-  }, [dayEvents]);
-
-  const showSidebar = viewMode === "Day" || viewMode === "Week";
+  const showSidebar = viewMode === "Week";
 
   return (
     <div
       className={`bg-white rounded-3xl border border-slate-200/90 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] overflow-hidden flex flex-col ${className}`}
     >
-      {/* ─── 1. CALENDAR TOOLBAR ─── */}
+      {/* ─── 1. CALENDAR TOOLBAR (Fireart Schedule Control Bar Style) ─── */}
       <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
-        {/* Navigation & Current Month/Year */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-              {monthYearLabel}
-            </h2>
+        {/* Navigation & Date Display (Fireart Tear-Sheet Badge) */}
+        <div className="flex items-center gap-3.5 w-full sm:w-auto justify-between sm:justify-start">
+          <div className="flex items-center gap-3">
+            {/* Tear-sheet Calendar Icon */}
+            <div className="w-10 h-11 rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col shrink-0 select-none">
+              <div className="bg-[#EA3323] text-white text-[9px] font-bold tracking-wider text-center py-0.5 uppercase">
+                {MONTH_NAMES[currentDate.getMonth()].slice(0, 3)}
+              </div>
+              <div className="bg-white flex-1 flex items-center justify-center font-bold text-slate-900 text-sm leading-none">
+                {currentDate.getDate()}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-[#0F0F0E] tracking-tight leading-snug">
+                {viewMode === "Week" ? weekRangeLabel : monthYearLabel}
+              </h2>
+              <p className="text-xs text-slate-500 font-medium leading-none mt-0.5">
+                {viewMode === "Week" ? "ตารางนัดหมายและกิจกรรมประจำสัปดาห์" : "ปฏิทินกิจกรรมประจำเดือน"}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -231,20 +240,20 @@ export default function EventCalendar({
           </div>
         </div>
 
-        {/* View Mode Switcher */}
+        {/* View Mode Switcher: Week | Month */}
         <div className="inline-flex rounded-full bg-slate-200/60 p-1 border border-slate-200/80 w-full sm:w-auto justify-center">
-          {(["Month", "Week", "Day"] as const).map((mode) => (
+          {(["Week", "Month"] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => setViewMode(mode)}
               className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === mode
-                  ? "bg-white text-slate-900 shadow-xs"
+                  ? "bg-white text-[#0F0F0E] shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              {mode}
+              {mode === "Week" ? "Weekly View" : "Monthly View"}
             </button>
           ))}
         </div>
@@ -434,141 +443,59 @@ export default function EventCalendar({
             </div>
           )}
 
-          {/* ─── WEEK VIEW ─── */}
+          {/* ─── WEEK VIEW (Fireart Calendar Booking App 7-Day Time Grid) ─── */}
           {viewMode === "Week" && (
-            <div className="flex-1 flex flex-col overflow-x-auto">
-              <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/80 text-center py-2.5 text-xs font-semibold text-slate-600 min-w-[700px]">
-                {weekCalendarDays.map((day, idx) => (
-                  <div key={idx} className="flex flex-col items-center">
-                    <span>{CALENDAR_WEEK_DAYS[idx]}</span>
-                    <span
-                      className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-[11px] mt-0.5 font-semibold ${
-                        day.isToday
-                          ? "bg-[var(--primary-container)] text-white font-bold"
-                          : "text-slate-700"
-                      }`}
-                    >
-                      {day.dayNumber}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] min-h-[420px]">
-                {weekCalendarDays.map((day, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => selectDate(day.dateString)}
-                    className="p-2 space-y-1.5 cursor-pointer hover:bg-slate-50/60 transition-colors"
-                  >
-                    {day.events.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-[11px] text-slate-300 select-none py-12">
-                        -
-                      </div>
-                    ) : (
-                      day.events.map((event) => {
-                        const style = getCategoryStyle(event.eventCategory);
-                        return (
-                          <div
-                            key={event.eventId}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onSelectEvent) onSelectEvent(event);
-                            }}
-                            className={`p-2 rounded-xl border text-xs font-medium space-y-1 ${style.badgeClass}`}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <span className={`w-1.5 h-1.5 rounded-full ${style.dotClass}`} />
-                              <span className="font-semibold truncate">{event.eventName}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-500 flex justify-between">
-                              <span>{event.startTime || "All-day"}</span>
-                              <span className="truncate max-w-[80px]">{event.brandScope || ""}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ─── DAY VIEW (Google Calendar Multi-Brand Timeline Grid Layout) ─── */}
-          {viewMode === "Day" && (
             <div className="flex-1 flex flex-col overflow-hidden bg-white">
-              {/* Day View Sticky Header */}
-              <div className="border-b border-slate-200 bg-white sticky top-0 z-20">
-                {/* 1. Date Information Row */}
-                <div className="flex items-center justify-between py-2.5 px-4 sm:px-5">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      {currentDayInfo.dayOfWeekThShort || currentDayInfo.dayOfWeekEn}
-                    </span>
-                    <div
-                      className={`text-2xl sm:text-3xl font-bold flex items-center justify-center leading-none ${
-                        currentDayInfo.isToday
-                          ? "w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0b57d0] text-white shadow-xs"
-                          : "text-[#1f1f1f]"
-                      }`}
-                    >
-                      {currentDayInfo.dayNumber}
-                    </div>
-                    <div className="hidden sm:block pl-3 border-l border-slate-200 text-xs text-slate-500">
-                      <span className="font-semibold text-slate-700">{currentDayInfo.dayOfWeekThFull}</span>
-                      <span className="mx-2 text-slate-300">&bull;</span>
-                      <span>
-                        {dayEvents.length === 0
-                          ? "ไม่มีกิจกรรมในวันนี้"
-                          : `${dayEvents.length} กิจกรรมตามแถวแบรนด์`}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    ตารางกิจกรรมแบ่งตามแบรนด์
-                  </span>
+              {/* Sticky Weekdays Header (7 Day Columns) */}
+              <div className="flex border-b border-slate-200 bg-white sticky top-0 z-20">
+                {/* Time Axis Gutter Header */}
+                <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 py-3 pr-3 text-right flex items-center justify-end bg-slate-50/50">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase select-none">GMT+7</span>
                 </div>
 
-                {/* 2. Brand Column Track Headers (ตีเส้นแถวหัวแบรนด์) */}
-                <div className="flex border-t border-slate-200/80 bg-slate-50/70 overflow-x-auto [scrollbar-width:none]">
-                  <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 py-2 pr-3 text-right">
-                    <span className="text-[10px] font-bold text-slate-400 select-none">GMT+7</span>
-                  </div>
-                  <div className="flex-1 flex divide-x divide-slate-200/80 min-w-[750px]">
-                    {brandLanes.map((brandName) => {
-                      const count = dayEvents.filter((e) => e.brandScope === brandName).length;
-                      return (
-                        <div
-                          key={brandName}
-                          className="flex-1 min-w-[250px] max-w-[320px] px-3.5 py-2 flex items-center justify-between"
+                {/* 7 Day Column Headers */}
+                <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px]">
+                  {weekCalendarDays.map((day, idx) => {
+                    const isToday = day.isToday;
+                    return (
+                      <div
+                        key={day.dateString}
+                        onClick={() => selectDate(day.dateString)}
+                        className={`py-3 px-2 sm:px-3 flex flex-col items-center justify-center transition-colors cursor-pointer hover:bg-slate-50/80 ${
+                          isToday ? "bg-slate-50/60" : ""
+                        }`}
+                      >
+                        <span
+                          className={`text-xs font-semibold uppercase tracking-wider ${
+                            isToday ? "text-[#0F0F0E] font-bold" : "text-slate-500"
+                          }`}
                         >
-                          <div className="flex items-center gap-2 truncate">
-                            <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                            <span className="text-xs font-bold text-slate-800 truncate">
-                              {brandName}
-                            </span>
-                          </div>
-                          {count > 0 && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
-                              {count} งาน
-                            </span>
-                          )}
+                          {WEEKDAY_NAMES_EN[idx]}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                              isToday
+                                ? "bg-[#0F0F0E] text-white shadow-xs"
+                                : "text-slate-800"
+                            }`}
+                          >
+                            {day.dayNumber}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Day View Timeline Scroll Area */}
+              {/* Weekly Time Grid Canvas */}
               <div
                 ref={timelineRef}
-                className="relative flex-1 overflow-y-auto max-h-[640px] bg-white [scrollbar-width:thin]"
+                className="relative flex-1 overflow-y-auto max-h-[660px] bg-white [scrollbar-width:thin]"
               >
                 <div className="flex relative" style={{ height: `${24 * HOUR_HEIGHT}px` }}>
-                  {/* Left Gutter: Hour Axis */}
+                  {/* Left Gutter: Hour Axis (10 AM, 11 AM, 12 PM...) */}
                   <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 select-none relative bg-slate-50/20">
                     {HOURS_24.map((hour) => (
                       <div
@@ -581,28 +508,21 @@ export default function EventCalendar({
                     ))}
                   </div>
 
-                  {/* Multi-Brand Column Lanes Container (ตีเส้นแถวคอลัมน์แนวตั้ง divide-x) */}
-                  <div className="flex-1 flex divide-x divide-slate-200/80 relative min-w-[750px] overflow-x-auto">
-                    {/* Live Current Time Line running across all brand lanes */}
-                    {isCurrentDateToday && (
-                      <div
-                        className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
-                        style={{ top: `${currentMinutes}px` }}
-                      >
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1.5 shadow-xs" />
-                        <div className="h-[2px] bg-red-500 flex-1" />
-                      </div>
-                    )}
+                  {/* 7 Days Columns Grid */}
+                  <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] relative">
+                    {/* Live Current Time Line running across all 7 days */}
+                    <div
+                      className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
+                      style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px` }}
+                    >
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#0F0F0E] -ml-1.5 shadow-xs" />
+                      <div className="h-[2px] bg-[#0F0F0E] flex-1" />
+                    </div>
 
-                    {brandLanes.map((brandName) => {
-                      const laneEvents = dayEvents.filter((e) => e.brandScope === brandName);
-
+                    {weekCalendarDays.map((day) => {
                       return (
-                        <div
-                          key={brandName}
-                          className="flex-1 min-w-[250px] max-w-[320px] relative"
-                        >
-                          {/* Hourly Horizontal Rules for each brand lane */}
+                        <div key={day.dateString} className="relative h-full">
+                          {/* Hourly Horizontal Rules for each column */}
                           {HOURS_24.map((hour) => (
                             <div
                               key={hour}
@@ -611,82 +531,48 @@ export default function EventCalendar({
                             />
                           ))}
 
-                          {/* Event Cards placed inside this Brand Lane (แกน Y ยาว 270px เท่าเดิม, แกน X กะทัดรัดพอดีแถว) */}
-                          {laneEvents.map((event) => {
+                          {/* Events placed inside this Day Column */}
+                          {day.events.map((event) => {
                             const startMin = parseTimeToMinutes(event.startTime, 540);
-                            const isCompleted =
-                              (event.eventStatus || "").toUpperCase() === "COMPLETED";
+                            const endMin = parseTimeToMinutes(event.endTime, startMin + 60);
+                            const durationMin = Math.max(endMin - startMin, 45);
+                            const style =
+                              FIREART_CATEGORY_STYLES[event.eventCategory.toUpperCase()] ||
+                              FIREART_CATEGORY_STYLES.MAINTENANCE;
 
                             return (
                               <div
                                 key={event.eventId}
-                                onClick={() => onSelectEvent && onSelectEvent(event)}
-                                style={{
-                                  top: `${startMin}px`,
-                                  height: `${UNIFORM_CARD_HEIGHT}px`,
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onSelectEvent) onSelectEvent(event);
                                 }}
-                                className="absolute z-10 left-2 right-2 rounded-[22px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-xl hover:border-slate-300/90 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col bg-white text-slate-900 group select-none"
+                                style={{
+                                  top: `${(startMin / 60) * HOUR_HEIGHT}px`,
+                                  height: `${Math.max((durationMin / 60) * HOUR_HEIGHT, 44)}px`,
+                                }}
+                                className={`absolute z-10 left-1 right-1 rounded-xl border p-2 text-xs flex flex-col justify-between shadow-2xs transition-all hover:shadow-md hover:scale-[1.01] hover:z-30 cursor-pointer overflow-hidden ${style.bg} ${style.border}`}
                                 title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
                               >
-                                {/* ─── 1. TOP MEDIA SECTION: Brand Logo Frame ─── */}
-                                <div className="relative w-full h-[105px] bg-[#fff6ee] flex items-center justify-center p-3 border-b border-slate-100 overflow-hidden shrink-0">
-                                  <img
-                                    src={event.brandLogoUrl || "/images/brands/mister-donut.svg"}
-                                    alt={event.brandScope || "Brand Logo"}
-                                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                                  />
-                                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-2xs border border-slate-200/60 text-[9px] font-bold text-slate-700 uppercase tracking-wider">
-                                    {event.brandScope || "Brand"}
-                                  </div>
-                                </div>
-
-                                {/* ─── 2. CONTENT BODY (Flight Destination Card Style) ─── */}
-                                <div className="p-3.5 flex flex-col justify-between flex-1 bg-white">
-                                  <div>
-                                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-amber-600 transition-colors">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
+                                    <h4 className={`font-bold text-[11px] sm:text-xs truncate ${style.text}`}>
                                       {event.eventName}
                                     </h4>
-                                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
-                                      {event.description || "ไม่มีรายละเอียดเพิ่มเติม"}
-                                    </p>
-                                    {event.eventLocation && (
-                                      <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-2 truncate">
-                                        <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                          <circle cx="12" cy="10" r="3" />
-                                        </svg>
-                                        <span className="truncate">{event.eventLocation}</span>
-                                      </div>
-                                    )}
                                   </div>
-
-                                  {/* ─── 3. BOTTOM ACTION BUTTON (Full Width) ─── */}
-                                  <div className="mt-2.5">
-                                    <button
-                                      type="button"
-                                      className="w-full h-10 rounded-full bg-[#111111] hover:bg-black text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
-                                    >
-                                      {isCompleted ? (
-                                        <>
-                                          <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                            <polyline points="20 6 9 17 4 12" />
-                                          </svg>
-                                          <span>เสร็จสิ้นกิจกรรม</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                            <line x1="16" y1="2" x2="16" y2="6" />
-                                            <line x1="8" y1="2" x2="8" y2="6" />
-                                            <line x1="3" y1="10" x2="21" y2="10" />
-                                          </svg>
-                                          <span>รอจัดกิจกรรม</span>
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
+                                  <p className="text-[10px] font-medium opacity-80 mt-0.5 truncate">
+                                    {event.startTime} - {event.endTime}
+                                  </p>
                                 </div>
+
+                                {durationMin >= 60 && (
+                                  <div className="flex items-center justify-between text-[9px] pt-1 border-t border-black/5 mt-1">
+                                    <span className="font-semibold truncate opacity-85">
+                                      {event.brandScope}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

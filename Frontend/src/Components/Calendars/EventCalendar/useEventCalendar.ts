@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { EventItem, CalendarCell } from "@/Types/event";
 
-export type CalendarViewMode = "Month" | "Week" | "Day";
+export type CalendarViewMode = "Week" | "Month";
 
 export interface UseEventCalendarProps {
   events?: EventItem[] | null;
@@ -70,7 +70,7 @@ export function useEventCalendar({
   onSelectEvent,
 }: UseEventCalendarProps = {}) {
   const [currentDate, setCurrentDate] = useState<Date>(() => initialDate || new Date());
-  const [viewMode, setViewMode] = useState<CalendarViewMode>("Day");
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("Week");
   const [miniDate, setMiniDate] = useState<Date>(() => initialDate || new Date());
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -217,12 +217,13 @@ export function useEventCalendar({
     return cells;
   }, [currentDate, safeEvents, todayStr]);
 
-  // ─── 2. Week View Days Calculation ───
+  // ─── 2. Week View Days Calculation (Monday to Sunday, Fireart style) ───
   const weekCalendarDays = useMemo<CalendarCell[]>(() => {
     const curr = new Date(currentDate);
-    const dayOfWeek = curr.getDay();
+    const dayOfWeek = curr.getDay(); // 0 is Sun, 1 is Mon...
+    const mondayOffset = (dayOfWeek + 6) % 7; // 0 for Mon, 6 for Sun
     const startOfWeek = new Date(curr);
-    startOfWeek.setDate(curr.getDate() - dayOfWeek);
+    startOfWeek.setDate(curr.getDate() - mondayOffset);
 
     const days: CalendarCell[] = [];
     for (let i = 0; i < 7; i++) {
@@ -241,6 +242,18 @@ export function useEventCalendar({
 
     return days;
   }, [currentDate, safeEvents, todayStr]);
+
+  const weekRangeLabel = useMemo(() => {
+    if (weekCalendarDays.length === 0) return "";
+    const first = weekCalendarDays[0].date;
+    const last = weekCalendarDays[6].date;
+    const firstThMonth = THAI_MONTH_NAMES[first.getMonth()];
+    const lastThMonth = THAI_MONTH_NAMES[last.getMonth()];
+    if (first.getMonth() === last.getMonth()) {
+      return `${first.getDate()} - ${last.getDate()} ${firstThMonth} ${first.getFullYear()}`;
+    }
+    return `${first.getDate()} ${firstThMonth} - ${last.getDate()} ${lastThMonth} ${last.getFullYear()}`;
+  }, [weekCalendarDays]);
 
   // ─── 3. Day View Events (Filtered by Search Query & Category) ───
   const dayEvents = useMemo(() => {
@@ -328,7 +341,6 @@ export function useEventCalendar({
         const nextDate = new Date(y, m - 1, d);
         setCurrentDate(nextDate);
         setMiniDate(new Date(y, m - 1, 1));
-        setViewMode("Day");
       }
       if (onSelectDate) onSelectDate(dateString);
     },
@@ -352,6 +364,7 @@ export function useEventCalendar({
     setSelectedCategory,
     monthCalendarCells,
     weekCalendarDays,
+    weekRangeLabel,
     dayEvents,
     monthYearLabel,
     handlePrev,
