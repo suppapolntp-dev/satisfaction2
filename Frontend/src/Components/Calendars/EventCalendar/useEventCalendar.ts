@@ -36,6 +36,16 @@ export const MONTH_NAMES = [
 
 export const CALENDAR_WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+export const THAI_DAY_NAMES: Record<number, { full: string; short: string }> = {
+  0: { full: "วันอาทิตย์", short: "อาทิตย์" },
+  1: { full: "วันจันทร์", short: "จันทร์" },
+  2: { full: "วันอังคาร", short: "อังคาร" },
+  3: { full: "วันพุธ", short: "พุธ" },
+  4: { full: "วันพฤหัสบดี", short: "พฤหัส" },
+  5: { full: "วันศุกร์", short: "ศุกร์" },
+  6: { full: "วันเสาร์", short: "เสาร์" },
+};
+
 export function useEventCalendar({
   events = [],
   initialDate,
@@ -176,9 +186,41 @@ export function useEventCalendar({
     return `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
   }, [currentDate]);
 
+  const isCurrentDateToday = useMemo(
+    () => currentDateStr === todayStr,
+    [currentDateStr, todayStr]
+  );
+
+  const currentDayInfo = useMemo(() => {
+    const dayIndex = currentDate.getDay();
+    const thai = THAI_DAY_NAMES[dayIndex] || { full: "", short: "" };
+    const englishShort = CALENDAR_WEEK_DAYS[dayIndex] || "";
+    return {
+      dayOfWeekThShort: thai.short,
+      dayOfWeekThFull: thai.full,
+      dayOfWeekEn: englishShort,
+      dayNumber: currentDate.getDate(),
+      isToday: isCurrentDateToday,
+    };
+  }, [currentDate, isCurrentDateToday]);
+
+  const selectDate = useCallback(
+    (dateString: string) => {
+      const [y, m, d] = dateString.split("-").map(Number);
+      if (y && m && d) {
+        setCurrentDate(new Date(y, m - 1, d));
+        setViewMode("Day");
+      }
+      if (onSelectDate) onSelectDate(dateString);
+    },
+    [onSelectDate]
+  );
+
   return {
     currentDate,
     currentDateStr,
+    isCurrentDateToday,
+    currentDayInfo,
     viewMode,
     setViewMode,
     monthCalendarCells,
@@ -188,6 +230,7 @@ export function useEventCalendar({
     handlePrev,
     handleNext,
     handleToday,
+    selectDate,
     onSelectDate,
     onSelectEvent,
   };
