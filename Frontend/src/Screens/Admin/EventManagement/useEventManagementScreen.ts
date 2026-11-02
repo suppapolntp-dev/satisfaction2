@@ -4,11 +4,54 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import { EventItem } from "@/Types/event";
 import { eventService } from "@/Services/eventService";
+import { formatToYYYYMMDD } from "@/Components/Calendars/EventCalendar";
 
 export type EventManagementTab = "calendar" | "events";
 
 export interface UseEventManagementScreenProps {
   initialTab?: EventManagementTab;
+}
+
+// Helper สร้างข้อมูลจำลองสำหรับวันพรุ่งนี้ เพื่อให้ทดสอบและปรับแต่ง UI ได้ทันที
+function createTomorrowSampleEvents(): EventItem[] {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = formatToYYYYMMDD(tomorrow);
+
+  return [
+    {
+      eventId: "EVT-TOMORROW-001",
+      eventName: "แคมเปญแจกไอศกรีมและของขวัญ",
+      eventDate: tomorrowStr,
+      startTime: "10:00",
+      endTime: "16:00",
+      brandScope: "The Coffee Club",
+      brandId: null,
+      eventLocation: "ทุกสาขากรุงเทพฯ และปริมณฑล",
+      eventCategory: "CAMPAIGN",
+      eventStatus: "Upcoming",
+      description: "กิจกรรมประเมินความพึงพอใจและแจกคูปองพิเศษ",
+      kioskThemeOverride: "summer_theme",
+      targetBranchIds: [],
+      targetBranchNames: ["Central World", "Siam Paragon"],
+    },
+    {
+      eventId: "EVT-TOMORROW-002",
+      eventName: "ตรวจมาตรฐานความสะอาดและสุขอนามัย Q1",
+      eventDate: tomorrowStr,
+      startTime: "14:00",
+      endTime: "17:30",
+      brandScope: "Swensen's",
+      brandId: null,
+      eventLocation: "สาขาโซนภาคกลางและนนทบุรี",
+      eventCategory: "AUDIT",
+      eventStatus: "Upcoming",
+      description: "ตรวจสอบอุปกรณ์ Kiosk และสุขอนามัยประจำไตรมาส",
+      kioskThemeOverride: null,
+      targetBranchIds: [],
+      targetBranchNames: ["Mega Bangna"],
+    },
+  ];
 }
 
 export function useEventManagementScreen({
@@ -35,13 +78,20 @@ export function useEventManagementScreen({
       try {
         setIsLoading(true);
         const data = await eventService.getEvents();
+        const tomorrowSamples = createTomorrowSampleEvents();
+
         if (isMounted) {
-          setEvents(data);
+          if (data && data.length > 0) {
+            // รวมอีเวนต์จาก API กับตัวแปรจำลองวันพรุ่งนี้
+            setEvents([...data, ...tomorrowSamples]);
+          } else {
+            setEvents(tomorrowSamples);
+          }
         }
       } catch (error) {
         console.error("[useEventManagementScreen] loadEvents error:", error);
         if (isMounted) {
-          setEvents([]);
+          setEvents(createTomorrowSampleEvents());
         }
       } finally {
         if (isMounted) {
