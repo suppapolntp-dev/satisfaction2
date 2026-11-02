@@ -51,6 +51,7 @@ const DEFAULT_CATEGORY_STYLE = {
 
 const HOURS_24 = Array.from({ length: 24 }, (_, i) => i);
 const HOUR_HEIGHT = 60; // 60px ต่อชั่วโมง (1 นาที = 1px)
+const UNIFORM_CARD_HEIGHT = 270; // ขนาดเดียวเท่ากันทุกการ์ด (Uniform Fixed Height)
 
 function parseTimeToMinutes(timeStr?: string, defaultMinutes = 540): number {
   if (!timeStr) return defaultMinutes;
@@ -569,9 +570,9 @@ export default function EventCalendar({
                       </div>
                     )}
 
-                    {/* Event Blocks Placed on Grid (Cabin Booking Card UI Style) */}
+                    {/* Event Blocks Placed on Grid (Cabin Booking Card UI Style - ขนาดเดียวเท่ากันทุกการ์ด) */}
                     {positionedDayEvents.map((item) => {
-                      const { event, startMin, duration, colIndex, totalCols } = item;
+                      const { event, startMin, colIndex, totalCols } = item;
                       const colWidthPercent = 100 / totalCols;
                       const leftPercent = colIndex * colWidthPercent;
 
@@ -584,7 +585,7 @@ export default function EventCalendar({
                           onClick={() => onSelectEvent && onSelectEvent(event)}
                           style={{
                             top: `${startMin}px`,
-                            height: `${duration}px`,
+                            height: `${UNIFORM_CARD_HEIGHT}px`,
                             left: `calc(${leftPercent}% + 6px)`,
                             width: `calc(${colWidthPercent}% - 12px)`,
                           }}
@@ -596,26 +597,24 @@ export default function EventCalendar({
                             <img
                               src={event.brandLogoUrl || "/images/brands/mister-donut.svg"}
                               alt={event.brandScope || "Brand Logo"}
-                              className="w-full h-full object-contain -translate-y-4 opacity-95 group-hover:scale-105 transition-transform duration-500"
+                              className="w-full h-full object-contain -translate-y-6 opacity-95 group-hover:scale-105 transition-transform duration-500"
                             />
                           </div>
 
                           {/* ─── 2. BOTTOM SCRIM: Blurred Gradient Overlay (Cabin Booking Style) ─── */}
                           <div className="relative z-10 p-3 sm:p-4 backdrop-blur-md bg-gradient-to-t from-black/95 via-black/80 to-transparent pt-8 flex flex-col justify-end">
                             {/* Title ("หัวข้อ") */}
-                            <h4 className="font-bold text-xs sm:text-sm text-white tracking-tight leading-snug line-clamp-2 group-hover:text-amber-200 transition-colors drop-shadow-sm">
+                            <h4 className="font-bold text-xs sm:text-sm text-white tracking-tight leading-snug line-clamp-1 group-hover:text-amber-200 transition-colors drop-shadow-sm">
                               {event.eventName}
                             </h4>
 
                             {/* Details ("รายละเอียด") */}
-                            {duration >= 80 && (
-                              <p className="text-[11px] text-white/80 line-clamp-2 leading-relaxed mt-1">
-                                {event.description ||
-                                  (event.eventLocation
-                                    ? `สถานที่: ${event.eventLocation}`
-                                    : "ไม่มีรายละเอียดเพิ่มเติม")}
-                              </p>
-                            )}
+                            <p className="text-[11px] text-white/80 line-clamp-1 leading-relaxed mt-0.5">
+                              {event.description ||
+                                (event.eventLocation
+                                  ? `สถานที่: ${event.eventLocation}`
+                                  : "ไม่มีรายละเอียดเพิ่มเติม")}
+                            </p>
 
                             {/* Badges Row (Status Pill + Time Pill) */}
                             <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -643,38 +642,34 @@ export default function EventCalendar({
                             </div>
 
                             {/* Action Button: ปุ่มสีขาวตามตัวแปรดีไซน์ Dribbble (Reserve now) */}
-                            {duration >= 135 && (
-                              <button
-                                type="button"
-                                className="w-full mt-2.5 py-2 px-3 rounded-full bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-black/40 transition-all active:scale-95 cursor-pointer"
-                              >
-                                {isCompleted ? (
-                                  <>
-                                    <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    <span>เสร็จสิ้นกิจกรรม</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="w-3.5 h-3.5 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                      <line x1="16" y1="2" x2="16" y2="6" />
-                                      <line x1="8" y1="2" x2="8" y2="6" />
-                                      <line x1="3" y1="10" x2="21" y2="10" />
-                                    </svg>
-                                    <span>รอจัดกิจกรรม</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="w-full mt-2 py-2 px-3 rounded-full bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-black/40 transition-all active:scale-95 cursor-pointer"
+                            >
+                              {isCompleted ? (
+                                <>
+                                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  <span>เสร็จสิ้นกิจกรรม</span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3.5 h-3.5 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                  </svg>
+                                  <span>รอจัดกิจกรรม</span>
+                                </>
+                              )}
+                            </button>
 
-                            {/* Location Footer (if very tall) */}
-                            {duration >= 200 && (
-                              <div className="text-[10px] text-white/60 truncate pt-1 border-t border-white/10 mt-1">
-                                <span>{event.eventLocation || "ทุกสาขา"}</span>
-                              </div>
-                            )}
+                            {/* Location Footer */}
+                            <div className="text-[10px] text-white/60 truncate pt-1 border-t border-white/10 mt-1.5">
+                              <span>{event.eventLocation || "ทุกสาขา"}</span>
+                            </div>
                           </div>
                         </div>
                       );
