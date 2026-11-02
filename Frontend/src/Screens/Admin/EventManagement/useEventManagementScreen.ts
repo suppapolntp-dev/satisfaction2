@@ -107,9 +107,9 @@ export function useEventManagementScreen({
   const eventTabs: HeaderTabItem[] = useMemo(
     () => [
       { id: "calendar", label: "Calendar View" },
-      { id: "events", label: "Events & Campaigns" },
+      { id: "events", label: "Events & Campaigns", badge: events?.length || undefined },
     ],
-    []
+    [events?.length]
   );
 
   useEffect(() => {
@@ -165,6 +165,16 @@ export function useEventManagementScreen({
     setSelectedEvent(null);
   }, []);
 
+  const handleEditEvent = useCallback((event: EventItem) => {
+    console.log("[useEventManagementScreen] handleEditEvent triggered:", event);
+    // TODO: Connect edit event modal/action
+  }, []);
+
+  const handleDeleteEvent = useCallback((event: EventItem) => {
+    console.log("[useEventManagementScreen] handleDeleteEvent triggered:", event);
+    setEvents((prev) => (prev ? prev.filter((e) => e.eventId !== event.eventId) : []));
+  }, []);
+
   const handleCreateEvent = useCallback(() => {
     console.log("[useEventManagementScreen] handleCreateEvent triggered");
     // TODO: Connect API / Modal for creating an event
@@ -181,6 +191,8 @@ export function useEventManagementScreen({
     handleSelectDate,
     handleSelectEvent,
     handleCloseSelectedEvent,
+    handleEditEvent,
+    handleDeleteEvent,
     handleCreateEvent,
   };
 }

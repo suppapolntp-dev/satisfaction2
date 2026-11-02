@@ -3,7 +3,7 @@
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import EventCalendar from "@/Components/Calendars/EventCalendar";
-import EventCard from "@/Components/Cards/EventCard";
+import EventTable from "@/Components/Tables/EventTable";
 import {
   useEventManagementScreen,
   EventManagementTab,
@@ -21,11 +21,11 @@ export default function EventManagementScreen({
     eventTabs,
     events,
     isLoading,
-    selectedEvent,
     handleTabChange,
     handleSelectDate,
     handleSelectEvent,
-    handleCloseSelectedEvent,
+    handleEditEvent,
+    handleDeleteEvent,
     handleCreateEvent,
   } = useEventManagementScreen({ initialTab });
 
@@ -69,34 +69,14 @@ export default function EventManagementScreen({
         />
       )}
 
-      {/* ─── TAB 2: EVENTS & CAMPAIGNS (CARDS VIEW) ─── */}
+      {/* ─── TAB 2: EVENTS & CAMPAIGNS (TABLE VIEW) ─── */}
       {activeTab === "events" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Active Campaigns & Scheduled Events
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                รายการกิจกรรม CSAT, แคมเปญการประเมิน, และการซ่อมบำรุงตู้ Kiosk
-              </p>
-            </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-              {events?.length || 0} รายการ
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center pt-2">
-            {events?.map((event) => (
-              <EventCard
-                key={event.eventId}
-                event={event}
-                brandLogoUrl="/images/brands/mister-donut.svg"
-                onClick={handleSelectEvent}
-              />
-            ))}
-          </div>
-        </div>
+        <EventTable
+          events={events || []}
+          isLoading={isLoading}
+          onEditEvent={handleEditEvent}
+          onDeleteEvent={handleDeleteEvent}
+        />
       )}
     </div>
   );
