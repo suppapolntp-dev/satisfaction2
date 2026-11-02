@@ -570,7 +570,7 @@ export default function EventCalendar({
                       </div>
                     )}
 
-                    {/* Event Blocks Placed on Grid (Cabin Booking Card UI Style - ขนาดเดียวเท่ากันทุกการ์ด) */}
+                    {/* Event Blocks Placed on Grid (Flight Destination Card UI Style - ขนาดเดียวเท่ากันทุกการ์ด) */}
                     {positionedDayEvents.map((item) => {
                       const { event, startMin, colIndex, totalCols } = item;
                       const colWidthPercent = 100 / totalCols;
@@ -589,86 +589,101 @@ export default function EventCalendar({
                             left: `calc(${leftPercent}% + 6px)`,
                             width: `calc(${colWidthPercent}% - 12px)`,
                           }}
-                          className="absolute z-10 rounded-[24px] sm:rounded-[28px] border border-slate-700/50 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col justify-end bg-[#fff5ea] text-white group select-none"
+                          className="absolute z-10 rounded-[24px] sm:rounded-[28px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-xl hover:border-slate-300/90 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:z-20 active:scale-[0.99] flex flex-col bg-white text-slate-900 group select-none"
                           title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
                         >
-                          {/* ─── 1. FULL CARD BACKGROUND: Brand Logo Image (Mister Donut) ─── */}
-                          <div className="absolute inset-0 flex items-center justify-center p-4 bg-[#fff5ea] overflow-hidden">
+                          {/* ─── 1. TOP MEDIA SECTION: Brand Logo (Mister Donut) Frame ─── */}
+                          <div className="relative w-full h-[105px] bg-[#fff6ee] flex items-center justify-center p-3.5 border-b border-slate-100 overflow-hidden shrink-0">
                             <img
                               src={event.brandLogoUrl || "/images/brands/mister-donut.svg"}
                               alt={event.brandScope || "Brand Logo"}
-                              className="w-full h-full object-contain -translate-y-6 opacity-95 group-hover:scale-105 transition-transform duration-500"
+                              className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                             />
+                            {/* Brand Scope Tag on Top Left */}
+                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-2xs border border-slate-200/60 text-[9px] font-bold text-slate-700 uppercase tracking-wider">
+                              {event.brandScope || "Mister Donut"}
+                            </div>
                           </div>
 
-                          {/* ─── 2. BOTTOM SCRIM: Blurred Gradient Overlay (Cabin Booking Style) ─── */}
-                          <div className="relative z-10 p-3 sm:p-4 backdrop-blur-md bg-gradient-to-t from-black/95 via-black/80 to-transparent pt-8 flex flex-col justify-end">
-                            {/* Title ("หัวข้อ") */}
-                            <h4 className="font-bold text-xs sm:text-sm text-white tracking-tight leading-snug line-clamp-1 group-hover:text-amber-200 transition-colors drop-shadow-sm">
-                              {event.eventName}
-                            </h4>
+                          {/* ─── 2. CONTENT BODY (Flight Destination Card Style) ─── */}
+                          <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-1 bg-white">
+                            <div>
+                              {/* Title ("หัวข้อ") */}
+                              <h4 className="font-bold text-xs sm:text-sm text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-amber-600 transition-colors">
+                                {event.eventName}
+                              </h4>
 
-                            {/* Details ("รายละเอียด") */}
-                            <p className="text-[11px] text-white/80 line-clamp-1 leading-relaxed mt-0.5">
-                              {event.description ||
-                                (event.eventLocation
-                                  ? `สถานที่: ${event.eventLocation}`
-                                  : "ไม่มีรายละเอียดเพิ่มเติม")}
-                            </p>
+                              {/* Details ("รายละเอียด") */}
+                              <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
+                                {event.description ||
+                                  (event.eventLocation
+                                    ? `สถานที่: ${event.eventLocation}`
+                                    : "ไม่มีรายละเอียดเพิ่มเติม")}
+                              </p>
 
-                            {/* Badges Row (Status Pill + Time Pill) */}
-                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                              {/* Status Badge: เขียว (ทำเสร็จแล้ว) vs เหลือง (รอทำ / รอถึงวัน) */}
-                              {isCompleted ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 backdrop-blur-md shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
-                                  <span>ทำเสร็จแล้ว</span>
+                              {/* Badges Row (Status Pill + Time Pill) */}
+                              <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                                {/* Status Badge: เขียว (ทำเสร็จแล้ว) vs เหลือง (รอทำ / รอถึงวัน) */}
+                                {isCompleted ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span>ทำเสร็จแล้ว</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    <span>รอถึงวัน</span>
+                                  </span>
+                                )}
+
+                                {/* Time Pill */}
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                                  <svg className="w-3 h-3 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                  </svg>
+                                  <span>{event.startTime} - {event.endTime}</span>
                                 </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/30 text-amber-200 border border-amber-400/40 backdrop-blur-md shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)] animate-pulse" />
-                                  <span>รอถึงวัน</span>
-                                </span>
-                              )}
-
-                              {/* Time Pill */}
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/20 text-white border border-white/30 backdrop-blur-md shadow-xs">
-                                <svg className="w-3 h-3 text-white/80 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <polyline points="12 6 12 12 16 14" />
-                                </svg>
-                                <span>{event.startTime} - {event.endTime}</span>
-                              </span>
+                              </div>
                             </div>
 
-                            {/* Action Button: ปุ่มสีขาวตามตัวแปรดีไซน์ Dribbble (Reserve now) */}
-                            <button
-                              type="button"
-                              className="w-full mt-2 py-2 px-3 rounded-full bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-black/40 transition-all active:scale-95 cursor-pointer"
-                            >
-                              {isCompleted ? (
-                                <>
-                                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                  <span>เสร็จสิ้นกิจกรรม</span>
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-3.5 h-3.5 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                  </svg>
-                                  <span>รอจัดกิจกรรม</span>
-                                </>
-                              )}
-                            </button>
+                            {/* ─── 3. BOTTOM ACTIONS ROW (Black Pill Button + Circular Heart Button) ─── */}
+                            <div className="flex items-center gap-2 mt-2">
+                              {/* Primary Action: Black Pill Button */}
+                              <button
+                                type="button"
+                                className="flex-1 h-9 rounded-full bg-[#111111] hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                              >
+                                {isCompleted ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    <span>เสร็จสิ้นกิจกรรม</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                      <line x1="16" y1="2" x2="16" y2="6" />
+                                      <line x1="8" y1="2" x2="8" y2="6" />
+                                      <line x1="3" y1="10" x2="21" y2="10" />
+                                    </svg>
+                                    <span>รอจัดกิจกรรม</span>
+                                  </>
+                                )}
+                              </button>
 
-                            {/* Location Footer */}
-                            <div className="text-[10px] text-white/60 truncate pt-1 border-t border-white/10 mt-1.5">
-                              <span>{event.eventLocation || "ทุกสาขา"}</span>
+                              {/* Secondary Action: Circular Heart Button */}
+                              <button
+                                type="button"
+                                aria-label="Bookmark"
+                                className="w-9 h-9 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-rose-500 shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                              >
+                                <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
+                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
                         </div>

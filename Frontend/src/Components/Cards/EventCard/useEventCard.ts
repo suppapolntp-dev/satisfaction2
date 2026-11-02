@@ -31,9 +31,9 @@ export function useEventCard({ event, brandLogoUrl, onClick }: UseEventCardProps
         variant: "completed",
         badgeLabel: "ทำเสร็จแล้ว",
         buttonLabel: "เสร็จสิ้นกิจกรรม",
-        pillClass: "bg-emerald-500/25 text-emerald-200 border-emerald-400/40",
-        dotClass: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]",
-        buttonClass: "bg-white hover:bg-slate-100 text-slate-950",
+        pillClass: "bg-emerald-50 text-emerald-700 border-emerald-200/90",
+        dotClass: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]",
+        buttonClass: "bg-[#111111] hover:bg-black text-white",
       };
     }
 
@@ -42,9 +42,9 @@ export function useEventCard({ event, brandLogoUrl, onClick }: UseEventCardProps
       variant: "upcoming",
       badgeLabel: "รอถึงวัน",
       buttonLabel: "รอจัดกิจกรรม",
-      pillClass: "bg-amber-500/25 text-amber-200 border-amber-400/40",
-      dotClass: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] animate-pulse",
-      buttonClass: "bg-white hover:bg-slate-100 text-slate-950",
+      pillClass: "bg-amber-50 text-amber-800 border-amber-200/90",
+      dotClass: "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)] animate-pulse",
+      buttonClass: "bg-[#111111] hover:bg-black text-white",
     };
   }, [event.eventStatus]);
 
