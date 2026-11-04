@@ -1,0 +1,20 @@
+# Cursor Rules - Customer Satisfaction Platform
+
+## 🎨 MANDATORY DIRECTIVE: UI/UX Pro Max Design Intelligence
+
+For ANY and ALL frontend, UI/UX, styling, layout, typography, components, or screens tasks in this repository, you MUST read and strictly follow the design intelligence guidelines:
+1. **Mandatory Skill Reference**:
+   - Read `.agents/skills/ui-ux-pro-max/SKILL.md` (or `.cursor/skills/ui-ux-pro-max/SKILL.md`) before generating or modifying UI components.
+2. **Design Intelligence CLI**:
+   - Run Python search script to find styles, color palettes, typography, and UX reasoning:
+     ```bash
+     python .agents/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system
+     python .agents/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain [style|color|typography|ux|icons|chart|landing]
+     python .agents/skills/ui-ux-pro-max/scripts/search.py "<query>" --stack html-tailwind
+     ```
+3. **Core Enforcements**:
+   - **60-30-10 Color Rule**: 60% dominant neutral, 30% secondary structure, 10% intentional accent. WCAG AAA/AA contrast compliance.
+   - **8pt Spatial Grid**: Strict 8pt spatial grid for padding, margin, gap, and sizing.
+   - **Complete 5 States**: Default, Hover, Active/Focus, Loading, Empty, and Error states for all interactive components.
+   - **Accessible Micro-Interactions**: Smooth transitions respecting `prefers-reduced-motion`.
+   - **Strict API-Ready Mode**: Zero hardcoded mock data in UI templates. All values bound to typed props/DTOs with safe fallbacks (`?? '-'`). Use Lucide/SVG icons only (no emojis as icons).

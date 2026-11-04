@@ -22,10 +22,36 @@ yarn-error.log*
 **/.env.development.local
 **/.env.test.local
 **/.env.production.local
+**/docker-compose.yml
+**/design.md
+**/AGENTS.md
+**/BackendPlan.md
+**/schema.md
+**/schema.sql
+**/run.bat
 
 # Local AI / Agent artifacts
 .agents/
+.claude/
+.cursor/
+.windsurf/
+.github/prompts/
+.kiro/
+.opencode/
+.roo/
+.qoder/
+.gemini/
+.trae/
+.continue/
+.codebuddy/
+.factory/
+.kilocode/
+.warp/
+.augment/
+.codewhale/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+**/backup
