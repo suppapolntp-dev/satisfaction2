@@ -91,7 +91,7 @@ export default function PageHeader({
                 <button
                   type="button"
                   onClick={action.onClick}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full ${btnBg} active:scale-95 font-semibold text-xs sm:text-sm transition-all cursor-pointer select-none`}
+                  className={`inline-flex items-center justify-center gap-2 px-4 min-h-11 sm:min-h-10 rounded-full ${btnBg} active:scale-95 font-semibold text-xs sm:text-sm transition-all duration-200 motion-reduce:transition-none motion-reduce:active:scale-100 cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]`}
                 >
                   {action.icon}
                   <span className="font-medium">{action.label}</span>

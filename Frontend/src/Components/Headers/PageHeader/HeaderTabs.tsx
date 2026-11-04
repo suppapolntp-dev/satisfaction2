@@ -26,22 +26,24 @@ export default function HeaderTabs({
 
   return (
     <div className={`px-4 sm:px-6 border-t border-slate-100 bg-slate-50/50 ${className}`}>
-      <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto [scrollbar-width:none] pt-2">
+      <div role="tablist" className="flex items-center gap-1 sm:gap-2 overflow-x-auto [scrollbar-width:none] pt-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              aria-selected={isActive}
               onClick={() => onTabChange && onTabChange(tab.id)}
-              className={`inline-flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold whitespace-nowrap transition-all border-b-2 cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-4 min-h-11 sm:min-h-10 text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors duration-200 motion-reduce:transition-none border-b-2 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)] ${
                 isActive
                   ? "text-[var(--primary-container)] border-[var(--primary-container)] font-bold"
                   : "text-slate-500 hover:text-slate-900 border-transparent hover:border-slate-300"
               }`}
             >
               {tab.icon && (
-                <span className={isActive ? "text-[var(--primary-container)]" : "text-slate-400"}>
+                <span aria-hidden="true" className={isActive ? "text-[var(--primary-container)]" : "text-slate-400"}>
                   {tab.icon}
                 </span>
               )}
