@@ -14,6 +14,11 @@ import {
 export interface EventCalendarProps extends UseEventCalendarProps {
   className?: string;
   isLoading?: boolean;
+  /** Error message from the data layer; renders an error banner when set */
+  errorMessage?: string | null;
+  onRetry?: () => void;
+  /** Call-to-action shown in the empty state */
+  onCreateEvent?: () => void;
 }
 
 const CATEGORY_STYLES: Record<string, { label: string; badgeClass: string; dotClass: string }> = {
@@ -56,30 +61,36 @@ const FIREART_CATEGORY_STYLES: Record<
   { bg: string; border: string; text: string; dot: string }
 > = {
   CAMPAIGN: {
-    bg: "bg-[#FFF7ED]",
-    border: "border-[#F97316]/50",
-    text: "text-[#C2410C]",
-    dot: "bg-[#F97316]",
+    bg: "bg-orange-50",
+    border: "border-orange-500/50",
+    text: "text-orange-700",
+    dot: "bg-orange-500",
   },
   AUDIT: {
-    bg: "bg-[#F0FDF4]",
-    border: "border-[#10B981]/50",
-    text: "text-[#047857]",
-    dot: "bg-[#10B981]",
+    bg: "bg-emerald-50",
+    border: "border-emerald-500/50",
+    text: "text-emerald-700",
+    dot: "bg-emerald-500",
   },
   FIRMWARE: {
-    bg: "bg-[#EEF2FF]",
-    border: "border-[#6366F1]/50",
-    text: "text-[#4338CA]",
-    dot: "bg-[#6366F1]",
+    bg: "bg-indigo-50",
+    border: "border-indigo-500/50",
+    text: "text-indigo-700",
+    dot: "bg-indigo-500",
   },
   MAINTENANCE: {
-    bg: "bg-[#F8FAFC]",
-    border: "border-[#1F2937]/30",
-    text: "text-[#0F0F0E]",
-    dot: "bg-[#334155]",
+    bg: "bg-slate-50",
+    border: "border-slate-700/30",
+    text: "text-slate-900",
+    dot: "bg-slate-700",
   },
 };
+
+// Shared keyboard-focus ring (WCAG 2.4.7) — outline never shifts layout
+const FOCUS_RING =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]";
+const FOCUS_RING_INSET =
+  "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)]";
 
 const WEEKDAY_NAMES_EN = [
   "Monday",
@@ -118,6 +129,9 @@ export default function EventCalendar({
   onSelectEvent,
   className = "",
   isLoading = false,
+  errorMessage = null,
+  onRetry,
+  onCreateEvent,
 }: EventCalendarProps) {
   const {
     currentDate,
@@ -191,7 +205,7 @@ export default function EventCalendar({
           <div className="flex items-center gap-3">
             {/* Tear-sheet Calendar Icon */}
             <div className="w-10 h-11 rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col shrink-0 select-none">
-              <div className="bg-[#EA3323] text-white text-[9px] font-bold tracking-wider text-center py-0.5 uppercase">
+              <div className="bg-red-600 text-white text-[10px] font-bold tracking-wider text-center py-0.5 uppercase">
                 {MONTH_NAMES[currentDate.getMonth()].slice(0, 3)}
               </div>
               <div className="bg-white flex-1 flex items-center justify-center font-bold text-slate-900 text-sm leading-none">
@@ -200,7 +214,7 @@ export default function EventCalendar({
             </div>
 
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-[#0F0F0E] tracking-tight leading-snug">
+              <h2 className="text-base sm:text-lg font-bold text-slate-950 tracking-tight leading-snug">
                 {viewMode === "Week" ? weekRangeLabel : monthYearLabel}
               </h2>
               <p className="text-xs text-slate-500 font-medium leading-none mt-0.5">
@@ -213,7 +227,7 @@ export default function EventCalendar({
             <button
               type="button"
               onClick={handleToday}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 shadow-2xs cursor-pointer transition-all active:scale-95"
+              className={`px-4 min-h-11 sm:min-h-10 rounded-full text-xs font-semibold bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 shadow-2xs cursor-pointer transition-all duration-200 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
             >
               Today
             </button>
@@ -221,9 +235,9 @@ export default function EventCalendar({
               type="button"
               onClick={handlePrev}
               aria-label="Previous Period"
-              className="p-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200/80 cursor-pointer transition-all active:scale-95"
+              className={`inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200/80 cursor-pointer transition-all duration-200 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
@@ -231,9 +245,9 @@ export default function EventCalendar({
               type="button"
               onClick={handleNext}
               aria-label="Next Period"
-              className="p-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200/80 cursor-pointer transition-all active:scale-95"
+              className={`inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200/80 cursor-pointer transition-all duration-200 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -241,15 +255,16 @@ export default function EventCalendar({
         </div>
 
         {/* View Mode Switcher: Week | Month */}
-        <div className="inline-flex rounded-full bg-slate-200/60 p-1 border border-slate-200/80 w-full sm:w-auto justify-center">
+        <div role="group" aria-label="โหมดมุมมองปฏิทิน" className="inline-flex rounded-full bg-slate-200/60 p-1 border border-slate-200/80 w-full sm:w-auto justify-center">
           {(["Week", "Month"] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => setViewMode(mode)}
-              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              aria-pressed={viewMode === mode}
+              className={`flex-1 sm:flex-none px-4 min-h-10 sm:min-h-8 rounded-full text-xs font-semibold transition-colors duration-200 motion-reduce:transition-none cursor-pointer ${FOCUS_RING} ${
                 viewMode === mode
-                  ? "bg-white text-[#0F0F0E] shadow-xs font-bold"
+                  ? "bg-white text-slate-950 shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -261,8 +276,53 @@ export default function EventCalendar({
 
       {/* ─── LOADING INDICATOR ─── */}
       {isLoading && (
-        <div className="p-8 text-center text-xs text-slate-400">
-          Loading calendar events...
+        <div role="status" aria-live="polite" className="p-4 sm:p-5 grid gap-3 min-h-[640px] content-start">
+          <span className="sr-only">กำลังโหลดกิจกรรม...</span>
+          {Array.from({ length: 6 }, (_, skeletonIndex) => (
+            <div
+              key={skeletonIndex}
+              aria-hidden="true"
+              className="h-16 rounded-2xl bg-slate-100 animate-pulse motion-reduce:animate-none"
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ─── ERROR STATE ─── */}
+      {!isLoading && errorMessage && (
+        <div
+          role="alert"
+          className="m-4 sm:mx-5 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <p className="text-sm font-medium">{errorMessage}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className={`px-4 min-h-11 sm:min-h-10 rounded-full bg-white border border-red-200 text-xs font-semibold text-red-800 hover:bg-red-100 cursor-pointer transition-colors duration-200 motion-reduce:transition-none ${FOCUS_RING}`}
+            >
+              ลองใหม่อีกครั้ง
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ─── EMPTY STATE ─── */}
+      {!isLoading && !errorMessage && (events?.length ?? 0) === 0 && (
+        <div
+          role="status"
+          className="m-4 sm:mx-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <p className="text-sm font-medium">ยังไม่มีกิจกรรมในปฏิทิน</p>
+          {onCreateEvent && (
+            <button
+              type="button"
+              onClick={onCreateEvent}
+              className={`px-4 min-h-11 sm:min-h-10 rounded-full bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white text-xs font-semibold cursor-pointer transition-colors duration-200 motion-reduce:transition-none ${FOCUS_RING}`}
+            >
+              เพิ่มกิจกรรมแรก
+            </button>
+          )}
         </div>
       )}
 
@@ -288,20 +348,20 @@ export default function EventCalendar({
                       <button
                         type="button"
                         onClick={handlePrevMiniMonth}
-                        className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                        className={`inline-flex items-center justify-center w-10 h-10 lg:w-8 lg:h-8 rounded-full hover:bg-slate-100 text-slate-600 transition-colors motion-reduce:transition-none cursor-pointer ${FOCUS_RING}`}
                         aria-label="Previous Month"
                       >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="15 18 9 12 15 6" />
                         </svg>
                       </button>
                       <button
                         type="button"
                         onClick={handleNextMiniMonth}
-                        className="p-1.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                        className={`inline-flex items-center justify-center w-10 h-10 lg:w-8 lg:h-8 rounded-full hover:bg-slate-100 text-slate-600 transition-colors motion-reduce:transition-none cursor-pointer ${FOCUS_RING}`}
                         aria-label="Next Month"
                       >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="9 18 15 12 9 6" />
                         </svg>
                       </button>
@@ -325,13 +385,13 @@ export default function EventCalendar({
                       let cellBtnStyle = "text-slate-700 hover:bg-slate-100";
 
                       if (!cell.isCurrentMonth) {
-                        cellBtnStyle = "text-slate-400 hover:bg-slate-50";
+                        cellBtnStyle = "text-slate-500 hover:bg-slate-100";
                       }
                       if (isTod && !isSel) {
-                        cellBtnStyle = "bg-[#0b57d0] text-white font-bold";
+                        cellBtnStyle = "bg-[var(--primary-container)] text-white font-bold";
                       }
                       if (isSel) {
-                        cellBtnStyle = "bg-[#c2e7ff] text-[#001d35] font-bold shadow-xs";
+                        cellBtnStyle = "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-2 ring-inset ring-[var(--primary-container)] font-bold";
                       }
 
                       return (
@@ -339,7 +399,10 @@ export default function EventCalendar({
                           <button
                             type="button"
                             onClick={() => selectDate(cell.dateString)}
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all cursor-pointer ${cellBtnStyle}`}
+                            aria-label={cell.dateString}
+                            aria-pressed={cell.isSelected}
+                            aria-current={cell.isToday ? "date" : undefined}
+                            className={`w-10 h-10 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-xs transition-colors motion-reduce:transition-none cursor-pointer ${FOCUS_RING} ${cellBtnStyle}`}
                           >
                             {cell.dayNumber}
                           </button>
@@ -351,8 +414,8 @@ export default function EventCalendar({
 
                 {/* 2. Search Pill ("ค้นหาผู้คน" -> "ค้นหากิจกรรม") */}
                 <div>
-                  <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#edf2fa] hover:bg-[#e4ebf7] text-slate-600 transition-colors border border-transparent focus-within:border-blue-400 focus-within:bg-white">
-                    <svg className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="flex items-center gap-2.5 px-4 min-h-11 lg:min-h-10 rounded-full bg-slate-100 hover:bg-slate-200/70 text-slate-600 transition-colors motion-reduce:transition-none border border-transparent focus-within:border-[var(--primary-container)] focus-within:bg-white">
+                    <svg aria-hidden="true" className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="11" cy="11" r="8" />
                       <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
@@ -361,15 +424,20 @@ export default function EventCalendar({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="ค้นหากิจกรรม หรือ สาขา..."
-                      className="bg-transparent border-none outline-none text-xs w-full text-slate-800 placeholder-slate-400 font-normal"
+                      aria-label="ค้นหากิจกรรม หรือ สาขา"
+                      className="bg-transparent border-none outline-none text-xs w-full text-slate-800 placeholder-slate-500 font-normal"
                     />
                     {searchQuery && (
                       <button
                         type="button"
                         onClick={() => setSearchQuery("")}
-                        className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                        aria-label="ล้างคำค้นหา"
+                        className={`inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-full text-slate-500 hover:text-slate-800 cursor-pointer ${FOCUS_RING}`}
                       >
-                        ×
+                        <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                       </button>
                     )}
                   </div>
@@ -393,25 +461,32 @@ export default function EventCalendar({
                   <div
                     key={`${cell.dateString}-${idx}`}
                     onClick={() => selectDate(cell.dateString)}
-                    className={`min-h-[105px] p-2 flex flex-col justify-between transition-colors cursor-pointer hover:bg-slate-50/60 ${
-                      cell.isCurrentMonth ? "bg-white" : "bg-slate-50/30 text-slate-400"
+                    className={`min-h-[104px] p-2 flex flex-col justify-between transition-colors motion-reduce:transition-none cursor-pointer hover:bg-slate-50/60 ${
+                      cell.isCurrentMonth ? "bg-white" : "bg-slate-50/30 text-slate-500"
                     }`}
                   >
                     <div className="flex justify-between items-center mb-1">
-                      <span
-                        className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-semibold ${
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          selectDate(cell.dateString);
+                        }}
+                        aria-label={cell.dateString}
+                        aria-current={cell.isToday ? "date" : undefined}
+                        className={`inline-flex items-center justify-center w-8 h-8 -m-1 rounded-full text-xs font-semibold cursor-pointer ${FOCUS_RING} ${
                           cell.isToday
                             ? "bg-[var(--primary-container)] text-white font-bold"
                             : cell.isCurrentMonth
-                            ? "text-slate-800"
-                            : "text-slate-400"
+                            ? "text-slate-800 hover:bg-slate-100"
+                            : "text-slate-500 hover:bg-slate-100"
                         }`}
                       >
                         {cell.dayNumber}
-                      </span>
+                      </button>
 
                       {cell.events.length > 0 && (
-                        <span className="text-[10px] font-medium text-slate-400">
+                        <span className="text-[10px] font-medium text-slate-500">
                           {cell.events.length} {cell.events.length === 1 ? "event" : "events"}
                         </span>
                       )}
@@ -422,18 +497,19 @@ export default function EventCalendar({
                       {cell.events.map((event) => {
                         const style = getCategoryStyle(event.eventCategory);
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={event.eventId}
                             onClick={(e) => {
                               e.stopPropagation();
                               if (onSelectEvent) onSelectEvent(event);
                             }}
-                            className={`px-1.5 py-0.5 rounded text-[11px] border font-medium truncate flex items-center gap-1.5 transition-all ${style.badgeClass}`}
+                            className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] border font-medium truncate flex items-center gap-1.5 cursor-pointer transition-colors motion-reduce:transition-none ${FOCUS_RING_INSET} ${style.badgeClass}`}
                             title={`${event.eventName} (${event.startTime || ""}-${event.endTime || ""})`}
                           >
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dotClass}`} />
+                            <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dotClass}`} />
                             <span className="truncate">{event.eventName}</span>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -450,7 +526,7 @@ export default function EventCalendar({
               <div className="flex border-b border-slate-200 bg-white sticky top-0 z-20">
                 {/* Time Axis Gutter Header */}
                 <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 py-3 pr-3 text-right flex items-center justify-end bg-slate-50/50">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase select-none">GMT+7</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase select-none">GMT+7</span>
                 </div>
 
                 {/* 7 Day Column Headers */}
@@ -458,32 +534,34 @@ export default function EventCalendar({
                   {weekCalendarDays.map((day, idx) => {
                     const isToday = day.isToday;
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={day.dateString}
                         onClick={() => selectDate(day.dateString)}
-                        className={`py-3 px-2 sm:px-3 flex flex-col items-center justify-center transition-colors cursor-pointer hover:bg-slate-50/80 ${
+                        aria-current={isToday ? "date" : undefined}
+                        className={`py-3 px-2 sm:px-3 min-h-14 flex flex-col items-center justify-center transition-colors motion-reduce:transition-none cursor-pointer hover:bg-slate-50/80 ${FOCUS_RING_INSET} ${
                           isToday ? "bg-slate-50/60" : ""
                         }`}
                       >
                         <span
                           className={`text-xs font-semibold uppercase tracking-wider ${
-                            isToday ? "text-[#0F0F0E] font-bold" : "text-slate-500"
+                            isToday ? "text-slate-950 font-bold" : "text-slate-500"
                           }`}
                         >
                           {WEEKDAY_NAMES_EN[idx]}
                         </span>
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <span className="flex items-center gap-1.5 mt-1">
                           <span
                             className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                               isToday
-                                ? "bg-[#0F0F0E] text-white shadow-xs"
+                                ? "bg-slate-950 text-white shadow-xs"
                                 : "text-slate-800"
                             }`}
                           >
                             {day.dayNumber}
                           </span>
-                        </div>
-                      </div>
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
@@ -500,7 +578,7 @@ export default function EventCalendar({
                     {HOURS_24.map((hour) => (
                       <div
                         key={hour}
-                        className="absolute right-3 -translate-y-1/2 text-[11px] font-medium text-slate-400 select-none pointer-events-none"
+                        className="absolute right-3 -translate-y-1/2 text-[11px] font-medium text-slate-500 select-none pointer-events-none"
                         style={{ top: `${hour * HOUR_HEIGHT}px` }}
                       >
                         {hour !== 0 && formatHourLabel(hour)}
@@ -512,11 +590,12 @@ export default function EventCalendar({
                   <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] relative">
                     {/* Live Current Time Line running across all 7 days */}
                     <div
+                      aria-hidden="true"
                       className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
                       style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px` }}
                     >
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#0F0F0E] -ml-1.5 shadow-xs" />
-                      <div className="h-[2px] bg-[#0F0F0E] flex-1" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-950 -ml-1.5 shadow-xs" />
+                      <div className="h-[2px] bg-slate-950 flex-1" />
                     </div>
 
                     {weekCalendarDays.map((day) => {
@@ -541,39 +620,41 @@ export default function EventCalendar({
                               FIREART_CATEGORY_STYLES.MAINTENANCE;
 
                             return (
-                              <div
+                              <button
+                                type="button"
                                 key={event.eventId}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (onSelectEvent) onSelectEvent(event);
                                 }}
+                                aria-label={`${event.eventName} ${event.startTime} - ${event.endTime}`}
                                 style={{
                                   top: `${(startMin / 60) * HOUR_HEIGHT}px`,
                                   height: `${Math.max((durationMin / 60) * HOUR_HEIGHT, 44)}px`,
                                 }}
-                                className={`absolute z-10 left-1 right-1 rounded-xl border p-2 text-xs flex flex-col justify-between shadow-2xs transition-all hover:shadow-md hover:scale-[1.01] hover:z-30 cursor-pointer overflow-hidden ${style.bg} ${style.border}`}
+                                className={`absolute z-10 left-1 right-1 rounded-xl border p-2 text-xs text-left flex flex-col justify-between shadow-2xs transition-shadow motion-reduce:transition-none hover:shadow-md hover:z-30 cursor-pointer overflow-hidden ${FOCUS_RING_INSET} ${style.bg} ${style.border}`}
                                 title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
                               >
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
-                                    <h4 className={`font-bold text-[11px] sm:text-xs truncate ${style.text}`}>
+                                <span className="block min-w-0">
+                                  <span className="flex items-center gap-1.5">
+                                    <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
+                                    <span className={`font-bold text-[11px] sm:text-xs truncate ${style.text}`}>
                                       {event.eventName}
-                                    </h4>
-                                  </div>
-                                  <p className="text-[10px] font-medium opacity-80 mt-0.5 truncate">
+                                    </span>
+                                  </span>
+                                  <span className="block text-[10px] font-medium text-slate-600 mt-0.5 truncate">
                                     {event.startTime} - {event.endTime}
-                                  </p>
-                                </div>
+                                  </span>
+                                </span>
 
                                 {durationMin >= 60 && (
-                                  <div className="flex items-center justify-between text-[9px] pt-1 border-t border-black/5 mt-1">
-                                    <span className="font-semibold truncate opacity-85">
+                                  <span className="block text-[10px] pt-1 border-t border-black/5 mt-1">
+                                    <span className="block font-semibold truncate text-slate-700">
                                       {event.brandScope}
                                     </span>
-                                  </div>
+                                  </span>
                                 )}
-                              </div>
+                              </button>
                             );
                           })}
                         </div>

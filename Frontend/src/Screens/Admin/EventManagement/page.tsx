@@ -66,6 +66,7 @@ export default function EventManagementScreen({
           isLoading={isLoading}
           onSelectDate={handleSelectDate}
           onSelectEvent={handleSelectEvent}
+          onCreateEvent={handleCreateEvent}
         />
       )}
 
