@@ -56,51 +56,45 @@ const DEFAULT_CATEGORY_STYLE = {
 };
 
 // ─── FIREART CALENDAR BOOKING APP DESIGN SYSTEM TOKENS ───
+// accent = 4px left bar (Material-style), bg = soft tint, text = AA-contrast title color
 const FIREART_CATEGORY_STYLES: Record<
   string,
-  { bg: string; border: string; text: string; dot: string }
+  { bg: string; accent: string; text: string; hover: string }
 > = {
   CAMPAIGN: {
     bg: "bg-orange-50",
-    border: "border-orange-500/50",
-    text: "text-orange-700",
-    dot: "bg-orange-500",
+    accent: "border-l-orange-500",
+    text: "text-orange-800",
+    hover: "hover:bg-orange-100",
   },
   AUDIT: {
     bg: "bg-emerald-50",
-    border: "border-emerald-500/50",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
+    accent: "border-l-emerald-500",
+    text: "text-emerald-800",
+    hover: "hover:bg-emerald-100",
   },
   FIRMWARE: {
     bg: "bg-indigo-50",
-    border: "border-indigo-500/50",
-    text: "text-indigo-700",
-    dot: "bg-indigo-500",
+    accent: "border-l-indigo-500",
+    text: "text-indigo-800",
+    hover: "hover:bg-indigo-100",
   },
   MAINTENANCE: {
-    bg: "bg-slate-50",
-    border: "border-slate-700/30",
-    text: "text-slate-900",
-    dot: "bg-slate-700",
+    bg: "bg-slate-100",
+    accent: "border-l-slate-500",
+    text: "text-slate-800",
+    hover: "hover:bg-slate-200",
   },
 };
+
+// Localised short weekday (e.g. "จ.") derived from the date — no hardcoded weekday list
+const WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat("th-TH", { weekday: "short" });
 
 // Shared keyboard-focus ring (WCAG 2.4.7) — outline never shifts layout
 const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]";
 const FOCUS_RING_INSET =
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)]";
-
-const WEEKDAY_NAMES_EN = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 
 const HOURS_24 = Array.from({ length: 24 }, (_, i) => i);
 const HOUR_HEIGHT = 65; // 65px ต่อชั่วโมงในสเกลสัปดาห์ Fireart Grid
@@ -120,6 +114,49 @@ function formatHourLabel(hour: number): string {
   if (hour < 12) return `${hour} AM`;
   if (hour === 12) return "12 PM";
   return `${hour - 12} PM`;
+}
+
+// ponytail: greedy lane assignment for overlapping events in a day column; upgrade to interval-graph coloring if >4 concurrent lanes need dynamic cascade
+function layoutDayEvents(events: EventItem[]) {
+  const sorted = [...events]
+    .map((event) => {
+      const startMin = parseTimeToMinutes(event.startTime, 540);
+      const endMin = parseTimeToMinutes(event.endTime, startMin + 60);
+      const durationMin = Math.max(endMin - startMin, 45);
+      return { event, startMin, endMin: startMin + durationMin, durationMin };
+    })
+    .sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
+
+  const clusters: (typeof sorted)[] = [];
+  let currentCluster: typeof sorted = [];
+  let clusterEnd = -1;
+
+  for (const item of sorted) {
+    if (currentCluster.length > 0 && item.startMin >= clusterEnd) {
+      clusters.push(currentCluster);
+      currentCluster = [];
+      clusterEnd = -1;
+    }
+    currentCluster.push(item);
+    clusterEnd = Math.max(clusterEnd, item.endMin);
+  }
+  if (currentCluster.length > 0) clusters.push(currentCluster);
+
+  return clusters.flatMap((cluster) => {
+    const laneEnds: number[] = [];
+    const placed = cluster.map((item) => {
+      let laneIndex = laneEnds.findIndex((end) => end <= item.startMin);
+      if (laneIndex === -1) {
+        laneIndex = laneEnds.length;
+        laneEnds.push(item.endMin);
+      } else {
+        laneEnds[laneIndex] = item.endMin;
+      }
+      return { ...item, laneIndex };
+    });
+    const totalLanes = Math.max(laneEnds.length, 1);
+    return placed.map((item) => ({ ...item, totalLanes }));
+  });
 }
 
 export default function EventCalendar({
@@ -531,35 +568,35 @@ export default function EventCalendar({
 
                 {/* 7 Day Column Headers */}
                 <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px]">
-                  {weekCalendarDays.map((day, idx) => {
+                  {weekCalendarDays.map((day) => {
                     const isToday = day.isToday;
+                    const isSelected = day.dateString === currentDateStr;
                     return (
                       <button
                         type="button"
                         key={day.dateString}
                         onClick={() => selectDate(day.dateString)}
                         aria-current={isToday ? "date" : undefined}
-                        className={`py-3 px-2 sm:px-3 min-h-14 flex flex-col items-center justify-center transition-colors motion-reduce:transition-none cursor-pointer hover:bg-slate-50/80 ${FOCUS_RING_INSET} ${
-                          isToday ? "bg-slate-50/60" : ""
-                        }`}
+                        aria-pressed={isSelected}
+                        className={`group py-2 px-2 min-h-[72px] flex flex-col items-center justify-center gap-1 cursor-pointer ${FOCUS_RING_INSET}`}
                       >
                         <span
-                          className={`text-xs font-semibold uppercase tracking-wider ${
-                            isToday ? "text-slate-950 font-bold" : "text-slate-500"
+                          className={`text-xs font-medium ${
+                            isToday ? "text-[var(--primary-container)]" : "text-slate-600"
                           }`}
                         >
-                          {WEEKDAY_NAMES_EN[idx]}
+                          {WEEKDAY_SHORT_FORMATTER.format(day.date)}
                         </span>
-                        <span className="flex items-center gap-1.5 mt-1">
-                          <span
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                              isToday
-                                ? "bg-slate-950 text-white shadow-xs"
-                                : "text-slate-800"
-                            }`}
-                          >
-                            {day.dayNumber}
-                          </span>
+                        <span
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold tabular-nums transition-colors duration-200 motion-reduce:transition-none ${
+                            isToday
+                              ? "bg-[var(--primary-container)] text-white"
+                              : isSelected
+                              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-2 ring-inset ring-[var(--primary-container)]"
+                              : "text-slate-900 group-hover:bg-slate-100"
+                          }`}
+                        >
+                          {day.dayNumber}
                         </span>
                       </button>
                     );
@@ -611,13 +648,12 @@ export default function EventCalendar({
                           ))}
 
                           {/* Events placed inside this Day Column */}
-                          {day.events.map((event) => {
-                            const startMin = parseTimeToMinutes(event.startTime, 540);
-                            const endMin = parseTimeToMinutes(event.endTime, startMin + 60);
-                            const durationMin = Math.max(endMin - startMin, 45);
+                          {layoutDayEvents(day.events).map(({ event, startMin, durationMin, laneIndex, totalLanes }) => {
                             const style =
                               FIREART_CATEGORY_STYLES[event.eventCategory.toUpperCase()] ||
                               FIREART_CATEGORY_STYLES.MAINTENANCE;
+                            const widthPct = 100 / totalLanes;
+                            const leftPct = laneIndex * widthPct;
 
                             return (
                               <button
@@ -631,27 +667,24 @@ export default function EventCalendar({
                                 style={{
                                   top: `${(startMin / 60) * HOUR_HEIGHT}px`,
                                   height: `${Math.max((durationMin / 60) * HOUR_HEIGHT, 44)}px`,
+                                  left: `calc(${leftPct}% + 2px)`,
+                                  width: `calc(${widthPct}% - 4px)`,
                                 }}
-                                className={`absolute z-10 left-1 right-1 rounded-xl border p-2 text-xs text-left flex flex-col justify-between shadow-2xs transition-shadow motion-reduce:transition-none hover:shadow-md hover:z-30 cursor-pointer overflow-hidden ${FOCUS_RING_INSET} ${style.bg} ${style.border}`}
+                                className={`absolute z-10 rounded-lg border-l-4 py-1.5 pl-2 pr-1.5 text-left flex flex-col justify-between gap-1 shadow-xs ring-1 ring-black/5 transition-[background-color,box-shadow] duration-200 motion-reduce:transition-none hover:shadow-md hover:z-30 cursor-pointer overflow-hidden ${FOCUS_RING_INSET} ${style.bg} ${style.accent} ${style.hover}`}
                                 title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
                               >
                                 <span className="block min-w-0">
-                                  <span className="flex items-center gap-1.5">
-                                    <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
-                                    <span className={`font-bold text-[11px] sm:text-xs truncate ${style.text}`}>
-                                      {event.eventName}
-                                    </span>
+                                  <span className={`block text-xs font-semibold leading-snug break-words line-clamp-2 ${style.text}`}>
+                                    {event.eventName}
                                   </span>
-                                  <span className="block text-[10px] font-medium text-slate-600 mt-0.5 truncate">
+                                  <span className="block text-xs text-slate-600 mt-1 tabular-nums truncate">
                                     {event.startTime} - {event.endTime}
                                   </span>
                                 </span>
 
-                                {durationMin >= 60 && (
-                                  <span className="block text-[10px] pt-1 border-t border-black/5 mt-1">
-                                    <span className="block font-semibold truncate text-slate-700">
-                                      {event.brandScope}
-                                    </span>
+                                {durationMin >= 60 && event.brandScope && (
+                                  <span className="inline-flex max-w-full self-start rounded-md bg-white/70 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                                    <span className="truncate">{event.brandScope}</span>
                                   </span>
                                 )}
                               </button>
