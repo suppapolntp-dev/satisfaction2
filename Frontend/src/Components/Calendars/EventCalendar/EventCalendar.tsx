@@ -64,26 +64,32 @@ const FIREART_CATEGORY_STYLES: Record<
   CAMPAIGN: {
     bg: "bg-orange-50",
     accent: "border-l-orange-500",
-    text: "text-orange-800",
-    hover: "hover:bg-orange-100",
+    text: "text-orange-900",
+    hover: "hover:bg-orange-100/90",
   },
   AUDIT: {
     bg: "bg-emerald-50",
     accent: "border-l-emerald-500",
-    text: "text-emerald-800",
-    hover: "hover:bg-emerald-100",
+    text: "text-emerald-900",
+    hover: "hover:bg-emerald-100/90",
   },
   FIRMWARE: {
-    bg: "bg-indigo-50",
-    accent: "border-l-indigo-500",
-    text: "text-indigo-800",
-    hover: "hover:bg-indigo-100",
+    bg: "bg-blue-50",
+    accent: "border-l-blue-600",
+    text: "text-blue-900",
+    hover: "hover:bg-blue-100/90",
+  },
+  CALIBRATION: {
+    bg: "bg-purple-50",
+    accent: "border-l-purple-500",
+    text: "text-purple-900",
+    hover: "hover:bg-purple-100/90",
   },
   MAINTENANCE: {
     bg: "bg-slate-100",
     accent: "border-l-slate-500",
-    text: "text-slate-800",
-    hover: "hover:bg-slate-200",
+    text: "text-slate-900",
+    hover: "hover:bg-slate-200/90",
   },
 };
 
@@ -144,7 +150,7 @@ function layoutDayEvents(events: EventItem[]) {
 
   return clusters.flatMap((cluster) => {
     const laneEnds: number[] = [];
-    const placed = cluster.map((item) => {
+    const placed = cluster.map((item, orderIndex) => {
       let laneIndex = laneEnds.findIndex((end) => end <= item.startMin);
       if (laneIndex === -1) {
         laneIndex = laneEnds.length;
@@ -152,10 +158,17 @@ function layoutDayEvents(events: EventItem[]) {
       } else {
         laneEnds[laneIndex] = item.endMin;
       }
-      return { ...item, laneIndex };
+      return { ...item, laneIndex, orderIndex };
     });
     const totalLanes = Math.max(laneEnds.length, 1);
-    return placed.map((item) => ({ ...item, totalLanes }));
+    const hasTightStartCollision = cluster.some((a, i) =>
+      cluster.some((b, j) => i !== j && Math.abs(a.startMin - b.startMin) < 45)
+    );
+    return placed.map((item) => ({
+      ...item,
+      totalLanes,
+      hasTightStartCollision,
+    }));
   });
 }
 
@@ -648,48 +661,82 @@ export default function EventCalendar({
                           ))}
 
                           {/* Events placed inside this Day Column */}
-                          {layoutDayEvents(day.events).map(({ event, startMin, durationMin, laneIndex, totalLanes }) => {
-                            const style =
-                              FIREART_CATEGORY_STYLES[event.eventCategory.toUpperCase()] ||
-                              FIREART_CATEGORY_STYLES.MAINTENANCE;
-                            const widthPct = 100 / totalLanes;
-                            const leftPct = laneIndex * widthPct;
+                          {layoutDayEvents(day.events).map(
+                            ({
+                              event,
+                              startMin,
+                              durationMin,
+                              laneIndex,
+                              orderIndex,
+                              totalLanes,
+                              hasTightStartCollision,
+                            }) => {
+                              const style =
+                                FIREART_CATEGORY_STYLES[event.eventCategory.toUpperCase()] ||
+                                FIREART_CATEGORY_STYLES.MAINTENANCE;
 
-                            return (
-                              <button
-                                type="button"
-                                key={event.eventId}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (onSelectEvent) onSelectEvent(event);
-                                }}
-                                aria-label={`${event.eventName} ${event.startTime} - ${event.endTime}`}
-                                style={{
-                                  top: `${(startMin / 60) * HOUR_HEIGHT}px`,
-                                  height: `${Math.max((durationMin / 60) * HOUR_HEIGHT, 44)}px`,
-                                  left: `calc(${leftPct}% + 2px)`,
-                                  width: `calc(${widthPct}% - 4px)`,
-                                }}
-                                className={`absolute z-10 rounded-lg border-l-4 py-1.5 pl-2 pr-1.5 text-left flex flex-col justify-between gap-1 shadow-xs ring-1 ring-black/5 transition-[background-color,box-shadow] duration-200 motion-reduce:transition-none hover:shadow-md hover:z-30 cursor-pointer overflow-hidden ${FOCUS_RING_INSET} ${style.bg} ${style.accent} ${style.hover}`}
-                                title={`${event.eventName} (${event.startTime} - ${event.endTime})`}
-                              >
-                                <span className="block min-w-0">
-                                  <span className={`block text-xs font-semibold leading-snug break-words line-clamp-2 ${style.text}`}>
+                              // When overlapping events start >=45m apart, cascade lanes (88-92% width)
+                              // so titles, times, and brand pills never squish into 45px slivers.
+                              const isCascaded = totalLanes > 1 && !hasTightStartCollision;
+                              const stepPct = isCascaded
+                                ? Math.min(12, Math.floor(36 / Math.max(totalLanes - 1, 1)))
+                                : 100 / totalLanes;
+                              const leftPct = isCascaded ? laneIndex * stepPct : laneIndex * (100 / totalLanes);
+                              const widthPct = isCascaded
+                                ? laneIndex === 0 && totalLanes > 1
+                                  ? 92
+                                  : 100 - leftPct
+                                : 100 / totalLanes;
+
+                              return (
+                                <button
+                                  type="button"
+                                  key={event.eventId}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onSelectEvent) onSelectEvent(event);
+                                  }}
+                                  aria-label={`${event.eventName} ${event.startTime} - ${event.endTime}`}
+                                  style={{
+                                    top: `${(startMin / 60) * HOUR_HEIGHT}px`,
+                                    height: `${Math.max((durationMin / 60) * HOUR_HEIGHT, 44)}px`,
+                                    left: `calc(${leftPct}% + 2px)`,
+                                    width: `calc(${widthPct}% - 4px)`,
+                                    zIndex: 10 + orderIndex,
+                                  }}
+                                  className={`absolute rounded-xl border-l-4 p-2 text-left flex flex-col justify-start items-start gap-1 shadow-xs ring-1 ${
+                                    totalLanes > 1 ? "ring-white/90 shadow-sm" : "ring-black/5"
+                                  } transition-[background-color,box-shadow] duration-200 motion-reduce:transition-none hover:shadow-md hover:!z-40 focus-visible:!z-40 cursor-pointer overflow-hidden ${FOCUS_RING_INSET} ${style.bg} ${style.accent} ${style.hover}`}
+                                  title={`${event.eventName} (${event.startTime} - ${event.endTime})${
+                                    event.brandScope ? ` • ${event.brandScope}` : ""
+                                  }`}
+                                >
+                                  {/* 1. Compact Time Range Header (never wraps) */}
+                                  <span className="block w-full text-[11px] font-semibold text-slate-600 leading-none tabular-nums whitespace-nowrap truncate">
+                                    {event.startTime}–{event.endTime}
+                                  </span>
+
+                                  {/* 2. Event Title (top-aligned right under time) */}
+                                  <span
+                                    className={`block w-full text-xs font-bold leading-snug break-words ${
+                                      durationMin >= 120 ? "line-clamp-3" : "line-clamp-2"
+                                    } ${style.text}`}
+                                  >
                                     {event.eventName}
                                   </span>
-                                  <span className="block text-xs text-slate-600 mt-1 tabular-nums truncate">
-                                    {event.startTime} - {event.endTime}
-                                  </span>
-                                </span>
 
-                                {durationMin >= 60 && event.brandScope && (
-                                  <span className="inline-flex max-w-full self-start rounded-md bg-white/70 px-1.5 py-0.5 text-xs font-medium text-slate-700">
-                                    <span className="truncate">{event.brandScope}</span>
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
+                                  {/* 3. Brand Pill Badge (top-aligned, no bottom gap or clipping) */}
+                                  {durationMin >= 60 && event.brandScope && (
+                                    <span className="mt-0.5 inline-flex items-center max-w-full min-w-0 rounded-md bg-white/85 px-1.5 py-0.5 text-[11px] font-medium text-slate-700 ring-1 ring-black/5 shadow-2xs">
+                                      <span className="min-w-0 whitespace-nowrap truncate">
+                                        {event.brandScope}
+                                      </span>
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            }
+                          )}
                         </div>
                       );
                     })}
