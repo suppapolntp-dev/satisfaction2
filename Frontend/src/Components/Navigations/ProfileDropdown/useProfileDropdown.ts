@@ -1,49 +1,108 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { clearAuthCookies } from "@/Lib/apiClient";
+import { apiClient, clearAuthCookies, getAuthToken } from "@/Lib/apiClient";
 import { UserProfile } from "./types";
 
-const defaultUserProfile: UserProfile = {
-  fullName: "Guy Suppapol",
-  email: "guy@satisfaction.local",
-  roleName: "SuperAdmin",
-};
+interface AuthMeDto {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  email?: string;
+  roleName?: string;
+  roleCode?: string;
+  avatarUrl?: string;
+}
+
+function readCachedProfile(): UserProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem("satisfaction_user_profile");
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    const fullName =
+      parsed.fullName ||
+      `${parsed.firstName || ""} ${parsed.lastName || ""}`.trim();
+    if (!fullName && !parsed.email) return null;
+    return {
+      id: parsed.id,
+      fullName: fullName || "-",
+      email: parsed.email || "-",
+      roleName: parsed.roleName || parsed.roleCode || "-",
+      avatarUrl: parsed.avatarUrl,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function useProfileDropdown(initialProfile?: UserProfile | null) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile ?? null);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialProfile);
+  const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (initialProfile) {
-      setProfile(initialProfile);
+  const fetchProfile = useCallback(async () => {
+    setError(null);
+    const cached = readCachedProfile();
+    if (cached) {
+      setProfile(cached);
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     try {
-      const stored = localStorage.getItem("satisfaction_user_profile");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setProfile({
+      const response = await apiClient.get<AuthMeDto>("/auth/me");
+      if (response.success && response.data) {
+        const dto = response.data;
+        const resolvedProfile: UserProfile = {
+          id: dto.id,
           fullName:
-            parsed.fullName ||
-            `${parsed.firstName || ""} ${parsed.lastName || ""}`.trim() ||
-            defaultUserProfile.fullName,
-          email: parsed.email || defaultUserProfile.email,
-          roleName: parsed.roleName || defaultUserProfile.roleName,
-          avatarUrl: parsed.avatarUrl,
-        });
-        return;
+            dto.fullName ||
+            `${dto.firstName || ""} ${dto.lastName || ""}`.trim() ||
+            "-",
+          email: dto.email || "-",
+          roleName: dto.roleName || dto.roleCode || "-",
+          avatarUrl: dto.avatarUrl,
+        };
+        setProfile(resolvedProfile);
+        try {
+          localStorage.setItem(
+            "satisfaction_user_profile",
+            JSON.stringify(resolvedProfile)
+          );
+        } catch {
+          // Ignore storage quota errors
+        }
+      } else if (!cached) {
+        setError(response.message || "Unable to load profile");
       }
     } catch {
-      // Fallback silently if storage parsing fails
+      if (!cached) {
+        setError("Unable to load profile");
+      }
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    setProfile(defaultUserProfile);
-  }, [initialProfile]);
+  useEffect(() => {
+    if (initialProfile !== undefined) {
+      setProfile(initialProfile);
+      setIsLoading(false);
+      return;
+    }
+    fetchProfile();
+  }, [initialProfile, fetchProfile]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,7 +126,13 @@ export function useProfileDropdown(initialProfile?: UserProfile | null) {
   }, []);
 
   const toggleDropdown = () => {
-    setIsOpen((prev) => !prev);
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next && !profile && !isLoading) {
+        fetchProfile();
+      }
+      return next;
+    });
   };
 
   const closeDropdown = () => {
@@ -83,9 +148,12 @@ export function useProfileDropdown(initialProfile?: UserProfile | null) {
   return {
     isOpen,
     profile,
+    isLoading,
+    error,
     dropdownRef,
     toggleDropdown,
     closeDropdown,
+    retryFetchProfile: fetchProfile,
     handleSignOut,
   };
 }

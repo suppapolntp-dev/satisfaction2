@@ -12,52 +12,68 @@ export default function ProfileDropdown({
   const {
     isOpen,
     profile,
+    isLoading,
+    error,
     dropdownRef,
     toggleDropdown,
     closeDropdown,
+    retryFetchProfile,
     handleSignOut,
   } = useProfileDropdown(initialProfile);
 
-  const userInitial = profile?.fullName
-    ? profile.fullName.trim().charAt(0).toUpperCase()
-    : "U";
+  const userInitial =
+    profile?.fullName && profile.fullName !== "-"
+      ? profile.fullName.trim().charAt(0).toUpperCase()
+      : "-";
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      {/* Profile Trigger Button */}
+      {/* Profile Trigger Button (44px min target on touch, accessible focus ring) */}
       <button
         type="button"
         onClick={toggleDropdown}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="flex items-center gap-2.5 p-1 sm:pl-1.5 sm:pr-3 sm:py-1 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 transition-colors shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-container)] cursor-pointer"
+        aria-label={profile?.fullName ? `Account menu for ${profile.fullName}` : "Account menu"}
+        className="flex items-center gap-2.5 min-h-11 min-w-11 sm:min-h-10 p-1.5 sm:pl-1.5 sm:pr-3 sm:py-1 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 transition-colors duration-200 motion-reduce:transition-none shadow-2xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] cursor-pointer"
       >
         <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 relative shadow-2xs overflow-hidden">
           {profile?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.avatarUrl}
-              alt={profile.fullName}
+              alt=""
               className="w-full h-full object-cover"
             />
           ) : (
-            <span>{userInitial}</span>
+            <span aria-hidden="true">{userInitial}</span>
           )}
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-white" />
+          <span
+            aria-hidden="true"
+            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-white"
+          />
         </div>
 
-        <div className="hidden sm:flex flex-col text-left leading-tight">
-          <span className="text-xs font-semibold text-slate-900 truncate max-w-[120px]">
-            {profile?.fullName ?? "-"}
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">
-            {profile?.roleName ?? "-"}
-          </span>
-        </div>
+        {isLoading && !profile ? (
+          <div aria-hidden="true" className="hidden sm:flex flex-col gap-1 w-20">
+            <span className="h-3 w-16 rounded bg-slate-200 animate-pulse motion-reduce:animate-none" />
+            <span className="h-2.5 w-12 rounded bg-slate-100 animate-pulse motion-reduce:animate-none" />
+          </div>
+        ) : (
+          <div className="hidden sm:flex flex-col text-left leading-tight">
+            <span className="text-xs font-semibold text-slate-900 truncate max-w-[120px]">
+              {profile?.fullName ?? "-"}
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium truncate max-w-[120px]">
+              {profile?.roleName ?? "-"}
+            </span>
+          </div>
+        )}
 
         <svg
-          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-slate-600" : ""
+          aria-hidden="true"
+          className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 motion-reduce:transition-none ${
+            isOpen ? "rotate-180 text-slate-700" : ""
           }`}
           viewBox="0 0 24 24"
           fill="none"
@@ -73,32 +89,61 @@ export default function ProfileDropdown({
         <div
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 top-[calc(100%+8px)] w-64 bg-white border border-slate-200/90 rounded-2xl shadow-[0_16px_36px_-12px_rgba(15,23,42,0.18)] p-2 z-50 animate-in fade-in zoom-in-95 duration-150"
+          aria-label="User account options"
+          className="absolute right-0 top-[calc(100%+8px)] w-64 bg-white border border-slate-200/90 rounded-2xl shadow-[0_16px_36px_-12px_rgba(15,23,42,0.18)] p-2 z-50 animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
         >
-          {/* User Information Card */}
-          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100/80 mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                {userInitial}
+          {/* User Information Card (Loading / Error / Default States) */}
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 mb-2">
+            {isLoading && !profile ? (
+              <div className="flex items-center gap-2.5" role="status" aria-label="Loading profile">
+                <div className="w-9 h-9 rounded-full bg-slate-200 animate-pulse motion-reduce:animate-none shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-24 rounded bg-slate-200 animate-pulse motion-reduce:animate-none" />
+                  <div className="h-2.5 w-32 rounded bg-slate-200 animate-pulse motion-reduce:animate-none" />
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-900 truncate">
-                  {profile?.fullName ?? "-"}
-                </p>
-                <p className="text-[11px] text-slate-400 truncate">
-                  {profile?.email ?? "-"}
-                </p>
-              </div>
-            </div>
-            {profile?.roleName && (
-              <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                  Role
+            ) : error && !profile ? (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-rose-600 font-medium truncate">
+                  {error}
                 </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white border border-slate-200/80 text-slate-700 shadow-2xs">
-                  {profile.roleName}
-                </span>
+                <button
+                  type="button"
+                  onClick={retryFetchProfile}
+                  className="min-h-8 px-2.5 rounded-lg text-xs font-semibold text-[var(--primary-container)] hover:bg-[var(--accent-bg)] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] cursor-pointer shrink-0"
+                >
+                  Retry
+                </button>
               </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    aria-hidden="true"
+                    className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0"
+                  >
+                    {userInitial}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 truncate">
+                      {profile?.fullName ?? "-"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {profile?.email ?? "-"}
+                    </p>
+                  </div>
+                </div>
+                {profile?.roleName && (
+                  <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                      Role
+                    </span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white border border-slate-200/80 text-slate-700 shadow-2xs">
+                      {profile.roleName}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -110,11 +155,12 @@ export default function ProfileDropdown({
               rel="noopener noreferrer"
               onClick={closeDropdown}
               role="menuitem"
-              className="flex items-center justify-between w-full h-10 px-3 rounded-xl bg-[var(--primary-container)]/10 hover:bg-[var(--primary-container)]/20 text-[var(--primary-container)] transition-colors group cursor-pointer"
+              className="flex items-center justify-between w-full min-h-11 sm:min-h-10 px-3 rounded-xl bg-[var(--accent-bg)] hover:bg-[var(--primary-container)]/15 text-[var(--primary-container)] transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)] group cursor-pointer"
             >
               <div className="flex items-center gap-2.5">
                 <svg
-                  className="w-4 h-4 text-[var(--primary-container)]"
+                  aria-hidden="true"
+                  className="w-4 h-4 text-[var(--primary-container)] shrink-0"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -127,7 +173,8 @@ export default function ProfileDropdown({
                 <span className="text-xs font-bold">Open Kiosk</span>
               </div>
               <svg
-                className="w-3.5 h-3.5 text-[var(--primary-container)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                aria-hidden="true"
+                className="w-3.5 h-3.5 text-[var(--primary-container)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150 motion-reduce:transition-none shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -146,10 +193,11 @@ export default function ProfileDropdown({
               href="/test"
               onClick={closeDropdown}
               role="menuitem"
-              className="flex items-center gap-2.5 w-full h-9 px-2.5 rounded-xl text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-2.5 w-full min-h-11 sm:min-h-10 px-2.5 rounded-xl text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)]"
             >
               <svg
-                className="w-4 h-4 text-slate-400"
+                aria-hidden="true"
+                className="w-4 h-4 text-slate-500 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -165,10 +213,11 @@ export default function ProfileDropdown({
               href="/dashboard"
               onClick={closeDropdown}
               role="menuitem"
-              className="flex items-center gap-2.5 w-full h-9 px-2.5 rounded-xl text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-2.5 w-full min-h-11 sm:min-h-10 px-2.5 rounded-xl text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)]"
             >
               <svg
-                className="w-4 h-4 text-slate-400"
+                aria-hidden="true"
+                className="w-4 h-4 text-slate-500 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -187,10 +236,11 @@ export default function ProfileDropdown({
               type="button"
               onClick={handleSignOut}
               role="menuitem"
-              className="flex items-center gap-2.5 w-full h-9 px-2.5 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="flex items-center gap-2.5 w-full min-h-11 sm:min-h-10 px-2.5 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-rose-600 cursor-pointer"
             >
               <svg
-                className="w-4 h-4 text-rose-500"
+                aria-hidden="true"
+                className="w-4 h-4 text-rose-600 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

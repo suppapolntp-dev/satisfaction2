@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef, useMemo, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { DEFAULT_NAV_GROUPS, NavGroup, NavItem } from "@/Components/Sidebars/Sidebar";
+
+export interface BreadcrumbInfo {
+  groupName: string;
+  pageLabel: string;
+}
 
 export function useCommandPalette() {
   const router = useRouter();
+  const pathname = usePathname();
   const [, startTransition] = useTransition();
 
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -31,6 +37,21 @@ export function useCommandPalette() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const activeBreadcrumb = useMemo<BreadcrumbInfo>(() => {
+    for (const group of DEFAULT_NAV_GROUPS) {
+      for (const item of group.items) {
+        const isMatch =
+          item.exact || item.route === "/dashboard"
+            ? pathname === item.route
+            : pathname === item.route || (pathname ? pathname.startsWith(`${item.route}/`) : false);
+        if (isMatch) {
+          return { groupName: group.groupName, pageLabel: item.label };
+        }
+      }
+    }
+    return { groupName: "Workspace", pageLabel: "Overview" };
+  }, [pathname]);
 
   const allPaletteActions = useMemo(() => {
     const list: { label: string; route: string; shortcut: string }[] = [];
@@ -61,6 +82,13 @@ export function useCommandPalette() {
     });
   };
 
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && filteredPaletteActions.length > 0) {
+      event.preventDefault();
+      handleNavigate(filteredPaletteActions[0].route);
+    }
+  };
+
   const handleOpenSearch = () => {
     setIsPaletteOpen(true);
     setPaletteQuery("");
@@ -76,8 +104,10 @@ export function useCommandPalette() {
     paletteQuery,
     setPaletteQuery,
     paletteInputRef,
+    activeBreadcrumb,
     filteredPaletteActions,
     handleNavigate,
+    handleInputKeyDown,
     handleOpenSearch,
     handleCloseSearch,
   };
