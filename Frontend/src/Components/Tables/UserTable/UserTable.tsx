@@ -196,7 +196,7 @@ export default function UserTable({
 
         {/* Action Controls: Column Selector, Export Dropdown, Add User */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Column Visibility Selector Dropdown (Columnas ▾) */}
+          {/* Column Visibility Selector Dropdown (Columns ▾) */}
           <div className="relative" ref={columnsMenuRef}>
             <button
               type="button"
@@ -208,7 +208,7 @@ export default function UserTable({
                 <path d="M9 3v18" />
                 <path d="M15 3v18" />
               </svg>
-              <span>Columnas</span>
+              <span>Columns</span>
               <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="m6 9 6 6 6-6" />
               </svg>
@@ -217,13 +217,13 @@ export default function UserTable({
             {isColumnsMenuOpen && (
               <div className="absolute right-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-slate-200/90 p-2.5 z-30 space-y-1 animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between pb-1.5 mb-1 border-b border-slate-100 text-[11px] font-bold text-slate-700">
-                  <span>Columnas visibles</span>
+                  <span>Visible Columns</span>
                   <button
                     type="button"
                     onClick={resetColumnVisibility}
                     className="text-blue-600 hover:underline font-normal text-[10px]"
                   >
-                    Restablecer
+                    Reset Default
                   </button>
                 </div>
                 {USER_TABLE_COLUMNS.map((col) => {
@@ -247,7 +247,7 @@ export default function UserTable({
             )}
           </div>
 
-          {/* Export Dropdown Button (Exportar ▾ - Tal como la ves) */}
+          {/* Export Dropdown Button (Export ▾ - True WYSIWYG) */}
           <div className="relative" ref={exportMenuRef}>
             <button
               type="button"
@@ -259,7 +259,7 @@ export default function UserTable({
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span>Exportar</span>
+              <span>Export</span>
               {selectedUserIds.size > 0 && (
                 <span className="px-1.5 py-0.2 bg-blue-500 text-white rounded-full text-[10px] font-bold">
                   {selectedUserIds.size}
@@ -275,15 +275,15 @@ export default function UserTable({
                 <div className="px-3.5 py-2 border-b border-slate-100 text-[11px] text-slate-500">
                   {selectedUserIds.size > 0 ? (
                     <span>
-                      Exportando <strong className="text-slate-800">{selectedUserIds.size}</strong> filas seleccionadas
+                      Exporting <strong className="text-slate-800">{selectedUserIds.size}</strong> selected users
                     </span>
                   ) : (
                     <span>
-                      Exportando <strong className="text-slate-800">{totalItems}</strong> filas (según filtros)
+                      Exporting <strong className="text-slate-800">{totalItems}</strong> users (active filters)
                     </span>
                   )}
                   <span className="block text-[10px] text-slate-400 mt-0.5">
-                    {visibleColumnCount} columnas visibles aplicadas
+                    {visibleColumnCount} visible columns included
                   </span>
                 </div>
 
@@ -313,7 +313,7 @@ export default function UserTable({
                   </div>
                   <div>
                     <span className="block text-xs font-semibold text-slate-800">Excel Workbook (.xls)</span>
-                    <span className="block text-[10px] text-slate-400">Hoja de cálculo estructurada</span>
+                    <span className="block text-[10px] text-slate-400">Microsoft Excel Spreadsheet</span>
                   </div>
                 </button>
 
@@ -328,7 +328,7 @@ export default function UserTable({
                   </div>
                   <div>
                     <span className="block text-xs font-semibold text-slate-800">JSON Dataset (.json)</span>
-                    <span className="block text-[10px] text-slate-400">Datos limpios para APIs y sistemas</span>
+                    <span className="block text-[10px] text-slate-400">Clean REST API Object Tree</span>
                   </div>
                 </button>
               </div>
@@ -365,7 +365,7 @@ export default function UserTable({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Todos ({statusCounts.all})
+            All Users ({statusCounts.all})
           </button>
 
           <button
@@ -377,7 +377,7 @@ export default function UserTable({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Active ({statusCounts.active})</span>
           </button>
 
@@ -390,7 +390,7 @@ export default function UserTable({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
             <span>Inactive ({statusCounts.inactive})</span>
           </button>
         </div>
@@ -797,14 +797,14 @@ export default function UserTable({
           {selectedUserIds.size > 0 ? (
             <div className="flex items-center gap-2">
               <span className="font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/70">
-                {selectedUserIds.size} filas seleccionadas ({selectedUserIds.size} รายการที่เลือก)
+                {selectedUserIds.size} users selected ({selectedUserIds.size} รายการที่เลือก)
               </span>
               <button
                 type="button"
                 onClick={clearSelection}
                 className="text-slate-400 hover:text-slate-700 font-medium hover:underline cursor-pointer"
               >
-                Limpiar selección (ล้างค่า)
+                Clear Selection (ล้างการเลือก)
               </button>
             </div>
           ) : totalItems > 0 ? (
