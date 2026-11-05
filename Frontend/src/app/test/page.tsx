@@ -10,6 +10,7 @@ import { ErrorView } from "@/Components/Errors";
 
 // ประเภทหน้าจอทั้งหมดที่เลือกเทสได้
 export type ScreenRouteKey =
+  | "way-to-go"
   | "dashboard"
   | "satisfaction"
   | "brand"
@@ -30,13 +31,14 @@ export interface LogMessage {
 }
 
 const SCREEN_OPTIONS: { key: ScreenRouteKey; label: string; route: string; icon: string; category: "app" | "error" | "sandbox" }[] = [
+  { key: "way-to-go", label: "Way to go! (Dribbble 1:1 Reference)", route: "/test?view=way-to-go", icon: "celebration", category: "error" },
+  { key: "error-500", label: "Error 500 (Oops! Something went wrong)", route: "/500", icon: "error", category: "error" },
+  { key: "error-404", label: "Error 404 (Not Found)", route: "/404", icon: "search_off", category: "error" },
+  { key: "error-403", label: "Error 403 (Access Denied)", route: "/unauthorized", icon: "lock", category: "error" },
   { key: "dashboard", label: "Dashboard (/dashboard)", route: "/dashboard", icon: "dashboard", category: "app" },
   { key: "satisfaction", label: "Satisfaction Kiosk (/satisfaction)", route: "/satisfaction", icon: "sentiment_satisfied", category: "app" },
   { key: "brand", label: "Brand Management (/brand)", route: "/brand", icon: "store", category: "app" },
   { key: "event", label: "Event Management (/event)", route: "/event", icon: "event", category: "app" },
-  { key: "error-500", label: "Error 500 (Oops! Something went wrong)", route: "/500", icon: "error", category: "error" },
-  { key: "error-404", label: "Error 404 (Not Found)", route: "/404", icon: "search_off", category: "error" },
-  { key: "error-403", label: "Error 403 (Access Denied)", route: "/unauthorized", icon: "lock", category: "error" },
   { key: "runtime-crash", label: "Runtime Crash Simulator", route: "/test?crash=true", icon: "bug_report", category: "sandbox" },
   { key: "empty", label: "Blank Testing Slot", route: "/test?slot=blank", icon: "add_box", category: "sandbox" },
 ];
@@ -138,7 +140,7 @@ class PlaygroundErrorBoundary extends React.Component<
  * หน้าทดสอบ Sandbox สำหรับสลับหน้าจอ ดูจุดเกิด Error และ Log Messages แบบเรียลไทม์
  */
 export default function TestPlaygroundPage() {
-  const [selectedScreen, setSelectedScreen] = useState<ScreenRouteKey>("error-500");
+  const [selectedScreen, setSelectedScreen] = useState<ScreenRouteKey>("way-to-go");
   const [logs, setLogs] = useState<LogMessage[]>([]);
   const [logFilter, setLogFilter] = useState<"ALL" | "ERROR" | "WARN" | "INFO">("ALL");
   const [isLogConsoleExpanded, setIsLogConsoleExpanded] = useState(true);
@@ -330,6 +332,23 @@ export default function TestPlaygroundPage() {
           onLog={addLog}
           onReset={() => setHasSimulatedCrash(false)}
         >
+          {selectedScreen === "way-to-go" && (
+            <ErrorView
+              statusCode={200}
+              title="Way to go!"
+              description="you’ve create your first rule. time to add more rules and fully optimize all your prices."
+              primaryAction={{
+                label: "Got It",
+                onClick: () =>
+                  addLog({
+                    level: "SUCCESS",
+                    source: "[Dribbble Reference 1:1]",
+                    message: "User clicked 'Got It' button successfully",
+                  }),
+              }}
+            />
+          )}
+
           {selectedScreen === "dashboard" && <DashboardScreen />}
 
           {selectedScreen === "satisfaction" && <SatisfactionScreen />}

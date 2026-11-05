@@ -27,69 +27,91 @@ export interface ErrorViewProps {
 }
 
 /**
- * 😊 Satisfaction Smiley Icon for Error States
- * (ดึงไอคอนจากระบบตู้ Kiosk Satisfaction: แย่/ปานกลาง/ดี ขนาดกะทัดรัด พร้อมเงาสะท้อนด้านล่าง)
+ * 🎨 Dribbble Milestone & Error Vector Illustration
+ * Recreated 1:1 in pure vector SVG directly from reference (image_d88fef.png):
+ * - Leaping celebrating figure with vibrant orange ponytail (#f85d2e)
+ * - Off-white / pale-lavender sweater (#dfe8f4)
+ * - Dark navy pants (#0f2939) & orange boots (#f86337)
+ * - Tropical teal foliage (#1a7b8c) with white dashed ribs (.vein)
+ * - Soft oval ground shadow (#ebf0f7) with dark soil puddles (#0b2535)
  */
-function SatisfactionErrorIcon({ statusCode }: { statusCode: number | string }) {
-  const codeStr = String(statusCode);
-
-  const config =
-    codeStr === "404"
-      ? {
-          icon: "sentiment_neutral",
-          color: "#d97706",
-          bgColor: "bg-amber-50/70",
-          borderColor: "border-amber-400/30",
-          ringColor: "ring-amber-200/50",
-          label: "ปานกลาง",
-        }
-      : codeStr === "403"
-      ? {
-          icon: "sentiment_dissatisfied",
-          color: "#475569",
-          bgColor: "bg-slate-100",
-          borderColor: "border-slate-300",
-          ringColor: "ring-slate-200",
-          label: "ปฏิเสธสิทธิ์",
-          badge: "lock",
-        }
-      : {
-          icon: "sentiment_dissatisfied",
-          color: "#dc3545",
-          bgColor: "bg-red-50/70",
-          borderColor: "border-red-400/30",
-          ringColor: "ring-red-200/50",
-          label: "แย่",
-        };
-
+function DribbbleHeroIllustration() {
   return (
-    <div className="flex flex-col items-center justify-center select-none py-1">
-      {/* วงกลมไอคอนยิ้มขนาดกะทัดรัด (เล็กลงตามสั่ง) */}
-      <div
-        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 ${config.borderColor} ${config.bgColor} ring-4 ${config.ringColor} flex items-center justify-center relative shadow-sm transition-transform hover:scale-105 duration-200`}
-        style={{ color: config.color }}
-      >
-        <span
-          className="material-symbols-outlined leading-none select-none"
-          style={{
-            fontSize: "54px",
-            fontVariationSettings: "'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 48",
-          }}
-        >
-          {config.icon}
-        </span>
+    <svg
+      className="w-full h-auto max-h-[175px] mx-auto select-none"
+      viewBox="0 0 500 390"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <style>{`
+          .vein-dashed { stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 4, 4; fill: none; opacity: 0.9; }
+        `}</style>
+      </defs>
 
-        {/* ตราสัญลักษณ์เสริม เช่น แม่กุญแจสำหรับ 403 */}
-        {"badge" in config && (
-          <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#0F2231] text-white flex items-center justify-center text-[15px] border-2 border-white shadow-xs">
-            <span className="material-symbols-outlined text-[15px]">lock</span>
-          </span>
-        )}
-      </div>
+      {/* 1. Ground Shadow & Soil Puddles */}
+      <g id="ground-shadow">
+        <ellipse cx="255" cy="350" rx="150" ry="32" fill="#ebf0f7" />
+        <path d="M 158 344 C 170 340 205 340 212 346 C 215 352 195 355 180 354 C 165 354 152 350 158 344 Z" fill="#0b2535" />
+        <path d="M 300 360 C 310 356 325 356 330 361 C 332 366 320 369 312 368 C 304 368 296 364 300 360 Z" fill="#0b2535" />
+      </g>
 
-      {/* เงา Ground Shadow ด้านล่างไอคอน */}
-      <div className="w-24 h-2 bg-slate-200/70 rounded-full mt-3 blur-[1px]" />
-    </div>
+      {/* 2. Left Plant / Foliage with Dashed White Veins */}
+      <g id="left-plant">
+        {/* Central Tall Lobe */}
+        <path d="M 185 345 C 165 260 160 160 180 95 C 198 160 205 260 185 345 Z" fill="#1a7b8c" />
+        {/* Left Outer Lobe */}
+        <path d="M 182 320 C 145 270 130 220 135 180 C 152 175 175 220 183 270 Z" fill="#1a7b8c" />
+        {/* Right Inner Lobe */}
+        <path d="M 185 300 C 200 250 220 205 230 200 C 235 220 215 265 186 330 Z" fill="#1a7b8c" />
+        {/* Dashed Ribs */}
+        <path className="vein-dashed" d="M 181 330 C 175 250 174 160 180 102" />
+        <path className="vein-dashed" d="M 177 220 C 160 200 145 188 138 185" />
+        <path className="vein-dashed" d="M 179 245 C 195 230 212 215 225 205" />
+      </g>
+
+      {/* 3. Character: Back Leg (Behind Right Plant) */}
+      <g id="character-back-leg">
+        <path d="M 245 195 C 265 225 285 260 305 285 L 290 292 C 270 265 252 230 236 200 Z" fill="#0f2939" />
+      </g>
+
+      {/* 4. Right Plant / Foliage with Dashed White Veins */}
+      <g id="right-plant">
+        {/* Main Leaf */}
+        <path d="M 314 362 C 290 300 292 220 310 185 C 326 220 326 300 314 362 Z" fill="#1a7b8c" />
+        {/* Side Leaf */}
+        <path d="M 314 350 C 330 310 345 265 342 240 C 332 240 322 280 314 330 Z" fill="#1a7b8c" />
+        {/* Dashed Ribs */}
+        <path className="vein-dashed" d="M 314 350 C 305 295 305 230 310 192" />
+        <path className="vein-dashed" d="M 310 280 C 322 265 334 250 338 245" />
+      </g>
+
+      {/* 5. Character: Body, Torso, Ponytail, Arms & Boots */}
+      <g id="character-body">
+        {/* Vibrant Orange Ponytail flying right */}
+        <path d="M 255 118 C 262 105 272 108 276 122 C 282 145 295 185 300 190 C 290 195 275 180 268 155 C 262 140 258 128 255 118 Z" fill="#f85d2e" />
+
+        {/* Front Leg & Orange Boot */}
+        <path d="M 226 195 C 228 245 238 285 244 308 L 256 306 C 248 275 240 235 238 195 Z" fill="#0f2939" />
+        <path d="M 244 305 L 256 304 C 255 320 258 335 262 344 C 255 352 248 350 245 342 C 243 330 243 318 244 305 Z" fill="#f86337" />
+
+        {/* Torso / Off-white Sweater */}
+        <path d="M 224 195 C 220 170 216 142 215 136 C 226 134 254 130 260 134 C 256 148 248 175 246 195 C 238 198 230 198 224 195 Z" fill="#dfe8f4" />
+
+        {/* Neck & Face */}
+        <path d="M 239 135 C 241 125 244 118 248 112 L 254 115 C 250 122 247 128 246 135 Z" fill="#fca892" />
+        <path d="M 247 114 C 244 106 248 98 254 97 C 260 97 263 103 259 112 C 254 117 249 117 247 114 Z" fill="#fca892" />
+
+        {/* Left Arm & Orange Cuff */}
+        <path d="M 216 137 L 194 98 L 202 93 L 225 133 Z" fill="#dfe8f4" />
+        <path d="M 194 98 L 186 82 C 188 79 194 80 197 85 L 202 93 Z" fill="#f86337" />
+
+        {/* Right Arm & Orange Cuff */}
+        <path d="M 255 135 L 298 116 L 303 124 L 260 141 Z" fill="#dfe8f4" />
+        <path d="M 298 116 L 311 101 C 315 103 314 110 308 116 L 303 124 Z" fill="#f86337" />
+      </g>
+    </svg>
   );
 }
 
@@ -120,16 +142,6 @@ export function ErrorView({
     ? "หน้าที่คุณกำลังค้นหาอาจถูกย้าย ลบ หรือไม่พร้อมใช้งานชั่วคราวในระบบ Enterprise CSAT"
     : "ระบบพบปัญหาที่ไม่คาดคิด กรุณาลองใหม่อีกครั้งเพื่อกู้คืนการประมวลผล หรือกลับสู่หน้าหลัก";
 
-  const defaultErrorCode =
-    errorCode ||
-    (error?.digest
-      ? error.digest
-      : is403
-      ? "403-FORBIDDEN"
-      : is404
-      ? "404-NOT-FOUND"
-      : "51FC-3D73");
-
   const resolvedTitle = title || defaultTitle;
   const resolvedDescription = description || defaultDescription;
 
@@ -143,28 +155,30 @@ export function ErrorView({
         <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-slate-500/10 blur-3xl" />
       </div>
 
-      {/* ─── Main Modal Card (Adam Fard Style: 2px Dark Border, Rounded-3xl, White Card) ─── */}
-      <div className="max-w-[400px] w-full bg-white rounded-3xl border-2 border-[#0F2231] p-6 sm:p-8 text-center shadow-2xl relative z-10 transition-all">
-        {/* ─── 1. รูป icons ยิ้มจากปุ่ม Satisfaction (เล็กลง วางเด่นด้านบนก่อนเข้าสู่หัวข้อ) ─── */}
+      {/* ─── Main Modal Card (1:1 Reference Styling from image_d88fef.png) ─── */}
+      <div className="max-w-[360px] w-full bg-white rounded-2xl border-2 border-[#0d1b2a] p-8 text-center shadow-2xl relative z-10 transition-all">
+        {/* 1. Vector Illustration (Exact 1:1 Vector from Dribbble Shot) */}
         <div className="w-full flex items-center justify-center mb-4">
-          <SatisfactionErrorIcon statusCode={statusCode} />
+          <DribbbleHeroIllustration />
         </div>
 
-        {/* ─── 2. Text Block: Heading + Description ─── */}
-        <h2 className="text-xl sm:text-2xl font-bold text-[#0F2231] tracking-tight mb-2">
+        {/* 2. Heading (Bold Navy) */}
+        <h2 className="text-2xl font-extrabold text-[#0b1a2d] tracking-tight mb-2.5">
           {resolvedTitle}
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6 px-2">
+
+        {/* 3. Description (Muted Slate) */}
+        <p className="text-sm text-[#5c728a] leading-relaxed mb-6 px-1">
           {resolvedDescription}
         </p>
 
-        {/* ─── 3. Action Buttons (Layout ปุ่มเดิม: แนวนอนเรียงคู่กัน) ─── */}
-        <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-center w-full mt-6">
-          {/* Primary Action (ลองใหม่อีกครั้ง) */}
+        {/* 4. Action Buttons (Solid Orange Button matching Got It from Reference) */}
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-center w-full">
+          {/* Primary Action (Solid Orange Button - Got It / ลองใหม่อีกครั้ง) */}
           {reset ? (
             <button
               onClick={reset}
-              className="w-full sm:w-auto flex-1 bg-[#F95C2C] hover:bg-[#E04B1D] text-white font-semibold py-2.5 px-5 rounded-xl text-xs sm:text-sm transition-all duration-150 active:scale-95 shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">refresh</span>
               <span>{primaryAction?.label || "ลองใหม่อีกครั้ง"}</span>
@@ -172,25 +186,49 @@ export function ErrorView({
           ) : primaryAction?.onClick ? (
             <button
               onClick={primaryAction.onClick}
-              className="w-full sm:w-auto flex-1 bg-[#F95C2C] hover:bg-[#E04B1D] text-white font-semibold py-2.5 px-5 rounded-xl text-xs sm:text-sm transition-all duration-150 active:scale-95 shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
-                {primaryAction.icon || "refresh"}
+                {primaryAction.icon || "check"}
               </span>
               <span>{primaryAction.label}</span>
             </button>
-          ) : null}
+          ) : (
+            <Link
+              href={primaryAction?.href || "/dashboard"}
+              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {primaryAction?.icon || "check"}
+              </span>
+              <span>{primaryAction?.label || "Got It"}</span>
+            </Link>
+          )}
 
-          {/* Secondary Action (กลับสู่หน้า Dashboard) */}
-          <Link
-            href={secondaryAction?.href || "/dashboard"}
-            className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0F2231] hover:text-[#0F2231] text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {secondaryAction?.icon || "dashboard"}
-            </span>
-            <span>{secondaryAction?.label || "กลับสู่หน้า Dashboard"}</span>
-          </Link>
+          {/* Secondary Action (Optional Dashboard Link if provided) */}
+          {secondaryAction && (
+            secondaryAction.onClick ? (
+              <button
+                onClick={secondaryAction.onClick}
+                className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {secondaryAction.icon || "dashboard"}
+                </span>
+                <span>{secondaryAction.label}</span>
+              </button>
+            ) : (
+              <Link
+                href={secondaryAction.href || "/dashboard"}
+                className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {secondaryAction.icon || "dashboard"}
+                </span>
+                <span>{secondaryAction.label || "Dashboard"}</span>
+              </Link>
+            )
+          )}
         </div>
       </div>
     </div>
