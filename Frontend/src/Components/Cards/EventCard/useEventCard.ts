@@ -85,12 +85,20 @@ export function useEventCard({
   const attachmentCount = event.attachmentCount ?? 0;
 
   const { visibleAssignees, hiddenAssigneeCount } = useMemo(() => {
+    const branches = event.targetBranchNames ?? [];
+    if (branches.length > 0) {
+      const mapped: EventAssignee[] = branches.map((b) => ({ name: b, avatarUrl: null }));
+      return {
+        visibleAssignees: mapped.slice(0, MAX_VISIBLE_ASSIGNEES),
+        hiddenAssigneeCount: Math.max(mapped.length - MAX_VISIBLE_ASSIGNEES, 0),
+      };
+    }
     const assignees: EventAssignee[] = event.assignees ?? [];
     return {
       visibleAssignees: assignees.slice(0, MAX_VISIBLE_ASSIGNEES),
       hiddenAssigneeCount: Math.max(assignees.length - MAX_VISIBLE_ASSIGNEES, 0),
     };
-  }, [event.assignees]);
+  }, [event.targetBranchNames, event.assignees]);
 
   // คำนวณจำนวนวันที่งานกินพื้นที่ (1 วัน, 2 วัน, 3 วัน+) เพื่อคุมความยาวตัวอักษรไม่ให้ร่วงเป็นแนวตั้ง
   const daySpan = useMemo(() => {
