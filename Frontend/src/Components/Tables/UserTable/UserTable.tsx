@@ -1,0 +1,567 @@
+"use client";
+
+import React, { useRef, useEffect } from "react";
+import { UserModel, UserTierLevel, UserStatus } from "@/Types/user";
+import { useUserTable, UserTableSortField } from "./useUserTable";
+
+export interface UserTableProps {
+  users?: UserModel[];
+  isLoading?: boolean;
+  onAddUser?: () => void;
+  onEditUser?: (user: UserModel) => void;
+  onToggleStatus?: (user: UserModel) => void;
+  onDeleteUser?: (user: UserModel) => void;
+  className?: string;
+}
+
+function getTierBadgeClass(tier: UserTierLevel): string {
+  switch (tier) {
+    case "Super Admin":
+      return "bg-purple-50 text-purple-700 border-purple-200/80";
+    case "Brand Owner":
+      return "bg-indigo-50 text-indigo-700 border-indigo-200/80";
+    case "Regional Manager (RM)":
+      return "bg-blue-50 text-blue-700 border-blue-200/80";
+    case "Area Manager (AM)":
+      return "bg-teal-50 text-teal-700 border-teal-200/80";
+    case "Branch Staff":
+      return "bg-slate-50 text-slate-700 border-slate-200/80";
+    case "Custom Scope":
+      return "bg-amber-50 text-amber-700 border-amber-200/80";
+    default:
+      return "bg-slate-50 text-slate-700 border-slate-200/80";
+  }
+}
+
+function SortHeaderCell({
+  label,
+  field,
+  activeField,
+  direction,
+  onSort,
+  align = "left",
+}: {
+  label: string;
+  field: UserTableSortField;
+  activeField: UserTableSortField;
+  direction: "asc" | "desc";
+  onSort: (field: UserTableSortField) => void;
+  align?: "left" | "right" | "center";
+}) {
+  const isActive = activeField === field;
+  const alignmentClass =
+    align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start";
+
+  return (
+    <th
+      scope="col"
+      className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 select-none cursor-pointer hover:text-slate-800 transition-colors ${
+        align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"
+      }`}
+      onClick={() => onSort(field)}
+    >
+      <div className={`inline-flex items-center gap-1.5 ${alignmentClass}`}>
+        <span>{label}</span>
+        <span className={`transition-opacity ${isActive ? "opacity-100 text-blue-600" : "opacity-30"}`}>
+          {isActive && direction === "desc" ? (
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="m18 15-6-6-6 6" />
+            </svg>
+          )}
+        </span>
+      </div>
+    </th>
+  );
+}
+
+export default function UserTable({
+  users = [],
+  isLoading = false,
+  onAddUser,
+  onEditUser,
+  onToggleStatus,
+  onDeleteUser,
+  className = "",
+}: UserTableProps) {
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    searchKeyword,
+    setSearchKeyword,
+    tierFilter,
+    setTierFilter,
+    statusFilter,
+    setStatusFilter,
+    sortField,
+    sortDirection,
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    paginatedUsers,
+    activeMenuUserId,
+    setActiveMenuUserId,
+    hasActiveFilters,
+    handleSort,
+    handlePageChange,
+    handleResetFilters,
+  } = useUserTable({ users, initialPageSize: 8 });
+
+  // Close actions menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveMenuUserId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setActiveMenuUserId]);
+
+  return (
+    <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
+      {/* ─── 1. TOOLBAR & CONTROLS ─── */}
+      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        {/* Search & Filters */}
+        <div className="flex flex-1 flex-wrap items-center gap-2.5">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[220px] max-w-sm">
+            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              placeholder="Search by name, ID, email, role..."
+              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder-slate-400 transition-all"
+            />
+            {searchKeyword && (
+              <button
+                type="button"
+                onClick={() => setSearchKeyword("")}
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+                aria-label="Clear search"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Tier Filter Dropdown */}
+          <select
+            value={tierFilter}
+            onChange={(e) => setTierFilter(e.target.value)}
+            className="py-2 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          >
+            <option value="All">All Tiers (ทุกระดับสิทธิ์)</option>
+            <option value="Super Admin">Super Admin</option>
+            <option value="Brand Owner">Brand Owner</option>
+            <option value="Regional Manager (RM)">Regional Manager (RM)</option>
+            <option value="Area Manager (AM)">Area Manager (AM)</option>
+            <option value="Branch Staff">Branch Staff</option>
+            <option value="Custom Scope">Custom Scope</option>
+          </select>
+
+          {/* Status Filter Dropdown */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="py-2 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          >
+            <option value="All">All Status (ทุกสถานะ)</option>
+            <option value="Active">Active (เปิดใช้งาน)</option>
+            <option value="Inactive">Inactive (ปิดใช้งาน)</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1.5 transition-colors"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+
+        {/* Action Button */}
+        {onAddUser && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onAddUser}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add User</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ─── 2. DATA TABLE AREA ─── */}
+      <div className="overflow-x-auto min-h-[300px]">
+        <table className="w-full border-collapse text-left text-sm text-slate-600">
+          <thead className="bg-slate-50/80 border-b border-slate-200/80">
+            <tr>
+              <SortHeaderCell
+                label="User ID & Tier"
+                field="userCode"
+                activeField={sortField}
+                direction={sortDirection}
+                onSort={handleSort}
+              />
+              <SortHeaderCell
+                label="Full Name & Account"
+                field="name"
+                activeField={sortField}
+                direction={sortDirection}
+                onSort={handleSort}
+              />
+              <SortHeaderCell
+                label="Role"
+                field="role"
+                activeField={sortField}
+                direction={sortDirection}
+                onSort={handleSort}
+              />
+              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Assigned Scope
+              </th>
+              <SortHeaderCell
+                label="Status"
+                field="status"
+                activeField={sortField}
+                direction={sortDirection}
+                onSort={handleSort}
+              />
+              <SortHeaderCell
+                label="Created Date"
+                field="createdDate"
+                activeField={sortField}
+                direction={sortDirection}
+                onSort={handleSort}
+              />
+              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {/* Loading Skeleton State */}
+            {isLoading &&
+              Array.from({ length: 5 }).map((_, index) => (
+                <tr key={`user-skeleton-${index}`} className="animate-pulse">
+                  <td className="px-5 py-4">
+                    <div className="h-4 bg-slate-200 rounded w-20 mb-1.5" />
+                    <div className="h-3 bg-slate-100 rounded w-16" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 bg-slate-200 rounded w-32" />
+                        <div className="h-3 bg-slate-100 rounded w-24" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="h-5 bg-slate-200 rounded-md w-24" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="h-4 bg-slate-200 rounded w-36" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="h-5 bg-slate-200 rounded-full w-16" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="h-4 bg-slate-200 rounded w-24" />
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="h-7 w-7 bg-slate-200 rounded-lg ml-auto" />
+                  </td>
+                </tr>
+              ))}
+
+            {/* Empty State */}
+            {!isLoading && paginatedUsers.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-5 py-12 text-center">
+                  <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <line x1="18" y1="8" x2="23" y2="13" />
+                        <line x1="23" y1="8" x2="18" y2="13" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-800 mb-1">
+                      {hasActiveFilters ? "No matching users found" : "No users available"}
+                    </p>
+                    <p className="text-xs text-slate-500 mb-4">
+                      {hasActiveFilters
+                        ? "Try adjusting your search criteria or clear your active filters."
+                        : "Get started by creating the first system user account."}
+                    </p>
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={handleResetFilters}
+                        className="px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {/* Data Rows */}
+            {!isLoading &&
+              paginatedUsers.map((user) => {
+                const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || "U";
+                const isMenuOpen = activeMenuUserId === user.id;
+                const isActiveStatus = user.status === "Active";
+
+                const brandsCount = user.assignedBrands?.length ?? 0;
+                const branchesCount = user.assignedBranches?.length ?? 0;
+
+                return (
+                  <tr
+                    key={user.id}
+                    className="hover:bg-slate-50/80 transition-colors group"
+                  >
+                    {/* User Code & Tier */}
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
+                          {user.userCode ?? "-"}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${getTierBadgeClass(
+                            user.tierLevel
+                          )}`}
+                        >
+                          {user.tierLevel ?? "-"}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Name & Account */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 select-none shadow-xs">
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-slate-900 truncate">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-xs text-slate-500 font-mono truncate">
+                            {user.email ?? "-"}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Role */}
+                    <td className="px-5 py-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/80">
+                        {user.role ?? "-"}
+                      </span>
+                    </td>
+
+                    {/* Assigned Scope */}
+                    <td className="px-5 py-4">
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center gap-1.5 text-slate-600">
+                          <span className="font-medium text-slate-400">Brand:</span>
+                          <span className="truncate max-w-[160px] text-slate-700 font-medium">
+                            {brandsCount > 0 ? user.assignedBrands!.join(", ") : user.brand ?? "All"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-600">
+                          <span className="font-medium text-slate-400">Branch:</span>
+                          <span className="truncate max-w-[160px] text-slate-700 font-medium">
+                            {branchesCount > 0 ? `${branchesCount} สาขา` : user.branch ?? "All"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Status Badge */}
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                          isActiveStatus
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
+                            : "bg-slate-100 text-slate-600 border-slate-200/80"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isActiveStatus ? "bg-emerald-600" : "bg-slate-400"
+                          }`}
+                        />
+                        {user.status ?? "-"}
+                      </span>
+                    </td>
+
+                    {/* Created Date */}
+                    <td className="px-5 py-4 text-xs text-slate-500 font-mono">
+                      {user.createdDate ?? "-"}
+                    </td>
+
+                    {/* Actions Menu */}
+                    <td className="px-5 py-4 text-right">
+                      <div className="relative inline-block" ref={isMenuOpen ? dropdownRef : undefined}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveMenuUserId(isMenuOpen ? null : user.id)}
+                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                          aria-label="User actions"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="12" cy="5" r="1" />
+                            <circle cx="12" cy="19" r="1" />
+                          </svg>
+                        </button>
+
+                        {isMenuOpen && (
+                          <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-slate-200/80 py-1.5 z-20 text-left">
+                            {onEditUser && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuUserId(null);
+                                  onEditUser(user);
+                                }}
+                                className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                              >
+                                <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M12 20h9" />
+                                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                </svg>
+                                <span>Edit Profile</span>
+                              </button>
+                            )}
+
+                            {onToggleStatus && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuUserId(null);
+                                  onToggleStatus(user);
+                                }}
+                                className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                              >
+                                <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="1" y="5" width="22" height="14" rx="7" ry="7" />
+                                  <circle cx={isActiveStatus ? "16" : "8"} cy="12" r="3" />
+                                </svg>
+                                <span>{isActiveStatus ? "Deactivate" : "Activate"}</span>
+                              </button>
+                            )}
+
+                            {onDeleteUser && (
+                              <>
+                                <div className="h-px bg-slate-100 my-1" />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuUserId(null);
+                                    onDeleteUser(user);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  </svg>
+                                  <span>Delete User</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ─── 3. PAGINATION FOOTER ─── */}
+      <div className="p-4 sm:px-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div>
+          {totalItems > 0 ? (
+            <span>
+              Showing{" "}
+              <strong className="text-slate-800 font-semibold">
+                {(currentPage - 1) * pageSize + 1}
+              </strong>{" "}
+              to{" "}
+              <strong className="text-slate-800 font-semibold">
+                {Math.min(currentPage * pageSize, totalItems)}
+              </strong>{" "}
+              of <strong className="text-slate-800 font-semibold">{totalItems}</strong> entries
+            </span>
+          ) : (
+            <span>0 entries</span>
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="p-1.5 text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              aria-label="Previous page"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+
+            <span className="px-2.5 py-1 font-medium text-slate-700 bg-white border border-slate-200 rounded-lg">
+              {currentPage} / {totalPages}
+            </span>
+
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="p-1.5 text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              aria-label="Next page"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

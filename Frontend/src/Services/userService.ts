@@ -1,105 +1,150 @@
 import { apiClient } from "./apiClient";
-import { UserModel } from "@/Types/user";
+import {
+  UserModel,
+  UserOverviewMetrics,
+  CreateUserPayload,
+  UpdateUserPayload,
+  UserStatus,
+} from "@/Types/user";
 
-export type { UserModel };
+export type { UserModel, UserOverviewMetrics, CreateUserPayload, UpdateUserPayload };
 
-function mapBackendUserToModel(u: any): UserModel {
-  const brandScopes = u.brandScopes || u.assignedBrands || [];
-  const regionScopes = u.regionScopes || u.assignedRegions || [];
-  const provinceScopes = u.provinceScopes || u.assignedProvinces || [];
-  const branchScopes = u.branchScopes || u.assignedBranches || [];
+interface BackendUserDto {
+  id: string;
+  userCode?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  roleId?: string;
+  roleName?: string;
+  tierLevel?: string;
+  brand?: string;
+  assignedBrands?: string[];
+  region?: string;
+  assignedRegions?: string[];
+  province?: string;
+  assignedProvinces?: string[];
+  branch?: string;
+  assignedBranches?: string[];
+  status?: string;
+  lastLoginAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+function mapBackendUserToModel(dto: BackendUserDto): UserModel {
+  const rawTier = dto.tierLevel || "Branch Staff";
+  const validTier: UserModel["tierLevel"] =
+    rawTier === "Super Admin" ||
+    rawTier === "Brand Owner" ||
+    rawTier === "Regional Manager (RM)" ||
+    rawTier === "Area Manager (AM)" ||
+    rawTier === "Branch Staff" ||
+    rawTier === "Custom Scope"
+      ? rawTier
+      : "Branch Staff";
 
   return {
-    id: u.userCode || u.id,
-    firstName: u.firstName || "",
-    lastName: u.lastName || "",
-    email: u.email || "",
-    phone: u.phone || "-",
-    role: u.roleName || u.role || "Staff",
-    brand: brandScopes.length > 0 ? brandScopes.join(", ") : u.brand || "ทุกแบรนด์",
-    assignedBrands: brandScopes,
-    region: regionScopes.length > 0 ? regionScopes.join(", ") : u.region || "-",
-    assignedRegions: regionScopes,
-    province: provinceScopes.length > 0 ? provinceScopes.join(", ") : u.province || "-",
-    assignedProvinces: provinceScopes,
-    branch: branchScopes.length > 0 ? branchScopes.join(", ") : u.branch || "-",
-    assignedBranches: branchScopes,
-    status: u.status === "Inactive" ? "Inactive" : "Active",
-    tierLevel: typeof u.tierLevel === "number" 
-      ? (["Super Admin", "Brand Owner", "Regional Manager (RM)", "Area Manager (AM)", "Branch Staff"][u.tierLevel - 1] || "Branch Staff")
-      : u.tierLevel || "Branch Staff",
-    createdDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString("th-TH") : "-",
+    id: dto.id,
+    userCode: dto.userCode || `EMP-${dto.id.slice(0, 5).toUpperCase()}`,
+    firstName: dto.firstName || "",
+    lastName: dto.lastName || "",
+    email: dto.email || "",
+    phone: dto.phone || undefined,
+    role: dto.roleName || "User",
+    roleId: dto.roleId,
+    tierLevel: validTier,
+    brand: dto.brand,
+    assignedBrands: dto.assignedBrands || (dto.brand ? [dto.brand] : []),
+    region: dto.region,
+    assignedRegions: dto.assignedRegions || (dto.region ? [dto.region] : []),
+    province: dto.province,
+    assignedProvinces: dto.assignedProvinces || (dto.province ? [dto.province] : []),
+    branch: dto.branch,
+    assignedBranches: dto.assignedBranches || (dto.branch ? [dto.branch] : []),
+    status: dto.status === "Inactive" ? "Inactive" : "Active",
+    lastLoginAt: dto.lastLoginAt,
+    createdDate: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("en-CA") : undefined,
+    updatedDate: dto.updatedAt ? new Date(dto.updatedAt).toLocaleDateString("en-CA") : undefined,
   };
 }
 
 export const userService = {
+  // TODO: Connect API [get_users]
   async getUsers(): Promise<UserModel[]> {
     try {
-      const response = await apiClient.get<any[]>("/users");
+      const response = await apiClient.get<BackendUserDto[]>("/users");
       if (response.success && Array.isArray(response.data)) {
         return response.data.map(mapBackendUserToModel);
       }
-    } catch (err) {
-      console.error("[userService.getUsers] error:", err);
+    } catch (error) {
+      console.error("[userService.getUsers] error:", error);
     }
     return [];
   },
 
+  // TODO: Connect API [get_user_by_id]
   async getUserById(id: string): Promise<UserModel | null> {
     try {
-      const response = await apiClient.get<any>(`/users/${id}`);
+      const response = await apiClient.get<BackendUserDto>(`/users/${id}`);
       if (response.success && response.data) {
         return mapBackendUserToModel(response.data);
       }
-    } catch (err) {
-      console.error("[userService.getUserById] error:", err);
+    } catch (error) {
+      console.error("[userService.getUserById] error:", error);
     }
     return null;
   },
 
-  async createUser(userData: Omit<UserModel, "id"> & { id?: string; password?: string; roleId?: string }): Promise<UserModel> {
-    const payload = {
-      userCode: userData.id || `EMP-${String(Math.floor(100 + Math.random() * 900))}`,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      email: userData.email,
-      phone: userData.phone,
-      password: userData.password || "Temp@123456",
-      roleId: userData.roleId || "7b7f5d0c-03af-4f28-99b0-c824ddcdb342", // Default role
-      tierLevel: userData.tierLevel || "Branch",
-      isMfaEnabled: false,
-      brandScopeIds: [],
-      regionScopeIds: [],
-      provinceScopeIds: [],
-      branchScopeIds: [],
-    };
-
-    const response = await apiClient.post<any>("/users", payload);
+  // TODO: Connect API [create_user]
+  async createUser(payload: CreateUserPayload): Promise<UserModel> {
+    const response = await apiClient.post<BackendUserDto>("/users", payload);
     if (response.success && response.data) {
       return mapBackendUserToModel(response.data);
     }
-
-    throw new Error(response.message || "ไม่สามารถสร้างผู้ใช้งานใหม่ได้");
+    throw new Error(response.message || "Failed to create user");
   },
 
-  async updateUser(id: string, userData: Partial<UserModel>): Promise<UserModel> {
-    const response = await apiClient.put<any>(`/users/${id}`, userData);
+  // TODO: Connect API [update_user]
+  async updateUser(id: string, payload: UpdateUserPayload): Promise<UserModel> {
+    const response = await apiClient.put<BackendUserDto>(`/users/${id}`, payload);
     if (response.success && response.data) {
       return mapBackendUserToModel(response.data);
     }
-
-    // Return fallback updated model if backend didn't return full entity
-    return {
-      ...userData,
-      id,
-    } as UserModel;
+    throw new Error(response.message || "Failed to update user");
   },
 
+  // TODO: Connect API [toggle_user_status]
+  async toggleUserStatus(id: string, nextStatus: UserStatus): Promise<boolean> {
+    const response = await apiClient.put<{ id: string; status: string }>(`/users/${id}/status`, {
+      status: nextStatus,
+    });
+    return response.success;
+  },
+
+  // TODO: Connect API [delete_user]
   async deleteUser(id: string): Promise<boolean> {
-    const response = await apiClient.delete<any>(`/users/${id}`);
-    if (response.success) {
-      return true;
+    const response = await apiClient.delete(`/users/${id}`);
+    return response.success;
+  },
+
+  // TODO: Connect API [get_user_metrics]
+  async getUserMetrics(): Promise<UserOverviewMetrics> {
+    try {
+      const response = await apiClient.get<UserOverviewMetrics>("/users/metrics");
+      if (response.success && response.data) {
+        return response.data;
+      }
+    } catch (error) {
+      console.error("[userService.getUserMetrics] error:", error);
     }
-    throw new Error(response.message || "ไม่สามารถลบผู้ใช้งานได้");
+
+    return {
+      totalUsers: 0,
+      activeUsers: 0,
+      multiScopeUsers: 0,
+      inactiveUsers: 0,
+    };
   },
 };
