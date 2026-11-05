@@ -1,16 +1,9 @@
-import React from "react";
+"use client";
 
-export interface LoginHeroSectionProps {
-  /** Main brand or product name displayed in header */
-  brandName?: string;
-  /** Sub-badge beside brand name */
-  badgeText?: string;
-  /** Primary headline summarizing platform value */
-  headline?: string;
-  /** Secondary subtitle elaborating value proposition */
-  subheadline?: string;
-  /** Legal copyright statement at bottom */
-  copyrightText?: string;
+import React from "react";
+import { useLoginHero, UseLoginHeroOptions } from "./useLoginHero";
+
+export interface LoginHeroSectionProps extends UseLoginHeroOptions {
   /** Optional custom container CSS classes */
   className?: string;
 }
@@ -19,16 +12,15 @@ export interface LoginHeroSectionProps {
  * 🌟 LoginHeroSection
  * 
  * Component แผงฝั่งซ้ายของหน้า Login ตาม Visual Reference สไตล์ Enterprise SaaS
- * ใช้สัดส่วน 50% Desktop Canvas โทนสี Slate 950 พร้อม Luminous Ribbon Wave & Cobalt Radial Gradient
+ * โทนสี Slate 950 พร้อม Luminous Ribbon Wave & Cobalt Radial Gradient
+ * ผูกค่าตัวแปรทั้งหมดกับ System Settings ผ่าน useLoginHero Hook เพื่อให้แก้ไขในอนาคตได้ทันที
  */
 export default function LoginHeroSection({
-  brandName = "Satisfaction Console",
-  badgeText = "Enterprise Tier",
-  headline = "The platform empowering enterprise brands with real-time operational satisfaction analytics.",
-  subheadline = "The trusted choice of multi-tier restaurant operations, regional managers, and executive leadership.",
-  copyrightText = "Copyright © 2026 Central Restaurants Group (CRG). All rights reserved.",
   className = "",
+  ...overrides
 }: LoginHeroSectionProps) {
+  const { config } = useLoginHero(overrides);
+
   return (
     <aside
       aria-label="Platform Highlights & Identity"
@@ -111,14 +103,14 @@ export default function LoginHeroSection({
           </div>
           <div>
             <div className="text-base font-bold tracking-tight text-white flex items-center gap-2">
-              <span>{brandName}</span>
-              {badgeText && (
+              <span>{config.brandName}</span>
+              {config.badgeText && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  {badgeText}
+                  {config.badgeText}
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">Multi-Tier Analytics Platform</p>
+            <p className="text-[11px] text-slate-400 font-medium">{config.platformSubtitle}</p>
           </div>
         </div>
       </header>
@@ -127,43 +119,37 @@ export default function LoginHeroSection({
       <div className="relative z-10 max-w-xl my-auto py-12">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-slate-300 text-xs mb-6 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="font-medium">Operational Intelligence 2.0</span>
+          <span className="font-medium">{config.tagText}</span>
         </div>
 
         <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-[1.2] mb-4">
-          {headline}
+          {config.headline}
         </h1>
 
         <p className="text-sm xl:text-base text-slate-400 leading-relaxed max-w-lg mb-8">
-          {subheadline}
+          {config.subheadline}
         </p>
 
-        {/* 3 Pillars of Architecture */}
+        {/* 3 Pillars of Architecture (Rendered Dynamically from Config Variables) */}
         <div className="grid grid-cols-3 gap-3 pt-6 border-t border-slate-800/80">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-slate-200">5-Tier Scoping</span>
-            <span className="text-[11px] text-slate-500">Strict Data Isolation</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-slate-200">Real-Time CSAT</span>
-            <span className="text-[11px] text-slate-500">Kiosk Vote Ingestion</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-slate-200">2FA Protected</span>
-            <span className="text-[11px] text-slate-500">Zero-Trust Access</span>
-          </div>
+          {config.pillars.map((pillar) => (
+            <div key={pillar.id} className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-slate-200">{pillar.title}</span>
+              <span className="text-[11px] text-slate-500">{pillar.subtitle}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* ─── 4. BOTTOM FOOTER: Legal & System Info ─── */}
       <footer className="relative z-10 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-500 gap-2 border-t border-slate-900">
         <small className="text-[11px] font-normal text-slate-500">
-          {copyrightText}
+          {config.copyrightText}
         </small>
         <div className="flex items-center gap-4 text-[11px] text-slate-500">
-          <span className="hover:text-slate-400 transition-colors">Privacy Notice</span>
+          <span className="hover:text-slate-400 transition-colors cursor-pointer">{config.privacyNoticeLabel}</span>
           <span className="w-1 h-1 rounded-full bg-slate-800" />
-          <span className="hover:text-slate-400 transition-colors">Security Audit</span>
+          <span className="hover:text-slate-400 transition-colors cursor-pointer">{config.securityAuditLabel}</span>
         </div>
       </footer>
     </aside>
