@@ -11,3 +11,5 @@ export { default as ConfirmDialogModal } from "./ConfirmDialogModal";
 export * from "./ConfirmDialogModal";
 export { default as EventEditModal } from "./EventEditModal";
 export * from "./EventEditModal";
+export { default as CreateUserModal } from "./CreateUserModal";
+export * from "./CreateUserModal";
