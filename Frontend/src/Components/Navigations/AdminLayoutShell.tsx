@@ -108,8 +108,8 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
         </header>
 
         {/* Dynamic Nested Content Outlet */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6 [scrollbar-width:thin]">
-          <div className="max-w-7xl w-full mx-auto pb-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 [scrollbar-width:thin]">
+          <div className="w-full pb-6">
             {children}
           </div>
         </main>
