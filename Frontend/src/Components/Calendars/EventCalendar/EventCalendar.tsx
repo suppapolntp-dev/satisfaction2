@@ -93,6 +93,8 @@ export default function EventCalendar({
     setSelectedCategory,
     monthWeeks,
     weekCalendarDays,
+    weekSegments,
+    weekLaneCount,
     weekRangeLabel,
     dayEvents,
     monthYearLabel,
@@ -438,100 +440,129 @@ export default function EventCalendar({
             </div>
           )}
 
-          {/* ─── WEEK VIEW (7-Day Task Schedule Columns) ─── */}
+          {/* ─── WEEK VIEW (7-Day Task Row Schedule Grid with Left Task Gutter) ─── */}
           {viewMode === "Week" && (
-            <div className="flex-1 flex flex-col overflow-x-auto bg-slate-50/40">
-              {/* Sticky Weekdays Header (7 Day Columns) */}
-              <div className="grid grid-cols-7 border-b border-slate-200/80 bg-white sticky top-0 z-10 min-w-[760px] divide-x divide-slate-100">
-                {weekCalendarDays.map((day) => {
-                  const isToday = day.isToday;
-                  const isSelected = day.dateString === currentDateStr;
-                  const eventCount = day.events.length;
-                  return (
-                    <button
-                      type="button"
-                      key={day.dateString}
-                      onClick={() => selectDate(day.dateString)}
-                      aria-current={isToday ? "date" : undefined}
-                      aria-pressed={isSelected}
-                      className={`group py-3 px-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors duration-200 motion-reduce:transition-none hover:bg-slate-50 ${FOCUS_RING_INSET} ${
-                        isSelected ? "bg-slate-50/80" : ""
-                      }`}
-                    >
-                      <span
-                        className={`text-xs font-semibold uppercase tracking-wider ${
-                          isToday ? "text-[var(--primary-container)] font-bold" : "text-slate-500"
-                        }`}
-                      >
-                        {WEEKDAY_SHORT_FORMATTER.format(day.date)}
-                      </span>
-                      <span
-                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums transition-colors duration-200 motion-reduce:transition-none ${
-                          isToday
-                            ? "bg-[var(--primary-container)] text-white shadow-2xs"
-                            : isSelected
-                            ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-2 ring-inset ring-[var(--primary-container)]"
-                            : "text-slate-900 group-hover:bg-slate-200/60"
-                        }`}
-                      >
-                        {day.dayNumber}
-                      </span>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
-                          eventCount > 0
-                            ? "bg-slate-100 text-slate-700 font-bold"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        {eventCount > 0 ? `${eventCount} งาน` : "ว่าง"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex-1 flex flex-col overflow-x-auto bg-white min-w-[760px]">
+              {/* Sticky Weekdays Header: Left Gutter Header + 7 Day Headers */}
+              <div className="flex border-b border-slate-200/80 bg-white sticky top-0 z-20">
+                {/* Left Gutter Header */}
+                <div className="w-20 sm:w-24 shrink-0 border-r border-slate-200/80 py-3 px-2 flex flex-col items-center justify-center bg-slate-50/70 select-none">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">ลำดับงาน</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Task Row</span>
+                </div>
 
-              {/* 7 Day Task Columns */}
-              <div className="flex-1 p-3">
-                <div className="grid grid-cols-7 gap-3 min-w-[760px] items-start">
+                {/* 7 Day Headers with Task Count Badges */}
+                <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100">
                   {weekCalendarDays.map((day) => {
+                    const isToday = day.isToday;
                     const isSelected = day.dateString === currentDateStr;
+                    const eventCount = day.events.length;
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={day.dateString}
-                        className={`flex flex-col gap-2.5 p-2 rounded-2xl transition-colors duration-200 min-h-[460px] ${
-                          isSelected ? "bg-white/80 ring-1 ring-slate-200/90" : "bg-transparent"
+                        onClick={() => selectDate(day.dateString)}
+                        aria-current={isToday ? "date" : undefined}
+                        aria-pressed={isSelected}
+                        className={`group py-3 px-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors duration-200 motion-reduce:transition-none hover:bg-slate-50 ${FOCUS_RING_INSET} ${
+                          isSelected ? "bg-slate-50/80" : ""
                         }`}
                       >
-                        {day.events.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-slate-200/90 text-center min-h-[140px] bg-white/40">
-                            <span className="text-[11px] font-medium text-slate-500">ไม่มีกิจกรรม</span>
-                            {onCreateEvent && (
-                              <button
-                                type="button"
-                                onClick={onCreateEvent}
-                                className={`mt-2 text-[10px] font-semibold text-[var(--primary-container)] hover:underline cursor-pointer ${FOCUS_RING}`}
-                              >
-                                + เพิ่มงาน
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          day.events.map((event) => {
-                            const isMultiDay =
-                              event.eventEndDate && event.eventEndDate > event.eventDate;
-                            return (
-                              <EventCard
-                                key={`${event.eventId}-${day.dateString}`}
-                                event={event}
-                                variant={isMultiDay ? "detailed" : "compact"}
-                                onClick={onSelectEvent}
-                              />
-                            );
-                          })
-                        )}
-                      </div>
+                        <span
+                          className={`text-xs font-semibold uppercase tracking-wider ${
+                            isToday ? "text-[var(--primary-container)] font-bold" : "text-slate-500"
+                          }`}
+                        >
+                          {WEEKDAY_SHORT_FORMATTER.format(day.date)}
+                        </span>
+                        <span
+                          className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums transition-colors duration-200 motion-reduce:transition-none ${
+                            isToday
+                              ? "bg-[var(--primary-container)] text-white shadow-2xs"
+                              : isSelected
+                              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-2 ring-inset ring-[var(--primary-container)]"
+                              : "text-slate-900 group-hover:bg-slate-200/60"
+                          }`}
+                        >
+                          {day.dayNumber}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
+                            eventCount > 0
+                              ? "bg-slate-100 text-slate-700 font-bold"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {eventCount > 0 ? `${eventCount} งาน` : "ว่าง"}
+                        </span>
+                      </button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Weekly Task Row Canvas: Left Gutter + 7 Columns Grid */}
+              <div className="flex flex-1 relative bg-white">
+                {/* Left Gutter: Task Order Labels (งานที่ 1, งานที่ 2, งานที่ 3...) เหมือนแกนเวลาเดิม */}
+                <div className="w-20 sm:w-24 shrink-0 border-r border-slate-200/80 bg-slate-50/40 select-none flex flex-col">
+                  {Array.from({ length: weekLaneCount }, (_, laneIdx) => (
+                    <div
+                      key={laneIdx}
+                      className="h-28 sm:h-32 border-b border-slate-100 flex flex-col items-center justify-center p-2 text-center"
+                    >
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-white border border-slate-200/80 text-[11px] font-bold text-slate-700 shadow-2xs">
+                        งานที่ {laneIdx + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 7 Day Columns Canvas with Horizontal Row Lines and Multi-Day Spanning Cards */}
+                <div className="flex-1 relative">
+                  {/* Layer 1: Background Day Cell Grid with Row Dividers */}
+                  <div className="absolute inset-0 grid grid-cols-7 divide-x divide-slate-100">
+                    {weekCalendarDays.map((day) => (
+                      <div
+                        key={day.dateString}
+                        onClick={() => selectDate(day.dateString)}
+                        className={`flex flex-col cursor-pointer transition-colors hover:bg-slate-50/40 ${
+                          day.dateString === currentDateStr ? "bg-slate-50/30" : ""
+                        }`}
+                      >
+                        {Array.from({ length: weekLaneCount }, (_, laneIdx) => (
+                          <div
+                            key={laneIdx}
+                            className="h-28 sm:h-32 border-b border-slate-100"
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Layer 2: Event Cards Positioned across Rows and Day Columns */}
+                  <div
+                    className="relative grid grid-cols-7 gap-x-2 pointer-events-none"
+                    style={{
+                      gridTemplateRows: `repeat(${weekLaneCount}, minmax(7rem, 8rem))`,
+                    }}
+                  >
+                    {weekSegments.map((segment) => (
+                      <div
+                        key={`${segment.event.eventId}-${segment.startColumn}`}
+                        className="pointer-events-auto min-w-0 p-2 flex items-center"
+                        style={{
+                          gridColumn: `${segment.startColumn} / span ${segment.columnSpan}`,
+                          gridRow: segment.laneIndex + 1,
+                        }}
+                      >
+                        <EventCard
+                          event={segment.event}
+                          variant={segment.isMultiDay ? "detailed" : "compact"}
+                          onClick={onSelectEvent}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

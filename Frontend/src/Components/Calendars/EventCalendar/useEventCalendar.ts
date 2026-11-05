@@ -300,6 +300,37 @@ export function useEventCalendar({
     return days;
   }, [currentDate, filteredEvents, todayStr]);
 
+  // ─── 2b. Week View Event Segments (Multi-Day Lane-Packed) ───
+  const weekSegments = useMemo<CalendarEventSegment[]>(() => {
+    if (weekCalendarDays.length === 0) return [];
+    const cells = weekCalendarDays;
+    const firstDay = cells[0].dateString;
+    const lastDay = cells[cells.length - 1].dateString;
+
+    const candidates = filteredEvents
+      .filter((e) => e.eventDate <= lastDay && getEventEndDate(e) >= firstDay)
+      .map((event) => {
+        const endDate = getEventEndDate(event);
+        const startIndex = Math.max(0, cells.findIndex((c) => c.dateString >= event.eventDate));
+        const endIndex = cells.filter((c) => c.dateString <= endDate).length - 1;
+        return { event, startIndex, endIndex: Math.max(startIndex, endIndex), isMultiDay: endDate > event.eventDate };
+      })
+      .sort((a, b) => a.startIndex - b.startIndex || b.endIndex - a.endIndex);
+
+    const laneEndIndexes: number[] = [];
+    return candidates.map(({ event, startIndex, endIndex, isMultiDay }) => {
+      let laneIndex = laneEndIndexes.findIndex((laneEnd) => laneEnd < startIndex);
+      if (laneIndex === -1) laneIndex = laneEndIndexes.length;
+      laneEndIndexes[laneIndex] = endIndex;
+      return { event, startColumn: startIndex + 1, columnSpan: Math.max(1, endIndex - startIndex + 1), laneIndex, isMultiDay };
+    });
+  }, [weekCalendarDays, filteredEvents]);
+
+  const weekLaneCount = useMemo(() => {
+    const maxLane = weekSegments.reduce((max, s) => Math.max(max, s.laneIndex + 1), 0);
+    return Math.max(4, maxLane);
+  }, [weekSegments]);
+
   const weekRangeLabel = useMemo(() => {
     if (weekCalendarDays.length === 0) return "";
     const first = weekCalendarDays[0].date;
@@ -422,6 +453,8 @@ export function useEventCalendar({
     monthCalendarCells,
     monthWeeks,
     weekCalendarDays,
+    weekSegments,
+    weekLaneCount,
     weekRangeLabel,
     dayEvents,
     monthYearLabel,
