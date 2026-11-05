@@ -25,17 +25,17 @@ export interface LoginFormProps extends UseLoginFormOptions {
  */
 export default function LoginForm({
   title = "Welcome back",
-  subtitle = "Sign in to access your operational analytics dashboard",
+  subtitle = "กรอกรหัสประจำตัวองค์กรเพื่อเข้าสู่ระบบงาน",
   submitLabel = "Sign In to Console",
-  securityNotice = "Restricted system for authorized CRG personnel only. Dynamic multi-tier data scoping is strictly enforced.",
-  initialEmail = "",
+  securityNotice = "ระบบสงวนสิทธิ์เฉพาะบุคลากรที่ได้รับมอบหมาย บัญชีผู้ใช้งานถูกสร้างและกำหนดสิทธิ์โดย Admin / Brand Manager ประจำสายงาน (Role-based Provisioning)",
+  initialCorporateId = "",
   initialPassword = "",
   onSubmit,
   className = "",
 }: LoginFormProps) {
   const {
-    emailOrUserId,
-    setEmailOrUserId,
+    corporateId,
+    setCorporateId,
     password,
     setPassword,
     isPasswordVisible,
@@ -44,7 +44,7 @@ export default function LoginForm({
     errorMessage,
     fieldErrors,
     handleSubmit,
-  } = useLoginForm({ initialEmail, initialPassword, onSubmit });
+  } = useLoginForm({ initialCorporateId, initialPassword, onSubmit });
 
   return (
     <div
@@ -90,16 +90,16 @@ export default function LoginForm({
 
       {/* ─── 3. FORM FIELDS ─── */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-        {/* Email / Corporate ID Field */}
+        {/* Corporate ID Field */}
         <div className="flex flex-col gap-1.5">
           <label
-            htmlFor="login-email"
+            htmlFor="login-corporate-id"
             className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between"
           >
-            <span>Email / Corporate ID</span>
-            {fieldErrors.emailOrUserId && (
+            <span>Corporate ID</span>
+            {fieldErrors.corporateId && (
               <span className="text-[11px] font-medium text-rose-600 lowercase">
-                {fieldErrors.emailOrUserId}
+                {fieldErrors.corporateId}
               </span>
             )}
           </label>
@@ -111,16 +111,16 @@ export default function LoginForm({
               </svg>
             </div>
             <input
-              id="login-email"
+              id="login-corporate-id"
               type="text"
               autoComplete="username"
               required
               disabled={isLoading}
-              placeholder="e.g. admin@satisfaction.local"
-              value={emailOrUserId}
-              onChange={(e) => setEmailOrUserId(e.target.value)}
+              placeholder="e.g. CRG-88201"
+              value={corporateId}
+              onChange={(e) => setCorporateId(e.target.value)}
               className={`w-full h-12 pl-10 pr-4 bg-slate-50 border rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 focus:bg-white ${
-                fieldErrors.emailOrUserId
+                fieldErrors.corporateId
                   ? "border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
                   : "border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
               }`}

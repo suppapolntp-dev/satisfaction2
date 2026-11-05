@@ -3,18 +3,18 @@
 import { useState, useCallback, FormEvent } from "react";
 
 export interface LoginCredentials {
-  emailOrUserId: string;
+  corporateId: string;
   password: string;
 }
 
 export interface UseLoginFormOptions {
-  initialEmail?: string;
+  initialCorporateId?: string;
   initialPassword?: string;
   onSubmit?: (credentials: LoginCredentials) => Promise<void> | void;
 }
 
 export interface FormFieldErrors {
-  emailOrUserId?: string;
+  corporateId?: string;
   password?: string;
 }
 
@@ -22,14 +22,14 @@ export interface FormFieldErrors {
  * 🪝 useLoginForm
  * 
  * Colocated Hook สำหรับจัดการ State, Validation, Toggle Password และ Submit Lifecycle
- * ของแบบฟอร์มล็อกอินระดับองค์กร (Strict API-Ready Mode)
+ * ของแบบฟอร์มล็อกอินระดับองค์กร (Strict API-Ready Mode โดยใช้ Corporate ID)
  */
 export function useLoginForm({
-  initialEmail = "",
+  initialCorporateId = "",
   initialPassword = "",
   onSubmit,
 }: UseLoginFormOptions = {}) {
-  const [emailOrUserId, setEmailOrUserId] = useState<string>(initialEmail);
+  const [corporateId, setCorporateId] = useState<string>(initialCorporateId);
   const [password, setPassword] = useState<string>(initialPassword);
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,8 +43,8 @@ export function useLoginForm({
   const validate = useCallback((): boolean => {
     const errors: FormFieldErrors = {};
 
-    if (!emailOrUserId.trim()) {
-      errors.emailOrUserId = "กรุณากรอกอีเมลหรือรหัสประจำตัวองค์กร";
+    if (!corporateId.trim()) {
+      errors.corporateId = "กรุณากรอกรหัสประจำตัวองค์กร (Corporate ID)";
     }
 
     if (!password) {
@@ -53,7 +53,7 @@ export function useLoginForm({
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [emailOrUserId, password]);
+  }, [corporateId, password]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -70,7 +70,7 @@ export function useLoginForm({
 
       setIsLoading(true);
       try {
-        await onSubmit({ emailOrUserId: emailOrUserId.trim(), password });
+        await onSubmit({ corporateId: corporateId.trim(), password });
       } catch (err: unknown) {
         const message =
           err instanceof Error
@@ -81,12 +81,12 @@ export function useLoginForm({
         setIsLoading(false);
       }
     },
-    [emailOrUserId, password, validate, onSubmit]
+    [corporateId, password, validate, onSubmit]
   );
 
   return {
-    emailOrUserId,
-    setEmailOrUserId,
+    corporateId,
+    setCorporateId,
     password,
     setPassword,
     isPasswordVisible,

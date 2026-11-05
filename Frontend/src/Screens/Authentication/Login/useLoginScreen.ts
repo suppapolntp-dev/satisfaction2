@@ -29,8 +29,8 @@ export function useLoginScreen(): UseLoginScreenReturn {
       try {
         // TODO: Connect API [authService.login] with tiered MFA & JWT cookie session
         // For development/stubbing: Validate inputs and transition to dashboard
-        if (!credentials.emailOrUserId || !credentials.password) {
-          throw new Error("ข้อมูลการเข้าสู่ระบบไม่ครบถ้วน");
+        if (!credentials.corporateId || !credentials.password) {
+          throw new Error("ข้อมูลการเข้าสู่ระบบไม่ครบถ้วน กรุณากรอก Corporate ID และรหัสผ่าน");
         }
 
         // นำทางไปยัง Dashboard ของระบบแอดมิน
