@@ -45,31 +45,8 @@ export default function EventCard({
     handleDelete,
   } = useEventCard({ event, columnSpan, onClick, onMenuClick, onEdit, onDelete });
 
-  if (variant === "compact") {
-    const leadAssignee = visibleAssignees[0];
-    return (
-      <button
-        type="button"
-        onClick={handleClick}
-        title={event.eventName}
-        className={`w-full min-h-9 px-2.5 py-1.5 rounded-md flex items-center gap-2 text-left text-xs font-semibold cursor-pointer transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] ${compactStyleClass} ${className}`}
-      >
-        {leadAssignee && (
-          <span className="w-5 h-5 rounded-full bg-white/80 text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">
-            {leadAssignee.avatarUrl ? (
-              <img src={leadAssignee.avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              leadAssignee.name.trim().charAt(0).toUpperCase()
-            )}
-          </span>
-        )}
-        <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">{displayTitle}</span>
-      </button>
-    );
-  }
-
   // ponytail: title button's ::after stretches over the card (single focus target); the menu button sits above via z-10.
-  // Add a compact single-day variant when the calendar needs it.
+  // 1-day cards show title + 3-dot menu; multi-day cards show title + assignees + 3-dot menu.
   return (
     <article
       className={`relative w-full flex flex-col justify-between gap-2 p-3 sm:p-4 rounded-lg bg-white border border-slate-200/80 shadow-[0_4px_12px_rgba(15,23,42,0.05)] transition-shadow duration-200 motion-reduce:transition-none hover:shadow-[0_8px_16px_rgba(15,23,42,0.10)] has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-[var(--primary-container)] ${className}`}
