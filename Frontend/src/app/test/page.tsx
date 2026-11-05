@@ -230,7 +230,8 @@ export default function TestPlaygroundPage() {
   const currentOption = SCREEN_OPTIONS.find((s) => s.key === selectedScreen);
 
   // Mock Error Object สำหรับโหมด Error 500
-  const mock500Error = new Error("DatabaseConnectionTimeout: Failed to connect to Enterprise PostgreSQL replica pool");
+  const mock500Error = new Error("DatabaseConnectionTimeout: Failed to connect to Enterprise PostgreSQL replica pool") as Error & { digest?: string };
+  mock500Error.digest = "51FC-3D73";
   mock500Error.stack =
     "Error: DatabaseConnectionTimeout: Failed to connect to Enterprise PostgreSQL replica pool\n    at async QueryExecutor.execute (D:\\DevProject\\Project\\Satifaction2\\Backend\\Services\\ScopeFilterService.cs:42:15)\n    at async DashboardController.GetMetrics (D:\\DevProject\\Project\\Satifaction2\\Backend\\Controllers\\DashboardController.cs:88:9)";
 
@@ -342,7 +343,7 @@ export default function TestPlaygroundPage() {
               statusCode={500}
               title="Oops something went wrong!"
               description="ระบบพบปัญหาในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง หรือกลับไปที่หน้าหลัก"
-              errorCode="ERR_500_INTERNAL_SERVER"
+              errorCode="51FC-3D73"
               error={mock500Error}
               reset={() =>
                 addLog({
