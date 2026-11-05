@@ -11,6 +11,22 @@ export interface UseEventDetailModalProps {
   onDelete?: (event: EventItem) => void;
 }
 
+const THAI_MONTH_ABBR = [
+  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+];
+
+function formatThaiDateDisplay(dateStr?: string | null): string {
+  if (!dateStr) return "-";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return dateStr;
+  return `${d} ${THAI_MONTH_ABBR[m] || ""} ${y + 543}`;
+}
+
 export function useEventDetailModal({
   isOpen,
   event,
@@ -33,9 +49,9 @@ export function useEventDetailModal({
   const dateRangeFormatted = useMemo(() => {
     if (!event) return "-";
     if (event.eventEndDate && event.eventEndDate > event.eventDate) {
-      return `${event.eventDate} ถึง ${event.eventEndDate}`;
+      return `${formatThaiDateDisplay(event.eventDate)} – ${formatThaiDateDisplay(event.eventEndDate)}`;
     }
-    return event.eventDate || "-";
+    return formatThaiDateDisplay(event.eventDate);
   }, [event]);
 
   const timeFormatted = useMemo(() => {
@@ -44,12 +60,6 @@ export function useEventDetailModal({
       return `${event.startTime} - ${event.endTime} น.`;
     }
     return event.startTime || "ตลอดทั้งวัน (All-day)";
-  }, [event]);
-
-  const progressPercent = useMemo(() => {
-    if (!event) return 0;
-    const isCompleted = (event.eventStatus || "").toUpperCase() === "COMPLETED";
-    return Math.min(100, Math.max(0, event.progressPercent ?? (isCompleted ? 100 : 0)));
   }, [event]);
 
   const handleEditClick = useCallback(() => {

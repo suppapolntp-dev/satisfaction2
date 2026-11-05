@@ -59,122 +59,145 @@ export default function EventDetailModal({
       <div
         className={`relative z-10 w-full max-w-lg rounded-2xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col p-6 animate-in zoom-in-95 duration-200 ${className}`}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
-          <div className="space-y-1.5 flex-1 min-w-0">
+        {/* ─── MODAL HEADER ─── */}
+        <div className="flex items-start gap-4 pb-4 border-b border-slate-100">
+          {/* GREEN: Circular Brand Logo Avatar (Big, like assignees but bigger) */}
+          <div className="relative shrink-0">
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full ring-2 ring-slate-100 shadow-sm bg-white border border-slate-200/80 flex items-center justify-center overflow-hidden p-1.5">
+              <img
+                src={event.brandLogoUrl || DEFAULT_BRAND_LOGO_FALLBACK}
+                alt={event.brandScope || "Brand"}
+                className="w-full h-full object-contain rounded-full"
+              />
+            </div>
+            {event.brandScope && (
+              <span className="sr-only">{event.brandScope}</span>
+            )}
+          </div>
+
+          {/* Title & Metadata (YELLOW: Moved down below title) */}
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <h2
+                id="event-detail-title"
+                className="text-lg sm:text-xl font-bold text-slate-950 tracking-tight leading-snug break-words"
+              >
+                {event.eventName}
+              </h2>
+
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="ปิดหน้าต่างรายละเอียด"
+                className="inline-flex items-center justify-center w-8 h-8 -mr-1 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+              >
+                <svg aria-hidden="true" className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* YELLOW: Consolidated Metadata Row under Title */}
             <div className="flex items-center gap-2 flex-wrap">
+              {event.brandScope && (
+                <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  {event.brandScope}
+                </span>
+              )}
+
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${categoryStyle.bg} ${categoryStyle.text}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${categoryStyle.dot}`} />
                 <span>{categoryStyle.label}</span>
               </span>
 
               {event.eventStatus && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80">
                   {event.eventStatus}
                 </span>
               )}
 
-              {/* Brand Badge with Logo */}
-              {event.brandScope && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
-                  <img
-                    src={event.brandLogoUrl || DEFAULT_BRAND_LOGO_FALLBACK}
-                    alt={event.brandScope}
-                    className="w-4 h-4 object-contain rounded-full shrink-0"
-                  />
-                  <span>{event.brandScope}</span>
-                </span>
+              {/* Team Assignees inline avatar stack */}
+              {event.assignees && event.assignees.length > 0 && (
+                <div className="flex items-center gap-1.5 pl-1 border-l border-slate-200">
+                  <div className="flex items-center -space-x-1.5">
+                    {event.assignees.map((assignee) => (
+                      <span
+                        key={assignee.name}
+                        title={assignee.name}
+                        className="w-5 h-5 rounded-full ring-2 ring-white bg-slate-200 text-slate-800 text-[10px] font-bold flex items-center justify-center overflow-hidden"
+                      >
+                        {assignee.avatarUrl ? (
+                          <img src={assignee.avatarUrl} alt={assignee.name} className="w-full h-full object-cover" />
+                        ) : (
+                          assignee.name.trim().charAt(0).toUpperCase()
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-[11px] text-slate-600 font-medium truncate max-w-[130px]">
+                    {event.assignees.map((a) => a.name).join(", ")}
+                  </span>
+                </div>
               )}
             </div>
-
-            <h2
-              id="event-detail-title"
-              className="text-lg sm:text-xl font-bold text-slate-950 tracking-tight leading-snug break-words"
-            >
-              {event.eventName}
-            </h2>
-
-            {/* Green Arrow: Moved Team Assignees up to Header */}
-            {event.assignees && event.assignees.length > 0 && (
-              <div className="flex items-center gap-2 pt-1 flex-wrap">
-                <span className="text-[11px] font-medium text-slate-500">ทีมผู้รับผิดชอบ:</span>
-                <div className="flex items-center -space-x-1.5">
-                  {event.assignees.map((assignee) => (
-                    <span
-                      key={assignee.name}
-                      title={assignee.name}
-                      className="w-6 h-6 rounded-full ring-2 ring-white bg-slate-200 text-slate-800 text-[10px] font-bold flex items-center justify-center overflow-hidden"
-                    >
-                      {assignee.avatarUrl ? (
-                        <img src={assignee.avatarUrl} alt={assignee.name} className="w-full h-full object-cover" />
-                      ) : (
-                        assignee.name.trim().charAt(0).toUpperCase()
-                      )}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-[11px] text-slate-600 font-medium">
-                  {event.assignees.map((a) => a.name).join(", ")}
-                </span>
-              </div>
-            )}
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="ปิดหน้าต่างรายละเอียด"
-            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-          >
-            <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
         </div>
 
-        {/* Body Info */}
+        {/* ─── BODY INFO ─── */}
         <div className="py-4 space-y-4 text-xs text-slate-700 flex-1 overflow-y-auto max-h-[60vh]">
-          {/* Yellow Marking (Swapped): Description comes FIRST */}
+          {/* RED: Remodeled Unified Schedule Card (Single piece, sleek & clear) */}
+          <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-3.5 shadow-2xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 gap-3 sm:gap-0">
+              {/* Date Column */}
+              <div className="flex items-center gap-3 sm:pr-4">
+                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-slate-600 shrink-0">
+                  <svg aria-hidden="true" className="w-4.5 h-4.5 text-[var(--primary-container)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[11px] font-medium text-slate-500 leading-tight">วันที่จัดกิจกรรม</span>
+                  <span className="block text-xs sm:text-sm font-bold text-slate-900 leading-snug truncate">
+                    {dateRangeFormatted}
+                  </span>
+                </div>
+              </div>
+
+              {/* Time Column */}
+              <div className="flex items-center gap-3 pt-3 sm:pt-0 sm:pl-4">
+                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-slate-600 shrink-0">
+                  <svg aria-hidden="true" className="w-4.5 h-4.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[11px] font-medium text-slate-500 leading-tight">เวลาดำเนินงาน</span>
+                  <span className="block text-xs sm:text-sm font-bold text-slate-900 leading-snug truncate">
+                    {timeFormatted}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
           {event.description && (
             <div className="space-y-1">
               <span className="text-[11px] font-medium text-slate-500">คำอธิบายเพิ่มเติม</span>
-              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50/70 p-3 rounded-xl border border-slate-100">
+              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
                 {event.description}
               </p>
             </div>
           )}
 
-          {/* Yellow Marking (Swapped): Date & Time comes AFTER Description */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="p-3 rounded-xl border border-slate-100 bg-white space-y-1">
-              <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5">
-                <svg aria-hidden="true" className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                วันที่จัดกิจกรรม
-              </span>
-              <p className="font-semibold text-slate-900">{dateRangeFormatted}</p>
-            </div>
-
-            <div className="p-3 rounded-xl border border-slate-100 bg-white space-y-1">
-              <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5">
-                <svg aria-hidden="true" className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                เวลา
-              </span>
-              <p className="font-semibold text-slate-900">{timeFormatted}</p>
-            </div>
-          </div>
-
           {/* Location */}
           {event.eventLocation && (
-            <div className="p-3 rounded-xl border border-slate-100 bg-white space-y-1">
+            <div className="p-3.5 rounded-xl border border-slate-100 bg-white space-y-1">
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5">
                 <svg aria-hidden="true" className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -204,7 +227,7 @@ export default function EventDetailModal({
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* ─── FOOTER ACTIONS ─── */}
         <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
           {onDelete && (
             <button
