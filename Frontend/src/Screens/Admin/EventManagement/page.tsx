@@ -4,6 +4,7 @@ import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import EventCalendar from "@/Components/Calendars/EventCalendar";
 import EventTable from "@/Components/Tables/EventTable";
+import EventDetailModal from "@/Components/Modals/EventDetailModal";
 import {
   useEventManagementScreen,
   EventManagementTab,
@@ -21,6 +22,8 @@ export default function EventManagementScreen({
     eventTabs,
     events,
     isLoading,
+    selectedEvent,
+    handleCloseSelectedEvent,
     handleTabChange,
     handleSelectDate,
     handleSelectEvent,
@@ -81,6 +84,15 @@ export default function EventManagementScreen({
           onDeleteEvent={handleDeleteEvent}
         />
       )}
+
+      {/* ─── MODAL: EVENT DETAILS POPUP ─── */}
+      <EventDetailModal
+        isOpen={Boolean(selectedEvent)}
+        event={selectedEvent}
+        onClose={handleCloseSelectedEvent}
+        onEdit={handleEditEvent}
+        onDelete={handleDeleteEvent}
+      />
     </div>
   );
 }
