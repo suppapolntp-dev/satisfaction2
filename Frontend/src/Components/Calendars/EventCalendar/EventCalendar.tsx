@@ -387,43 +387,32 @@ export default function EventCalendar({
                   </div>
                 </div>
 
-                {/* 3. Filter Section Header */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    ตัวกรองกิจกรรม
-                  </span>
-                  {isFiltered && (
+                {/* ─── GOOGLE CALENDAR STYLE CHECKBOX LIST (image_725516.png) ─── */}
+                <div className="pt-2 border-t border-slate-100 space-y-4">
+                  {/* Filter Header with Clear Action */}
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      ตัวกรองการแสดงผล
+                    </span>
+                    {isFiltered && (
+                      <button
+                        type="button"
+                        onClick={resetFilters}
+                        className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                      >
+                        ล้างตัวกรอง
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Section 1: แบรนด์ (Flat list with colored checkboxes) */}
+                  <div className="space-y-1">
                     <button
                       type="button"
-                      onClick={resetFilters}
-                      className="text-[10px] font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                      onClick={() => setIsBrandOpen((prev) => !prev)}
+                      className="w-full flex items-center justify-between py-1 px-1 text-xs font-bold text-slate-700 hover:text-slate-950 cursor-pointer select-none"
                     >
-                      ล้างตัวกรอง
-                    </button>
-                  )}
-                </div>
-
-                {/* 4. Brand Filter Dropdown / Collapsible */}
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition-all">
-                  <button
-                    type="button"
-                    onClick={() => setIsBrandOpen((prev) => !prev)}
-                    className="w-full p-2.5 flex items-center justify-between text-left cursor-pointer hover:bg-slate-100/70 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-5 h-5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                        <svg aria-hidden="true" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                          <polyline points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                      </div>
-                      <span className="text-xs font-bold text-slate-800 truncate">แบรนด์</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-slate-200 text-slate-600">
-                        {selectedBrands.length === 0 ? "ทั้งหมด" : `${selectedBrands.length} แบรนด์`}
-                      </span>
+                      <span>แบรนด์</span>
                       <svg
                         aria-hidden="true"
                         className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isBrandOpen ? "rotate-180" : ""}`}
@@ -434,63 +423,57 @@ export default function EventCalendar({
                       >
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
-                    </div>
-                  </button>
+                    </button>
 
-                  {isBrandOpen && (
-                    <div className="p-2.5 pt-0 border-t border-slate-200/60 space-y-1 bg-white">
-                      <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs text-slate-700 cursor-pointer font-semibold">
-                        <input
-                          type="checkbox"
-                          checked={selectedBrands.length === 0}
-                          onChange={selectAllBrands}
-                          className="w-3.5 h-3.5 rounded border-slate-300 text-[var(--primary-container)] accent-[var(--primary-container)] cursor-pointer"
-                        />
-                        <span>เลือกทุกแบรนด์</span>
-                      </label>
+                    {isBrandOpen && (
+                      <div className="space-y-0.5">
+                        <label className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-100/80 text-xs text-slate-800 cursor-pointer select-none transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedBrands.length === 0}
+                            onChange={selectAllBrands}
+                            className="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
+                          />
+                          <span className="font-semibold">ทั้งหมด (All Brands)</span>
+                        </label>
 
-                      {availableBrands.map((brand) => {
-                        const isChecked = selectedBrands.includes(brand);
-                        return (
-                          <label
-                            key={brand}
-                            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs text-slate-700 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleBrandFilter(brand)}
-                              className="w-3.5 h-3.5 rounded border-slate-300 text-[var(--primary-container)] accent-[var(--primary-container)] cursor-pointer"
-                            />
-                            <span className="truncate">{brand}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* 5. Category Filter Dropdown / Collapsible */}
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition-all">
-                  <button
-                    type="button"
-                    onClick={() => setIsCategoryOpen((prev) => !prev)}
-                    className="w-full p-2.5 flex items-center justify-between text-left cursor-pointer hover:bg-slate-100/70 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-5 h-5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                        <svg aria-hidden="true" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                          <line x1="7" y1="7" x2="7.01" y2="7" />
-                        </svg>
+                        {availableBrands.map((brand, idx) => {
+                          const isChecked = selectedBrands.includes(brand);
+                          const brandColors = [
+                            "accent-amber-500",
+                            "accent-rose-500",
+                            "accent-blue-500",
+                            "accent-emerald-500",
+                            "accent-purple-500",
+                          ];
+                          const accentClass = brandColors[idx % brandColors.length];
+                          return (
+                            <label
+                              key={brand}
+                              className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-100/80 text-xs text-slate-800 cursor-pointer select-none transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleBrandFilter(brand)}
+                                className={`w-4 h-4 rounded cursor-pointer ${accentClass}`}
+                              />
+                              <span className="truncate">{brand}</span>
+                            </label>
+                          );
+                        })}
                       </div>
-                      <span className="text-xs font-bold text-slate-800 truncate">หมวดหมู่</span>
-                    </div>
+                    )}
+                  </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-slate-200 text-slate-600">
-                        {selectedCategories.length === 0 ? "ทั้งหมด" : `${selectedCategories.length} หมวด`}
-                      </span>
+                  {/* Section 2: หมวดหมู่ (ปฏิทินของฉัน - Categories with color square checkboxes) */}
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryOpen((prev) => !prev)}
+                      className="w-full flex items-center justify-between py-1 px-1 text-xs font-bold text-slate-700 hover:text-slate-950 cursor-pointer select-none"
+                    >
+                      <span>หมวดหมู่กิจกรรม</span>
                       <svg
                         aria-hidden="true"
                         className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
@@ -501,41 +484,51 @@ export default function EventCalendar({
                       >
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
-                    </div>
-                  </button>
+                    </button>
 
-                  {isCategoryOpen && (
-                    <div className="p-2.5 pt-0 border-t border-slate-200/60 space-y-1 bg-white">
-                      <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs text-slate-700 cursor-pointer font-semibold">
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.length === 0}
-                          onChange={selectAllCategories}
-                          className="w-3.5 h-3.5 rounded border-slate-300 text-[var(--primary-container)] accent-[var(--primary-container)] cursor-pointer"
-                        />
-                        <span>เลือกทุกหมวดหมู่</span>
-                      </label>
+                    {isCategoryOpen && (
+                      <div className="space-y-0.5">
+                        <label className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-100/80 text-xs text-slate-800 cursor-pointer select-none transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.length === 0}
+                            onChange={selectAllCategories}
+                            className="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
+                          />
+                          <span className="font-semibold">ทั้งหมด (All Categories)</span>
+                        </label>
 
-                      {Object.entries(CATEGORY_STYLES).map(([key, cat]) => {
-                        const isChecked = selectedCategories.includes(key);
-                        return (
-                          <label
-                            key={key}
-                            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs text-slate-700 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleCategoryFilter(key)}
-                              className="w-3.5 h-3.5 rounded border-slate-300 text-[var(--primary-container)] accent-[var(--primary-container)] cursor-pointer"
-                            />
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${cat.dotClass}`} />
-                            <span className="truncate">{cat.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
+                        {Object.entries(CATEGORY_STYLES).map(([key, cat]) => {
+                          const isChecked = selectedCategories.includes(key);
+                          const accentColor =
+                            key === "CAMPAIGN"
+                              ? "accent-orange-500"
+                              : key === "AUDIT"
+                              ? "accent-emerald-500"
+                              : key === "FIRMWARE"
+                              ? "accent-blue-500"
+                              : key === "CALIBRATION"
+                              ? "accent-purple-500"
+                              : "accent-slate-500";
+                          return (
+                            <label
+                              key={key}
+                              className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-100/80 text-xs text-slate-800 cursor-pointer select-none transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleCategoryFilter(key)}
+                                className={`w-4 h-4 rounded cursor-pointer ${accentColor}`}
+                              />
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${cat.dotClass}`} />
+                              <span className="truncate">{cat.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </aside>
             )}
@@ -786,7 +779,7 @@ export default function EventCalendar({
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col space-y-3">
                   {dayEvents.map((event) => {
                     const style = getCategoryStyle(event.eventCategory);
                     const brandLogo = event.brandLogoUrl || DEFAULT_BRAND_LOGO_FALLBACK;
