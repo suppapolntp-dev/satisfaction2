@@ -31,6 +31,15 @@ function mapBackendBrandToModel(dto: BackendBrandDto): BrandModel {
   };
 }
 
+export const DEFAULT_DEV_BRANDS: BrandModel[] = [
+  { id: "b-1", brandId: "KFC", brandName: "KFC", parentCompanyName: "Enterprise Group", category: "Fast Food (QSR)", brandIconName: "restaurant", totalBranchesCount: 12, totalKiosksCount: 24, csatAverage: "94.2%", status: "Active" },
+  { id: "b-2", brandId: "MISTER_DONUT", brandName: "Mister Donut", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandIconName: "donut_large", totalBranchesCount: 15, totalKiosksCount: 30, csatAverage: "91.8%", status: "Active" },
+  { id: "b-3", brandId: "OOTOYA", brandName: "Ootoya", parentCompanyName: "Enterprise Group", category: "Japanese Dining", brandIconName: "ramen_dining", totalBranchesCount: 8, totalKiosksCount: 16, csatAverage: "95.5%", status: "Active" },
+  { id: "b-4", brandId: "PEPPER_LUNCH", brandName: "Pepper Lunch", parentCompanyName: "Enterprise Group", category: "Western Casual", brandIconName: "dinner_dining", totalBranchesCount: 6, totalKiosksCount: 12, csatAverage: "89.4%", status: "Active" },
+  { id: "b-5", brandId: "AUNTIE_ANNES", brandName: "Auntie Anne's", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandIconName: "bakery_dining", totalBranchesCount: 10, totalKiosksCount: 20, csatAverage: "93.1%", status: "Active" },
+  { id: "b-6", brandId: "ARIGATO", brandName: "Arigato", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandIconName: "local_cafe", totalBranchesCount: 14, totalKiosksCount: 28, csatAverage: "90.0%", status: "Active" },
+];
+
 export const brandService = {
   // TODO: Connect API [get_brands]
   async getBrands(): Promise<BrandModel[]> {
@@ -38,7 +47,7 @@ export const brandService = {
       console.log("[brandService.getBrands] Requesting GET /brands...");
       const response = await apiClient.get<BackendBrandDto[]>("/brands");
       console.log("[brandService.getBrands] Response received:", response);
-      if (response.success && Array.isArray(response.data)) {
+      if (response.success && Array.isArray(response.data) && response.data.length > 0) {
         const mapped = response.data.map(mapBackendBrandToModel);
         console.log(`[brandService.getBrands] Successfully mapped ${mapped.length} brands:`, mapped);
         return mapped;
@@ -47,7 +56,8 @@ export const brandService = {
     } catch (error) {
       console.error("[brandService.getBrands] error:", error);
     }
-    return [];
+    // Fallback to dev test seed brands when backend is offline or empty
+    return DEFAULT_DEV_BRANDS;
   },
 
   // TODO: Connect API [get_brand_by_id]
