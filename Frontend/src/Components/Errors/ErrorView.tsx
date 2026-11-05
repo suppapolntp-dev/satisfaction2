@@ -23,6 +23,7 @@ export interface ErrorViewProps {
     href?: string;
   };
   systemStatus?: string;
+  className?: string;
 }
 
 export function ErrorView({
@@ -35,28 +36,44 @@ export function ErrorView({
   primaryAction,
   secondaryAction,
   systemStatus = "Operational",
+  className = "",
 }: ErrorViewProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   const is404 = String(statusCode) === "404";
-  const defaultTitle = is404 ? "404 - ไม่พบหน้าที่ต้องการ" : "เกิดข้อผิดพลาดในการทำงาน";
-  const defaultDescription = is404
+  const is403 = String(statusCode) === "403";
+  const defaultTitle = is403
+    ? "403 - ปฏิเสธการเข้าถึง (Access Denied)"
+    : is404
+    ? "404 - ไม่พบหน้าที่ต้องการ"
+    : "เกิดข้อผิดพลาดในการทำงาน";
+  const defaultDescription = is403
+    ? "คุณไม่มีสิทธิ์ระดับ Role หรือ Data Access Tier ที่จำเป็นในการเข้าถึงหน้านี้ หากจำเป็นต้องใช้งาน กรุณาติดต่อ Super Admin"
+    : is404
     ? "หน้าที่คุณกำลังค้นหาอาจถูกย้าย ลบ หรือไม่พร้อมใช้งานชั่วคราว"
     : "ระบบพบปัญหาที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง หรือกลับไปยังหน้าหลัก";
-  const defaultErrorCode = errorCode || (is404 ? "ERR_404_NOT_FOUND" : "ERR_INTERNAL_SERVER_ERROR");
+  const defaultErrorCode =
+    errorCode ||
+    (is403
+      ? "ERR_403_FORBIDDEN"
+      : is404
+      ? "ERR_404_NOT_FOUND"
+      : "ERR_INTERNAL_SERVER_ERROR");
 
   const resolvedTitle = title || defaultTitle;
   const resolvedDescription = description || defaultDescription;
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 bg-[#f7f9fb] text-slate-800 relative overflow-hidden select-none">
+    <div
+      className={`min-h-[75vh] w-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 bg-[#f7f9fb] text-slate-800 relative overflow-hidden select-none ${className}`}
+    >
       {/* Background Decorative Watermark */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
         <span
           className="material-symbols-outlined text-[320px] md:text-[460px] text-[var(--primary-container)]"
           style={{ fontVariationSettings: "'FILL' 0, 'wght' 200" }}
         >
-          {is404 ? "route" : "warning"}
+          {is403 ? "lock" : is404 ? "route" : "warning"}
         </span>
       </div>
 
@@ -88,9 +105,19 @@ export function ErrorView({
             <path className="text-blue-700 opacity-80" d="M110 100 L144 100" strokeDasharray="8 4" />
 
             {/* Error Icon in Middle */}
-            <g className={is404 ? "text-amber-500" : "text-red-500"} transform="translate(88, 88)">
+            <g
+              className={is403 ? "text-amber-600" : is404 ? "text-amber-500" : "text-red-500"}
+              transform="translate(88, 88)"
+            >
               <circle cx="12" cy="12" fill="currentColor" fillOpacity="0.1" r="14" stroke="none" />
-              {is404 ? (
+              {is403 ? (
+                <path
+                  d="M8 11 V8 A4 4 0 0 1 16 8 V11 M6 11 H18 V19 H6 Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+              ) : is404 ? (
                 <text
                   x="12"
                   y="17"
