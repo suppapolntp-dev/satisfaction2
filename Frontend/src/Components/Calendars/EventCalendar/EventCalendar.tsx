@@ -207,6 +207,8 @@ export default function EventCalendar({
     handleNext,
     handleToday,
     selectDate,
+    currentMinutes,
+    currentTimeFormatted,
   } = useEventCalendar({
     events,
     initialDate,
@@ -216,19 +218,28 @@ export default function EventCalendar({
 
   const timelineRef = useRef<HTMLDivElement>(null);
 
-  // Live minute marker for current time
-  const [currentMinutes, setCurrentMinutes] = useState<number>(() => {
-    const now = new Date();
-    return now.getHours() * 60 + now.getMinutes();
-  });
+  // Hover state for current time line tooltip
+  const [isTimeLineHovered, setIsTimeLineHovered] = useState(false);
+  const [timeLineTooltipX, setTimeLineTooltipX] = useState<number | null>(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentMinutes(now.getHours() * 60 + now.getMinutes());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const rawX = e.clientX - rect.left;
+    // Keep tooltip comfortably inside boundaries (min 60px, max rect.width - 60px)
+    const clampedX = Math.max(60, Math.min(rawX, rect.width - 60));
+    setTimeLineTooltipX(clampedX);
+  };
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Pass clicks through seamlessly to any event card or cell underneath the line hitbox
+    const lineEl = e.currentTarget;
+    lineEl.style.pointerEvents = "none";
+    const underlyingEl = document.elementFromPoint(e.clientX, e.clientY);
+    lineEl.style.pointerEvents = "";
+    if (underlyingEl && underlyingEl !== lineEl) {
+      (underlyingEl as HTMLElement).click();
+    }
+  };
 
   // Auto-scroll timeline to daytime (~8 AM) in Week view
   useEffect(() => {
@@ -638,14 +649,47 @@ export default function EventCalendar({
 
                   {/* 7 Days Columns Grid */}
                   <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] relative">
-                    {/* Live Current Time Line running across all 7 days */}
+                    {/* Live Current Time Line running across all 7 days with interactive hover tooltip */}
                     <div
-                      aria-hidden="true"
-                      className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
+                      role="region"
+                      aria-label={`เส้นระบุเวลาปัจจุบัน: ${currentTimeFormatted}`}
+                      tabIndex={0}
+                      onClick={handleTimelineClick}
+                      onMouseEnter={(e) => {
+                        setIsTimeLineHovered(true);
+                        handleTimelineMouseMove(e);
+                      }}
+                      onMouseMove={handleTimelineMouseMove}
+                      onMouseLeave={() => setIsTimeLineHovered(false)}
+                      onFocus={() => {
+                        setIsTimeLineHovered(true);
+                        setTimeLineTooltipX(80);
+                      }}
+                      onBlur={() => setIsTimeLineHovered(false)}
+                      className="absolute left-0 right-0 z-20 group cursor-pointer flex items-center h-4 -mt-2 transition-all outline-none"
                       style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px` }}
+                      title={`เวลาปัจจุบัน ${currentTimeFormatted}`}
                     >
-                      <div className="w-2.5 h-2.5 rounded-full bg-slate-950 -ml-1.5 shadow-xs" />
-                      <div className="h-[2px] bg-slate-950 flex-1" />
+                      {/* Left Dot with hover scale & accent */}
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-950 -ml-1.5 shadow-xs group-hover:scale-125 group-hover:bg-[var(--primary-container)] transition-all shrink-0" />
+
+                      {/* Horizontal Line with subtle accent on hover */}
+                      <div className="h-[2px] bg-slate-950 group-hover:bg-[var(--primary-container)] group-hover:h-[3px] flex-1 transition-all" />
+
+                      {/* Floating Tooltip Pill showing live current time */}
+                      {isTimeLineHovered && (
+                        <div
+                          role="tooltip"
+                          className="absolute -top-9 -translate-x-1/2 pointer-events-none z-30 bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-lg tabular-nums whitespace-nowrap flex items-center gap-1.5 transition-transform animate-in fade-in zoom-in-95"
+                          style={{
+                            left: `${timeLineTooltipX ?? 60}px`,
+                          }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>เวลาปัจจุบัน {currentTimeFormatted}</span>
+                          <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-1.5 h-1.5 bg-slate-900 rotate-45" />
+                        </div>
+                      )}
                     </div>
 
                     {weekCalendarDays.map((day) => {

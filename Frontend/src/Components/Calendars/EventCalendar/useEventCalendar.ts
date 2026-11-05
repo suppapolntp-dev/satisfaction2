@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { EventItem, CalendarCell } from "@/Types/event";
 
 export type CalendarViewMode = "Week" | "Month";
@@ -79,6 +79,28 @@ export function useEventCalendar({
 
   const todayStr = useMemo(() => formatToYYYYMMDD(new Date()), []);
   const currentDateStr = useMemo(() => formatToYYYYMMDD(currentDate), [currentDate]);
+
+  // ─── Live Current Time & Minute Offset ───
+  const [currentMinutes, setCurrentMinutes] = useState<number>(() => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  });
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentMinutes(now.getHours() * 60 + now.getMinutes());
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 10000); // Sync every 10s
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentTimeFormatted = useMemo(() => {
+    const hours = Math.floor(currentMinutes / 60);
+    const minutes = currentMinutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} น.`;
+  }, [currentMinutes]);
 
   // ─── Mini Calendar Calculations (Google Calendar Sidebar) ───
   const miniYear = miniDate.getFullYear();
@@ -371,6 +393,8 @@ export function useEventCalendar({
     handleNext,
     handleToday,
     selectDate,
+    currentMinutes,
+    currentTimeFormatted,
     onSelectDate,
     onSelectEvent,
   };
