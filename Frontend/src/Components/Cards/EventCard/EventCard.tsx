@@ -26,8 +26,6 @@ export default function EventCard({ event, onClick, onMenuClick, variant = "deta
     progressFillClass,
     compactStyleClass,
     progressPercent,
-    commentCount,
-    attachmentCount,
     visibleAssignees,
     hiddenAssigneeCount,
     handleClick,
@@ -86,23 +84,8 @@ export default function EventCard({ event, onClick, onMenuClick, variant = "deta
         </button>
       </h3>
 
-      {/* ─── 3. FOOTER: metrics (left) · assignees + menu (right) ─── */}
+      {/* ─── 3. FOOTER: assignees (left) · menu (right) ─── */}
       <div className="flex items-center justify-between gap-2 mt-1">
-        <div className="flex items-center gap-4 text-xs text-slate-600 tabular-nums">
-          <span className="inline-flex items-center gap-1" aria-label={`ความคิดเห็น ${commentCount}`}>
-            <svg {...ICON_PROPS}>
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            {commentCount}
-          </span>
-          <span className="inline-flex items-center gap-1" aria-label={`ไฟล์แนบ ${attachmentCount}`}>
-            <svg {...ICON_PROPS}>
-              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
-            {attachmentCount}
-          </span>
-        </div>
-
         <div className="flex items-center gap-1">
           {visibleAssignees.length > 0 && (
             <ul className="flex items-center -space-x-1.5" aria-label="ผู้รับผิดชอบ">
@@ -126,20 +109,20 @@ export default function EventCard({ event, onClick, onMenuClick, variant = "deta
               )}
             </ul>
           )}
-
-          <button
-            type="button"
-            onClick={handleMenuClick}
-            aria-label={`ตัวเลือกเพิ่มเติม ${event.eventName ?? ""}`}
-            className="relative z-10 inline-flex items-center justify-center w-11 h-11 -my-2 -mr-2 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]"
-          >
-            <svg {...ICON_PROPS} fill="currentColor" stroke="none">
-              <circle cx="5" cy="12" r="1.75" />
-              <circle cx="12" cy="12" r="1.75" />
-              <circle cx="19" cy="12" r="1.75" />
-            </svg>
-          </button>
         </div>
+
+        <button
+          type="button"
+          onClick={handleMenuClick}
+          aria-label={`ตัวเลือกเพิ่มเติม ${event.eventName ?? ""}`}
+          className="relative z-10 inline-flex items-center justify-center w-11 h-11 -my-2 -mr-2 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]"
+        >
+          <svg {...ICON_PROPS} fill="currentColor" stroke="none">
+            <circle cx="5" cy="12" r="1.75" />
+            <circle cx="12" cy="12" r="1.75" />
+            <circle cx="19" cy="12" r="1.75" />
+          </svg>
+        </button>
       </div>
     </article>
   );
