@@ -100,10 +100,6 @@ export default function UserTable({
     userConfig,
     searchKeyword,
     setSearchKeyword,
-    tierFilter,
-    setTierFilter,
-    statusFilter,
-    setStatusFilter,
     sortField,
     sortDirection,
     currentPage,
@@ -127,7 +123,6 @@ export default function UserTable({
     clearSelection,
     isAllCurrentPageSelected,
     isSomeCurrentPageSelected,
-    statusCounts,
     exportData,
     handleSort,
     handlePageChange,
@@ -353,77 +348,7 @@ export default function UserTable({
         </div>
       </div>
 
-      {/* ─── 2. SECONDARY FILTER TOOLBAR: STATUS TABS & TIER PILL (Fardo Filterbar) ─── */}
-      <div className="px-4 py-3 sm:px-5 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-        {/* Status Filter Segmented Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-200/60 p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => setStatusFilter("All")}
-            className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
-              statusFilter === "All"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            {userConfig.statusTabLabels.all} ({statusCounts.all})
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter("Active")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
-              statusFilter === "Active"
-                ? "bg-white text-emerald-800 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{userConfig.statusTabLabels.active} ({statusCounts.active})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter("Inactive")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
-              statusFilter === "Inactive"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-            <span>{userConfig.statusTabLabels.inactive} ({statusCounts.inactive})</span>
-          </button>
-        </div>
-
-        {/* Tier Scope Selector & Reset */}
-        <div className="flex items-center gap-2">
-          <select
-            value={tierFilter}
-            onChange={(e) => setTierFilter(e.target.value)}
-            className="py-1.5 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-          >
-            <option value="All">All Tiers (ทุกระดับสิทธิ์)</option>
-            {userConfig.tiers.map((tier) => (
-              <option key={tier.id} value={tier.nameEn}>
-                {tier.nameEn}
-              </option>
-            ))}
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="text-xs text-blue-600 hover:text-blue-700 font-semibold px-2 py-1 transition-colors cursor-pointer"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ─── 3. DATA TABLE AREA WITH DYNAMIC COLUMNS & ROW SELECTION ─── */}
+      {/* ─── 2. DATA TABLE AREA WITH DYNAMIC COLUMNS & ROW SELECTION ─── */}
       <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full border-collapse text-left text-sm text-slate-600">
           <thead className="bg-slate-50/80 border-b border-slate-200/80">

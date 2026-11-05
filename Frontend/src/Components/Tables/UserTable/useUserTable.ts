@@ -125,6 +125,8 @@ export function useUserTable({
         const role = (user.role ?? "").toLowerCase();
         const brands = (user.assignedBrands ?? []).join(" ").toLowerCase();
         const branches = (user.assignedBranches ?? []).join(" ").toLowerCase();
+        const tier = (user.tierLevel ?? "").toLowerCase();
+        const status = (user.status ?? "").toLowerCase();
 
         const matchesKeyword =
           fullName.includes(normalizedKeyword) ||
@@ -132,7 +134,9 @@ export function useUserTable({
           email.includes(normalizedKeyword) ||
           role.includes(normalizedKeyword) ||
           brands.includes(normalizedKeyword) ||
-          branches.includes(normalizedKeyword);
+          branches.includes(normalizedKeyword) ||
+          tier.includes(normalizedKeyword) ||
+          status.includes(normalizedKeyword);
 
         if (!matchesKeyword) return false;
       }
