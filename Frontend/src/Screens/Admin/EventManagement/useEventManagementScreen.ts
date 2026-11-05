@@ -205,6 +205,7 @@ export function useEventManagementScreen({
   }, []);
 
   const handleEditEvent = useCallback((event: EventItem) => {
+    setSelectedEvent(null);
     setEditingEvent(event);
     setIsEditModalOpen(true);
   }, []);
@@ -228,6 +229,7 @@ export function useEventManagementScreen({
   }, []);
 
   const handleRequestDelete = useCallback((event: EventItem) => {
+    setSelectedEvent(null);
     setDeletingEvent(event);
     setIsDeleteConfirmOpen(true);
   }, []);
