@@ -9,14 +9,14 @@ export default function NotFound() {
       description="หน้าที่คุณกำลังค้นหาอาจถูกย้าย ลบ หรือไม่พร้อมใช้งานชั่วคราวในระบบ Enterprise CSAT"
       errorCode="ERR_404_NOT_FOUND"
       primaryAction={{
-        label: "กลับสู่หน้า Dashboard",
-        icon: "dashboard",
-        href: "/dashboard",
-      }}
-      secondaryAction={{
         label: "เข้าสู่ระบบ",
         icon: "login",
         href: "/login",
+      }}
+      secondaryAction={{
+        label: "Dashboard",
+        icon: "dashboard",
+        href: "/dashboard",
       }}
     />
   );

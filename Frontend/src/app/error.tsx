@@ -29,11 +29,12 @@ export default function Error({
       error={error}
       reset={reset}
       primaryAction={{
-        label: "ลองใหม่อีกครั้ง",
-        icon: "refresh",
+        label: "เข้าสู่ระบบ",
+        icon: "login",
+        href: "/login",
       }}
       secondaryAction={{
-        label: "กลับสู่หน้า Dashboard",
+        label: "Dashboard",
         icon: "dashboard",
         href: "/dashboard",
       }}

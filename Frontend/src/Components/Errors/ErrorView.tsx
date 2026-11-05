@@ -145,6 +145,19 @@ export function ErrorView({
   const resolvedTitle = title || defaultTitle;
   const resolvedDescription = description || defaultDescription;
 
+  // ค่าปุ่มเริ่มต้นตามคำสั่ง: ปุ่มหลักเข้าหน้า login ตัวรองลงมาเป็นปุ่ม dashboard
+  const resolvedPrimaryAction = primaryAction || {
+    label: "เข้าสู่ระบบ",
+    icon: "login",
+    href: "/login",
+  };
+
+  const resolvedSecondaryAction = secondaryAction || {
+    label: "Dashboard",
+    icon: "dashboard",
+    href: "/dashboard",
+  };
+
   return (
     <div
       className={`min-h-[82vh] w-full flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-b from-[#0C2B3A] via-[#0E3547] to-[#0A2431] text-slate-800 relative select-none ${className}`}
@@ -172,62 +185,52 @@ export function ErrorView({
           {resolvedDescription}
         </p>
 
-        {/* 4. Action Buttons (Solid Orange Button matching Got It from Reference) */}
+        {/* 4. Action Buttons: ปุ่มหลักเข้าหน้า login ตัวรองลงมาเป็นปุ่ม dashboard */}
         <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-center w-full">
-          {/* Primary Action (Solid Orange Button - Got It / ลองใหม่อีกครั้ง) */}
-          {reset ? (
+          {/* Primary Action (ปุ่มหลักสีส้ม: เข้าสู่ระบบ / Login) */}
+          {resolvedPrimaryAction.onClick ? (
             <button
-              onClick={reset}
-              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">refresh</span>
-              <span>{primaryAction?.label || "ลองใหม่อีกครั้ง"}</span>
-            </button>
-          ) : primaryAction?.onClick ? (
-            <button
-              onClick={primaryAction.onClick}
-              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              onClick={resolvedPrimaryAction.onClick}
+              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
-                {primaryAction.icon || "check"}
+                {resolvedPrimaryAction.icon || "login"}
               </span>
-              <span>{primaryAction.label}</span>
+              <span>{resolvedPrimaryAction.label}</span>
             </button>
           ) : (
             <Link
-              href={primaryAction?.href || "/dashboard"}
-              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              href={resolvedPrimaryAction.href || "/login"}
+              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
-                {primaryAction?.icon || "check"}
+                {resolvedPrimaryAction.icon || "login"}
               </span>
-              <span>{primaryAction?.label || "Got It"}</span>
+              <span>{resolvedPrimaryAction.label}</span>
             </Link>
           )}
 
-          {/* Secondary Action (Optional Dashboard Link if provided) */}
-          {secondaryAction && (
-            secondaryAction.onClick ? (
-              <button
-                onClick={secondaryAction.onClick}
-                className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  {secondaryAction.icon || "dashboard"}
-                </span>
-                <span>{secondaryAction.label}</span>
-              </button>
-            ) : (
-              <Link
-                href={secondaryAction.href || "/dashboard"}
-                className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  {secondaryAction.icon || "dashboard"}
-                </span>
-                <span>{secondaryAction.label || "Dashboard"}</span>
-              </Link>
-            )
+          {/* Secondary Action (ปุ่มรองสีขาว Outline: Dashboard) */}
+          {resolvedSecondaryAction.onClick ? (
+            <button
+              onClick={resolvedSecondaryAction.onClick}
+              className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {resolvedSecondaryAction.icon || "dashboard"}
+              </span>
+              <span>{resolvedSecondaryAction.label}</span>
+            </button>
+          ) : (
+            <Link
+              href={resolvedSecondaryAction.href || "/dashboard"}
+              className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {resolvedSecondaryAction.icon || "dashboard"}
+              </span>
+              <span>{resolvedSecondaryAction.label}</span>
+            </Link>
           )}
         </div>
       </div>

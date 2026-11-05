@@ -119,12 +119,12 @@ class PlaygroundErrorBoundary extends React.Component<
           error={this.state.error}
           reset={this.handleReset}
           primaryAction={{
-            label: "ลองใหม่อีกครั้ง (Reset)",
-            icon: "refresh",
-            onClick: this.handleReset,
+            label: "เข้าสู่ระบบ",
+            icon: "login",
+            href: "/login",
           }}
           secondaryAction={{
-            label: "กลับสู่หน้า Dashboard",
+            label: "Dashboard",
             icon: "dashboard",
             href: "/dashboard",
           }}
@@ -140,7 +140,7 @@ class PlaygroundErrorBoundary extends React.Component<
  * หน้าทดสอบ Sandbox สำหรับสลับหน้าจอ ดูจุดเกิด Error และ Log Messages แบบเรียลไทม์
  */
 export default function TestPlaygroundPage() {
-  const [selectedScreen, setSelectedScreen] = useState<ScreenRouteKey>("way-to-go");
+  const [selectedScreen, setSelectedScreen] = useState<ScreenRouteKey>("error-500");
   const [logs, setLogs] = useState<LogMessage[]>([]);
   const [logFilter, setLogFilter] = useState<"ALL" | "ERROR" | "WARN" | "INFO">("ALL");
   const [isLogConsoleExpanded, setIsLogConsoleExpanded] = useState(true);
@@ -364,25 +364,13 @@ export default function TestPlaygroundPage() {
               description="ระบบพบปัญหาในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง หรือกลับไปที่หน้าหลัก"
               errorCode="51FC-3D73"
               error={mock500Error}
-              reset={() =>
-                addLog({
-                  level: "SUCCESS",
-                  source: "[Error 500]",
-                  message: "กดปุ่มลองใหม่อีกครั้ง — ทำการรีเซ็ตสถานะเรียบร้อย",
-                })
-              }
               primaryAction={{
-                label: "ลองใหม่อีกครั้ง",
-                icon: "refresh",
-                onClick: () =>
-                  addLog({
-                    level: "SUCCESS",
-                    source: "[Error 500]",
-                    message: "กดปุ่มลองใหม่อีกครั้ง — ทำการรีเซ็ตสถานะเรียบร้อย",
-                  }),
+                label: "เข้าสู่ระบบ",
+                icon: "login",
+                href: "/login",
               }}
               secondaryAction={{
-                label: "กลับสู่หน้า Dashboard",
+                label: "Dashboard",
                 icon: "dashboard",
                 href: "/dashboard",
               }}
@@ -396,14 +384,14 @@ export default function TestPlaygroundPage() {
               description="หน้าที่คุณกำลังค้นหาอาจถูกย้าย ลบ หรือไม่พร้อมใช้งานชั่วคราวในระบบ Enterprise CSAT"
               errorCode="ERR_404_NOT_FOUND"
               primaryAction={{
-                label: "กลับสู่หน้า Dashboard",
-                icon: "dashboard",
-                href: "/dashboard",
-              }}
-              secondaryAction={{
                 label: "เข้าสู่ระบบ",
                 icon: "login",
                 href: "/login",
+              }}
+              secondaryAction={{
+                label: "Dashboard",
+                icon: "dashboard",
+                href: "/dashboard",
               }}
             />
           )}
@@ -415,14 +403,14 @@ export default function TestPlaygroundPage() {
               description="คุณไม่มีสิทธิ์ระดับ Role หรือ Data Access Tier ที่จำเป็นในการเข้าถึงหน้านี้ หากต้องการใช้งานกรุณาติดต่อผู้ดูแลระบบ"
               errorCode="ERR_403_FORBIDDEN"
               primaryAction={{
-                label: "กลับสู่หน้า Dashboard",
-                icon: "dashboard",
-                href: "/dashboard",
-              }}
-              secondaryAction={{
-                label: "เข้าสู่ระบบด้วยบัญชีอื่น",
+                label: "เข้าสู่ระบบ",
                 icon: "login",
                 href: "/login",
+              }}
+              secondaryAction={{
+                label: "Dashboard",
+                icon: "dashboard",
+                href: "/dashboard",
               }}
             />
           )}

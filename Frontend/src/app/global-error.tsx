@@ -32,13 +32,14 @@ export default function GlobalError({
           error={error}
           reset={reset}
           primaryAction={{
-            label: "ลองใหม่อีกครั้ง",
-            icon: "refresh",
-          }}
-          secondaryAction={{
-            label: "กลับสู่หน้าเข้าสู่ระบบ",
+            label: "เข้าสู่ระบบ",
             icon: "login",
             href: "/login",
+          }}
+          secondaryAction={{
+            label: "Dashboard",
+            icon: "dashboard",
+            href: "/dashboard",
           }}
         />
       </body>
