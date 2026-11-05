@@ -7,6 +7,11 @@ export type EventCategory =
 
 export type EventStatus = "Upcoming" | "Active" | "Completed" | "LIVE" | "UPCOMING" | "COMPLETED";
 
+export interface EventAssignee {
+  name: string;
+  avatarUrl?: string | null;
+}
+
 export interface EventItem {
   eventId: string;
   eventName: string;
@@ -23,6 +28,10 @@ export interface EventItem {
   kioskThemeOverride?: string | null;
   targetBranchIds?: string[];
   targetBranchNames?: string[];
+  progressPercent?: number | null; // 0-100
+  commentCount?: number | null;
+  attachmentCount?: number | null;
+  assignees?: EventAssignee[];
 }
 
 export interface CalendarCell {

@@ -7,90 +7,110 @@ export interface EventCardProps extends UseEventCardProps {
   className?: string;
 }
 
-export default function EventCard({
-  event,
-  brandLogoUrl,
-  onClick,
-  className = "",
-}: EventCardProps) {
-  const {
-    statusConfig,
-    brandInitial,
-    brandLogoUrl: effectiveBrandLogoUrl,
-    handleClick,
-  } = useEventCard({ event, brandLogoUrl, onClick });
+const ICON_PROPS = {
+  "aria-hidden": true,
+  className: "w-4 h-4 shrink-0",
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
 
-  // ponytail: the action button's ::after stretches over the card, so the whole card is one
-  // keyboard-focusable target (no nested interactive elements). Add a skeleton when a card grid needs one.
+export default function EventCard({ event, onClick, onMenuClick, className = "" }: EventCardProps) {
+  const {
+    progressFillClass,
+    progressPercent,
+    commentCount,
+    attachmentCount,
+    visibleAssignees,
+    hiddenAssigneeCount,
+    handleClick,
+    handleMenuClick,
+  } = useEventCard({ event, onClick, onMenuClick });
+
+  // ponytail: title button's ::after stretches over the card (single focus target); the menu button sits above via z-10.
+  // Add a compact single-day variant when the calendar needs it.
   return (
     <article
-      className={`relative w-full max-w-[340px] rounded-[32px] overflow-hidden border border-slate-200/90 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] bg-white flex flex-col group transition-shadow duration-300 motion-reduce:transition-none hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--primary-container)] select-none ${className}`}
+      className={`relative w-full flex flex-col gap-2 p-4 rounded-lg bg-white border border-slate-200/80 shadow-[0_4px_12px_rgba(15,23,42,0.05)] transition-shadow duration-200 motion-reduce:transition-none hover:shadow-[0_8px_16px_rgba(15,23,42,0.10)] has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-[var(--primary-container)] ${className}`}
     >
-      {/* ─── 1. TOP MEDIA SECTION: Brand Logo / Photo Frame ─── */}
-      <div className="relative w-full h-44 bg-orange-50 flex items-center justify-center p-6 overflow-hidden border-b border-slate-100">
-        {effectiveBrandLogoUrl ? (
-          <img
-            src={effectiveBrandLogoUrl}
-            alt=""
-            className="w-full h-full object-contain transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105 motion-reduce:group-hover:scale-100"
-          />
-        ) : (
-          <div aria-hidden="true" className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center">
-            <span className="text-3xl font-black text-amber-900">{brandInitial}</span>
-          </div>
-        )}
-
-        {/* Brand Scope Tag on Top Left */}
-        <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md shadow-2xs border border-slate-200/60 text-xs font-bold text-slate-700 uppercase tracking-wider">
-          {event.brandScope || "-"}
-        </div>
+      {/* ─── 1. PROGRESS PILL ─── */}
+      <div
+        role="progressbar"
+        aria-label="ความคืบหน้ากิจกรรม"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progressPercent}
+        className="w-12 h-1 rounded-full bg-slate-200 overflow-hidden"
+      >
+        <div className={`h-full rounded-full ${progressFillClass}`} style={{ width: `${progressPercent}%` }} />
       </div>
 
-      {/* ─── 2. CONTENT BODY ─── */}
-      <div className="p-6 flex flex-col justify-between flex-1 bg-white">
-        <div>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-[var(--primary-container)] transition-colors motion-reduce:transition-none">
-            {event.eventName}
-          </h3>
+      {/* ─── 2. TITLE (stretched click target) ─── */}
+      <h3 className="min-w-0">
+        <button
+          type="button"
+          onClick={handleClick}
+          className="block w-full text-left text-sm font-semibold text-slate-900 leading-snug line-clamp-2 cursor-pointer after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+        >
+          {event.eventName || "-"}
+        </button>
+      </h3>
 
-          <p className="text-xs text-slate-600 line-clamp-1 mt-1 leading-relaxed">
-            {event.description ||
-              (event.eventLocation
-                ? `สถานที่: ${event.eventLocation}`
-                : "ไม่มีรายละเอียดเพิ่มเติม")}
-          </p>
-
-          {event.eventLocation && (
-            <div className="flex items-center gap-2 text-xs text-slate-600 mt-4 pt-4 border-t border-slate-100 truncate">
-              <svg aria-hidden="true" className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              <span className="truncate">{event.eventLocation}</span>
-            </div>
-          )}
+      {/* ─── 3. FOOTER: metrics (left) · assignees + menu (right) ─── */}
+      <div className="flex items-center justify-between gap-2 mt-1">
+        <div className="flex items-center gap-4 text-xs text-slate-600 tabular-nums">
+          <span className="inline-flex items-center gap-1" aria-label={`ความคิดเห็น ${commentCount}`}>
+            <svg {...ICON_PROPS}>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {commentCount}
+          </span>
+          <span className="inline-flex items-center gap-1" aria-label={`ไฟล์แนบ ${attachmentCount}`}>
+            <svg {...ICON_PROPS}>
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+            {attachmentCount}
+          </span>
         </div>
 
-        {/* ─── 3. ACTION BUTTON (stretched over the whole card) ─── */}
-        <div className="mt-6">
+        <div className="flex items-center gap-1">
+          {visibleAssignees.length > 0 && (
+            <ul className="flex items-center -space-x-1.5" aria-label="ผู้รับผิดชอบ">
+              {visibleAssignees.map((assignee) => (
+                <li
+                  key={assignee.name}
+                  title={assignee.name}
+                  className="w-6 h-6 rounded-full ring-2 ring-white bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center overflow-hidden"
+                >
+                  {assignee.avatarUrl ? (
+                    <img src={assignee.avatarUrl} alt={assignee.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span aria-label={assignee.name}>{assignee.name.trim().charAt(0).toUpperCase()}</span>
+                  )}
+                </li>
+              ))}
+              {hiddenAssigneeCount > 0 && (
+                <li className="w-6 h-6 rounded-full ring-2 ring-white bg-slate-100 text-slate-600 text-[11px] font-semibold flex items-center justify-center">
+                  +{hiddenAssigneeCount}
+                </li>
+              )}
+            </ul>
+          )}
+
           <button
             type="button"
-            onClick={handleClick}
-            className={`w-full min-h-11 rounded-full font-medium text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors duration-200 motion-reduce:transition-none after:absolute after:inset-0 after:content-[''] ${statusConfig.buttonClass}`}
+            onClick={handleMenuClick}
+            aria-label={`ตัวเลือกเพิ่มเติม ${event.eventName ?? ""}`}
+            className="relative z-10 inline-flex items-center justify-center w-11 h-11 -my-2 -mr-2 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]"
           >
-            {statusConfig.variant === "completed" ? (
-              <svg aria-hidden="true" className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg aria-hidden="true" className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            )}
-            <span>{statusConfig.buttonLabel}</span>
+            <svg {...ICON_PROPS} fill="currentColor" stroke="none">
+              <circle cx="5" cy="12" r="1.75" />
+              <circle cx="12" cy="12" r="1.75" />
+              <circle cx="19" cy="12" r="1.75" />
+            </svg>
           </button>
         </div>
       </div>
