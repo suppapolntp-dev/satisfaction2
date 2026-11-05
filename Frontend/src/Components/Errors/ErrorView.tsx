@@ -160,16 +160,10 @@ export function ErrorView({
 
   return (
     <div
-      className={`min-h-[82vh] w-full flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-b from-[#0C2B3A] via-[#0E3547] to-[#0A2431] text-slate-800 relative select-none ${className}`}
+      className={`min-h-[82vh] w-full flex items-center justify-center p-4 sm:p-6 md:p-8 bg-slate-50 text-slate-800 relative select-none ${className}`}
     >
-      {/* Background Decorative Ambient Glow */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#149B9E]/10 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-slate-500/10 blur-3xl" />
-      </div>
-
       {/* ─── Main Modal Card (1:1 Reference Styling from image_d88fef.png) ─── */}
-      <div className="max-w-[360px] w-full bg-white rounded-2xl border-2 border-[#0d1b2a] p-8 text-center shadow-2xl relative z-10 transition-all">
+      <div className="max-w-[360px] w-full bg-white rounded-2xl border-2 border-[#0d1b2a] p-8 text-center shadow-md relative z-10 transition-all">
         {/* 1. Vector Illustration (Exact 1:1 Vector from Dribbble Shot) */}
         <div className="w-full flex items-center justify-center mb-4">
           <DribbbleHeroIllustration />
