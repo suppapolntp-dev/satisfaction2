@@ -238,7 +238,7 @@ export default function TestPlaygroundPage() {
     "Error: DatabaseConnectionTimeout: Failed to connect to Enterprise PostgreSQL replica pool\n    at async QueryExecutor.execute (D:\\DevProject\\Project\\Satifaction2\\Backend\\Services\\ScopeFilterService.cs:42:15)\n    at async DashboardController.GetMetrics (D:\\DevProject\\Project\\Satifaction2\\Backend\\Controllers\\DashboardController.cs:88:9)";
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col antialiased">
+    <div className="min-h-screen min-h-dvh bg-[#f8fafc] flex flex-col antialiased">
       {/* ─── Top Navbar พร้อม Page Selector ─── */}
       <header className="bg-[#0C2B3A] text-white border-b border-slate-700/80 px-4 sm:px-6 py-3 sticky top-0 z-40 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-3">

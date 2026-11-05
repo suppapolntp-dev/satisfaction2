@@ -160,7 +160,7 @@ export function ErrorView({
 
   return (
     <div
-      className={`min-h-[82vh] w-full flex items-center justify-center p-4 sm:p-6 md:p-8 bg-slate-50 text-slate-800 relative select-none ${className}`}
+      className={`min-h-screen min-h-dvh w-full flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-[#f8fafc] text-slate-800 relative select-none ${className}`}
     >
       {/* ─── Main Modal Card (1:1 Reference Styling from image_d88fef.png) ─── */}
       <div className="max-w-[360px] w-full bg-white rounded-2xl border-2 border-[#0d1b2a] p-8 text-center shadow-md relative z-10 transition-all">
@@ -179,13 +179,13 @@ export function ErrorView({
           {resolvedDescription}
         </p>
 
-        {/* 4. Action Buttons: ปุ่มหลักเข้าหน้า login ตัวรองลงมาเป็นปุ่ม dashboard */}
+        {/* 4. Action Buttons: ปุ่มหลักเข้าหน้า login (สีฟ้า Corporate Blue) ตัวรองลงมาเป็นปุ่ม dashboard */}
         <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-center w-full">
-          {/* Primary Action (ปุ่มหลักสีส้ม: เข้าสู่ระบบ / Login) */}
+          {/* Primary Action (ปุ่มหลักสีฟ้าตามโปรเจกต์: เข้าสู่ระบบ / Login) */}
           {resolvedPrimaryAction.onClick ? (
             <button
               onClick={resolvedPrimaryAction.onClick}
-              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto flex-1 bg-[var(--primary-container,#2563EB)] hover:bg-[var(--primary-hover,#1d4ed8)] text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {resolvedPrimaryAction.icon || "login"}
@@ -195,7 +195,7 @@ export function ErrorView({
           ) : (
             <Link
               href={resolvedPrimaryAction.href || "/login"}
-              className="w-full sm:w-auto flex-1 bg-[#f26430] hover:bg-[#e0531f] text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto flex-1 bg-[var(--primary-container,#2563EB)] hover:bg-[var(--primary-hover,#1d4ed8)] text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {resolvedPrimaryAction.icon || "login"}
@@ -208,7 +208,7 @@ export function ErrorView({
           {resolvedSecondaryAction.onClick ? (
             <button
               onClick={resolvedSecondaryAction.onClick}
-              className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[var(--primary-container,#2563EB)] hover:text-[var(--primary-container,#2563EB)] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {resolvedSecondaryAction.icon || "dashboard"}
@@ -218,7 +218,7 @@ export function ErrorView({
           ) : (
             <Link
               href={resolvedSecondaryAction.href || "/dashboard"}
-              className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[#0d1b2a] hover:text-[#0d1b2a] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto flex-1 bg-white border border-slate-300 hover:border-[var(--primary-container,#2563EB)] hover:text-[var(--primary-container,#2563EB)] text-slate-700 font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-150 active:scale-95 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {resolvedSecondaryAction.icon || "dashboard"}

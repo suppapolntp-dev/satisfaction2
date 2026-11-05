@@ -3,7 +3,7 @@ import { ErrorView } from "@/Components/Errors/ErrorView";
 
 export default function UnauthorizedPage() {
   return (
-    <div className="flex-1 flex items-center justify-center p-6 min-h-[70vh]">
+    <div className="flex-1 w-full min-h-screen min-h-dvh flex items-center justify-center bg-[#f8fafc]">
       <ErrorView
         statusCode={403}
         title="403 - ปฏิเสธการเข้าถึง (Access Denied)"

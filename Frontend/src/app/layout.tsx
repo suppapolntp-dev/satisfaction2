@@ -45,7 +45,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
       </head>
-      <body suppressHydrationWarning className="min-h-full flex flex-col bg-white text-neutral-800 transition-colors duration-200">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-[#f8fafc] text-neutral-800 transition-colors duration-200">
         <TouchEnabler />
         {children}
       </body>
