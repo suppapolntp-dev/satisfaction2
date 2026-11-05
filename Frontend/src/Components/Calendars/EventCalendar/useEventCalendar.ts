@@ -81,9 +81,51 @@ export function useEventCalendar({
   const [viewMode, setViewMode] = useState<CalendarViewMode>("Week");
   const [miniDate, setMiniDate] = useState<Date>(() => initialDate || new Date());
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const safeEvents = useMemo(() => events || [], [events]);
+
+  const availableBrands = useMemo(() => {
+    const set = new Set<string>();
+    safeEvents.forEach((e) => {
+      if (e.brandScope?.trim()) set.add(e.brandScope.trim());
+    });
+    return Array.from(set);
+  }, [safeEvents]);
+
+  const toggleBrandFilter = useCallback((brand: string) => {
+    setSelectedBrands((prev) =>
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+    );
+  }, []);
+
+  const selectAllBrands = useCallback(() => {
+    setSelectedBrands([]);
+  }, []);
+
+  const toggleCategoryFilter = useCallback((category: string) => {
+    const catUpper = category.toUpperCase();
+    setSelectedCategories((prev) =>
+      prev.includes(catUpper) ? prev.filter((c) => c !== catUpper) : [...prev, catUpper]
+    );
+  }, []);
+
+  const selectAllCategories = useCallback(() => {
+    setSelectedCategories([]);
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setSelectedBrands([]);
+    setSelectedCategories([]);
+    setSearchQuery("");
+  }, []);
+
+  const isFiltered = useMemo(() => {
+    return Boolean(
+      searchQuery.trim() || selectedBrands.length > 0 || selectedCategories.length > 0
+    );
+  }, [searchQuery, selectedBrands.length, selectedCategories.length]);
 
   const filteredEvents = useMemo(() => {
     let list = safeEvents;
@@ -97,11 +139,16 @@ export function useEventCalendar({
           (e.description && e.description.toLowerCase().includes(q))
       );
     }
-    if (selectedCategory !== "ALL") {
-      list = list.filter((e) => (e.eventCategory || "").toUpperCase() === selectedCategory);
+    if (selectedBrands.length > 0) {
+      list = list.filter((e) => selectedBrands.includes(e.brandScope));
+    }
+    if (selectedCategories.length > 0) {
+      list = list.filter((e) =>
+        selectedCategories.includes((e.eventCategory || "").toUpperCase())
+      );
     }
     return list;
-  }, [safeEvents, searchQuery, selectedCategory]);
+  }, [safeEvents, searchQuery, selectedBrands, selectedCategories]);
 
   const todayStr = useMemo(() => formatToYYYYMMDD(new Date()), []);
   const currentDateStr = useMemo(() => formatToYYYYMMDD(currentDate), [currentDate]);
@@ -438,8 +485,15 @@ export function useEventCalendar({
     handleNextMiniMonth,
     searchQuery,
     setSearchQuery,
-    selectedCategory,
-    setSelectedCategory,
+    selectedBrands,
+    availableBrands,
+    toggleBrandFilter,
+    selectAllBrands,
+    selectedCategories,
+    toggleCategoryFilter,
+    selectAllCategories,
+    resetFilters,
+    isFiltered,
     monthCalendarCells,
     monthWeeks,
     weekCalendarDays,
