@@ -32,11 +32,10 @@ export default function EventCard({
   className = "",
 }: EventCardProps) {
   const {
-    progressFillClass,
     compactStyleClass,
-    progressPercent,
     visibleAssignees,
     hiddenAssigneeCount,
+    daySpan,
     displayTitle,
     isMenuOpen,
     menuRef,
@@ -73,21 +72,9 @@ export default function EventCard({
   // Add a compact single-day variant when the calendar needs it.
   return (
     <article
-      className={`relative w-full flex flex-col gap-2 p-4 rounded-lg bg-white border border-slate-200/80 shadow-[0_4px_12px_rgba(15,23,42,0.05)] transition-shadow duration-200 motion-reduce:transition-none hover:shadow-[0_8px_16px_rgba(15,23,42,0.10)] has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-[var(--primary-container)] ${className}`}
+      className={`relative w-full flex flex-col justify-between gap-2 p-3 sm:p-4 rounded-lg bg-white border border-slate-200/80 shadow-[0_4px_12px_rgba(15,23,42,0.05)] transition-shadow duration-200 motion-reduce:transition-none hover:shadow-[0_8px_16px_rgba(15,23,42,0.10)] has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-[var(--primary-container)] ${className}`}
     >
-      {/* ─── 1. PROGRESS PILL ─── */}
-      <div
-        role="progressbar"
-        aria-label="ความคืบหน้ากิจกรรม"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={progressPercent}
-        className="w-12 h-1 rounded-full bg-slate-200 overflow-hidden"
-      >
-        <div className={`h-full rounded-full ${progressFillClass}`} style={{ width: `${progressPercent}%` }} />
-      </div>
-
-      {/* ─── 2. TITLE (stretched click target) ─── */}
+      {/* ─── 1. TITLE (stretched click target) ─── */}
       <h3 className="min-w-0">
         <button
           type="button"
@@ -99,10 +86,11 @@ export default function EventCard({
         </button>
       </h3>
 
-      {/* ─── 3. FOOTER: assignees (left) · menu (right) ─── */}
-      <div className="flex items-center justify-between gap-2 mt-1">
-        <div className="flex items-center gap-1">
-          {visibleAssignees.length > 0 && (
+      {/* ─── 2. FOOTER: assignees (if wide) · menu (right) ─── */}
+      <div className={`flex items-center gap-2 mt-1 ${daySpan > 1 && visibleAssignees.length > 0 ? "justify-between" : "justify-end"}`}>
+        {/* If card is small (1-day), hide avatars and show only 3-dot menu */}
+        {daySpan > 1 && visibleAssignees.length > 0 && (
+          <div className="flex items-center gap-1">
             <ul className="flex items-center -space-x-1.5" aria-label="ผู้รับผิดชอบ">
               {visibleAssignees.map((assignee) => (
                 <li
@@ -123,8 +111,8 @@ export default function EventCard({
                 </li>
               )}
             </ul>
-          )}
-        </div>
+          </div>
+        )}
 
         <div ref={menuRef} className="relative z-20">
           <button
