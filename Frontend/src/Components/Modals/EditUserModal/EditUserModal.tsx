@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { UserModel, UpdateUserPayload } from "@/Types/user";
 import { useEditUserModal } from "./useEditUserModal";
+import { useUserSettings } from "@/Lib/useUserSettings";
 
 export interface EditUserModalProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ export default function EditUserModal({
   onClose,
   onSave,
 }: EditUserModalProps) {
+  const { userConfig } = useUserSettings();
+
   const {
     formData,
     isSubmitting,
@@ -196,11 +199,11 @@ export default function EditUserModal({
                 onChange={(e) => handleChange("role", e.target.value)}
                 className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 transition-all font-medium"
               >
-                <option value="Administrator">Administrator (ควบคุมระบบ)</option>
-                <option value="Manager">Manager (ผู้จัดการระดับเขต/แบรนด์)</option>
-                <option value="Agent">Agent (เจ้าหน้าที่ปฏิบัติการ)</option>
-                <option value="Auditor">Auditor (ตรวจสอบข้อมูล)</option>
-                <option value="Read Only">Read Only (ดูรายงานอย่างเดียว)</option>
+                {userConfig.roles.map((role) => (
+                  <option key={role.id} value={role.name}>
+                    {role.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -215,12 +218,11 @@ export default function EditUserModal({
               onChange={(e) => handleChange("tierLevel", e.target.value)}
               className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold transition-all"
             >
-              <option value="Super Admin">Super Administrator (ผู้ดูแลระบบระดับองค์กร - Tier 1)</option>
-              <option value="Brand Owner">Brand Manager / Owner (ผู้บริหารระดับแบรนด์ - Tier 2)</option>
-              <option value="Regional Manager (RM)">Regional Manager / RM (ผู้จัดการระดับภูมิภาค - Tier 3)</option>
-              <option value="Area Manager (AM)">Area Manager / AM (ผู้จัดการระดับเขต - Tier 4)</option>
-              <option value="Branch Staff">Branch Officer / Staff (เจ้าหน้าที่ประจำสาขา - Tier 5)</option>
-              <option value="Custom Scope">Custom Scope (กำหนดขอบเขตเฉพาะบุคคล)</option>
+              {userConfig.tiers.map((tier) => (
+                <option key={tier.id} value={tier.nameEn}>
+                  {tier.nameTh}
+                </option>
+              ))}
             </select>
           </div>
 

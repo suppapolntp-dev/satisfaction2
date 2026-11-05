@@ -97,6 +97,7 @@ export default function UserTable({
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
 
   const {
+    userConfig,
     searchKeyword,
     setSearchKeyword,
     tierFilter,
@@ -365,7 +366,7 @@ export default function UserTable({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            All Users ({statusCounts.all})
+            {userConfig.statusTabLabels.all} ({statusCounts.all})
           </button>
 
           <button
@@ -378,7 +379,7 @@ export default function UserTable({
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Active ({statusCounts.active})</span>
+            <span>{userConfig.statusTabLabels.active} ({statusCounts.active})</span>
           </button>
 
           <button
@@ -391,7 +392,7 @@ export default function UserTable({
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-            <span>Inactive ({statusCounts.inactive})</span>
+            <span>{userConfig.statusTabLabels.inactive} ({statusCounts.inactive})</span>
           </button>
         </div>
 
@@ -403,12 +404,11 @@ export default function UserTable({
             className="py-1.5 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           >
             <option value="All">All Tiers (ทุกระดับสิทธิ์)</option>
-            <option value="Super Admin">Super Admin</option>
-            <option value="Brand Owner">Brand Owner</option>
-            <option value="Regional Manager (RM)">Regional Manager (RM)</option>
-            <option value="Area Manager (AM)">Area Manager (AM)</option>
-            <option value="Branch Staff">Branch Staff</option>
-            <option value="Custom Scope">Custom Scope</option>
+            {userConfig.tiers.map((tier) => (
+              <option key={tier.id} value={tier.nameEn}>
+                {tier.nameEn}
+              </option>
+            ))}
           </select>
 
           {hasActiveFilters && (

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { UserModel, UserTierLevel, UserStatus } from "@/Types/user";
+import { useUserSettings } from "@/Lib/useUserSettings";
 
 export type UserTableSortField =
   | "userCode"
@@ -43,15 +44,17 @@ export interface UseUserTableOptions {
 
 export function useUserTable({
   users = [],
-  initialPageSize = 8,
+  initialPageSize,
 }: UseUserTableOptions = {}) {
+  const { userConfig } = useUserSettings();
+
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [tierFilter, setTierFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [sortField, setSortField] = useState<UserTableSortField>("name");
   const [sortDirection, setSortDirection] = useState<UserTableSortDirection>("asc");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(initialPageSize);
+  const [pageSize, setPageSize] = useState<number>(initialPageSize || userConfig.defaultPageSize);
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
 
   // Column visibility state (Fardo style)
@@ -281,7 +284,7 @@ export function useUserTable({
       );
 
       const timestamp = new Date().toISOString().slice(0, 10);
-      const fileName = `users_export_${timestamp}`;
+      const fileName = `${userConfig.exportFileNamePrefix}_${timestamp}`;
 
       if (format === "json") {
         // Build JSON containing only visible columns
@@ -455,6 +458,7 @@ export function useUserTable({
   );
 
   return {
+    userConfig,
     searchKeyword,
     setSearchKeyword,
     tierFilter,

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { CreateUserPayload, UserTierLevel, UserStatus } from "@/Types/user";
 import { BranchModel } from "@/Types/branch";
 import { branchService } from "@/Services/branchService";
+import { useUserSettings } from "@/Lib/useUserSettings";
 
 export interface CreateUserFormData {
   userCode: string;
@@ -33,6 +34,8 @@ export function useCreateUserModal({
   onSave,
   onClose,
 }: UseCreateUserModalOptions) {
+  const { userConfig } = useUserSettings();
+
   const [formData, setFormData] = useState<CreateUserFormData>({
     userCode: "",
     firstName: "",
@@ -283,6 +286,7 @@ export function useCreateUserModal({
   );
 
   return {
+    userConfig,
     formData,
     branches,
     isBranchesLoading,

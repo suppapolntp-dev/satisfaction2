@@ -5,8 +5,10 @@ import { UserModel, CreateUserPayload, UpdateUserPayload } from "@/Types/user";
 import { userService } from "@/Services/userService";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
+import { useUserSettings } from "@/Lib/useUserSettings";
 
 export function useUsermanagementScreen() {
+  const { userConfig } = useUserSettings();
   const [users, setUsers] = useState<UserModel[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
@@ -143,6 +145,7 @@ export function useUsermanagementScreen() {
   }, [deletingUser]);
 
   return {
+    userConfig,
     users,
     availableBrands,
     availableBranches,

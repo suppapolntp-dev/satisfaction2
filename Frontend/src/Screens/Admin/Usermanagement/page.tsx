@@ -11,6 +11,7 @@ import { useUsermanagementScreen } from "./useUsermanagementScreen";
 
 export default function UsermanagementScreen() {
   const {
+    userConfig,
     users,
     availableBrands,
     availableBranches,
@@ -35,10 +36,10 @@ export default function UsermanagementScreen() {
 
   return (
     <div className="space-y-6">
-      {/* ─── 1. MODULAR PAGE HEADER ─── */}
+      {/* ─── 1. MODULAR PAGE HEADER (Dynamically bound to reactive userConfig) ─── */}
       <PageHeader
-        title="User & Multi-Scope Management"
-        description="Enterprise corporate accounts, 5-tier organizational data access scope, and role provisioning"
+        title={userConfig.pageTitle}
+        description={userConfig.pageDescription}
       />
 
       {/* ─── 2. USER METRIC KPI CARDS ─── */}
