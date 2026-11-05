@@ -69,7 +69,6 @@ export function useEventDetailModal({
   return {
     dateRangeFormatted,
     timeFormatted,
-    progressPercent,
     handleEditClick,
     handleDeleteClick,
   };

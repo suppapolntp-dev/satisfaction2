@@ -15,6 +15,9 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; dot: string; l
   MAINTENANCE: { bg: "bg-slate-50", text: "text-slate-800 border-slate-200", dot: "bg-slate-500", label: "ซ่อมบำรุงประจำรอบ" },
 };
 
+// Fallback image url provided by user for brand/profile icon
+const DEFAULT_BRAND_LOGO_FALLBACK = "https://cdn-icons-png.flaticon.com/512/456/456283.png";
+
 export default function EventDetailModal({
   isOpen,
   event,
@@ -26,7 +29,6 @@ export default function EventDetailModal({
   const {
     dateRangeFormatted,
     timeFormatted,
-    progressPercent,
     handleEditClick,
     handleDeleteClick,
   } = useEventDetailModal({ isOpen, event, onClose, onEdit, onDelete });
@@ -72,9 +74,15 @@ export default function EventDetailModal({
                 </span>
               )}
 
+              {/* Brand Badge with Logo */}
               {event.brandScope && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/80">
-                  {event.brandScope}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
+                  <img
+                    src={event.brandLogoUrl || DEFAULT_BRAND_LOGO_FALLBACK}
+                    alt={event.brandScope}
+                    className="w-4 h-4 object-contain rounded-full shrink-0"
+                  />
+                  <span>{event.brandScope}</span>
                 </span>
               )}
             </div>
@@ -85,6 +93,31 @@ export default function EventDetailModal({
             >
               {event.eventName}
             </h2>
+
+            {/* Green Arrow: Moved Team Assignees up to Header */}
+            {event.assignees && event.assignees.length > 0 && (
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <span className="text-[11px] font-medium text-slate-500">ทีมผู้รับผิดชอบ:</span>
+                <div className="flex items-center -space-x-1.5">
+                  {event.assignees.map((assignee) => (
+                    <span
+                      key={assignee.name}
+                      title={assignee.name}
+                      className="w-6 h-6 rounded-full ring-2 ring-white bg-slate-200 text-slate-800 text-[10px] font-bold flex items-center justify-center overflow-hidden"
+                    >
+                      {assignee.avatarUrl ? (
+                        <img src={assignee.avatarUrl} alt={assignee.name} className="w-full h-full object-cover" />
+                      ) : (
+                        assignee.name.trim().charAt(0).toUpperCase()
+                      )}
+                    </span>
+                  ))}
+                </div>
+                <span className="text-[11px] text-slate-600 font-medium">
+                  {event.assignees.map((a) => a.name).join(", ")}
+                </span>
+              </div>
+            )}
           </div>
 
           <button
@@ -102,21 +135,17 @@ export default function EventDetailModal({
 
         {/* Body Info */}
         <div className="py-4 space-y-4 text-xs text-slate-700 flex-1 overflow-y-auto max-h-[60vh]">
-          {/* Progress Section */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
-            <div className="flex justify-between items-center text-xs font-medium text-slate-600">
-              <span>ความคืบหน้า</span>
-              <span className="font-bold text-slate-900">{progressPercent}%</span>
+          {/* Yellow Marking (Swapped): Description comes FIRST */}
+          {event.description && (
+            <div className="space-y-1">
+              <span className="text-[11px] font-medium text-slate-500">คำอธิบายเพิ่มเติม</span>
+              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50/70 p-3 rounded-xl border border-slate-100">
+                {event.description}
+              </p>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[var(--primary-container)] transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+          )}
 
-          {/* Grid Metadata */}
+          {/* Yellow Marking (Swapped): Date & Time comes AFTER Description */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="p-3 rounded-xl border border-slate-100 bg-white space-y-1">
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5">
@@ -169,40 +198,6 @@ export default function EventDetailModal({
                   >
                     {branchName}
                   </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Description */}
-          {event.description && (
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-slate-500">คำอธิบายเพิ่มเติม</span>
-              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50/70 p-3 rounded-xl border border-slate-100">
-                {event.description}
-              </p>
-            </div>
-          )}
-
-          {/* Assignees */}
-          {event.assignees && event.assignees.length > 0 && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-medium text-slate-500">ทีมผู้รับผิดชอบ ({event.assignees.length})</span>
-              <div className="flex flex-wrap gap-2">
-                {event.assignees.map((assignee) => (
-                  <div
-                    key={assignee.name}
-                    className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-slate-300 text-[10px] font-bold text-slate-800 flex items-center justify-center overflow-hidden">
-                      {assignee.avatarUrl ? (
-                        <img src={assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        assignee.name.trim().charAt(0).toUpperCase()
-                      )}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-800">{assignee.name}</span>
-                  </div>
                 ))}
               </div>
             </div>
