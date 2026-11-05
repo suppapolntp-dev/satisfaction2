@@ -13,3 +13,5 @@ export { default as EventEditModal } from "./EventEditModal";
 export * from "./EventEditModal";
 export { default as CreateUserModal } from "./CreateUserModal";
 export * from "./CreateUserModal";
+export { default as EditUserModal } from "./EditUserModal";
+export * from "./EditUserModal";
