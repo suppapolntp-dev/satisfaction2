@@ -10,6 +10,7 @@ import {
   CalendarViewMode,
   MINI_WEEKDAYS_TH,
   MONTH_NAMES,
+  THAI_MONTH_NAMES,
 } from "./useEventCalendar";
 
 export interface EventCalendarProps extends UseEventCalendarProps {
@@ -134,14 +135,14 @@ export default function EventCalendar({
         {/* Navigation & Date Display (Fireart Tear-Sheet Badge) */}
         <div className="flex items-center gap-3.5 w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex items-center gap-3">
-            {/* Tear-sheet Calendar Icon */}
-            <div className="w-10 h-11 rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col shrink-0 select-none">
-              <div className="bg-red-600 text-white text-[10px] font-bold tracking-wider text-center py-0.5 uppercase">
-                {MONTH_NAMES[currentDate.getMonth()].slice(0, 3)}
-              </div>
-              <div className="bg-white flex-1 flex items-center justify-center font-bold text-slate-900 text-sm leading-none">
+            {/* Modern Thai Calendar Date Badge (ข้อ 10 Remodeled) */}
+            <div className="flex h-11 w-11 flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white shadow-2xs shrink-0 select-none">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 leading-none">
+                {THAI_MONTH_NAMES[currentDate.getMonth()].slice(0, 3)}
+              </span>
+              <span className="text-base font-black text-slate-900 leading-none mt-1 tabular-nums">
                 {currentDate.getDate()}
-              </div>
+              </span>
             </div>
 
             <div>
@@ -154,31 +155,33 @@ export default function EventCalendar({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          {/* Unified Segmented Navigation Controls (วันนี้ / < / >) */}
+          <div className="inline-flex items-center rounded-full bg-white p-1 border border-slate-200/90 shadow-2xs">
             <button
               type="button"
               onClick={handleToday}
-              className={`px-4 min-h-11 sm:min-h-10 rounded-full text-xs font-semibold bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 shadow-2xs cursor-pointer transition-all duration-200 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors cursor-pointer active:scale-95 ${FOCUS_RING}`}
             >
-              Today
+              วันนี้
             </button>
+            <div className="h-3.5 w-px bg-slate-200 mx-1" />
             <button
               type="button"
               onClick={handlePrev}
-              aria-label="Previous Period"
-              className={`inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200/80 cursor-pointer transition-all duration-200 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
+              aria-label="ย้อนกลับ"
+              className={`w-7 h-7 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer active:scale-90 ${FOCUS_RING}`}
             >
-              <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg aria-hidden="true" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
             <button
               type="button"
               onClick={handleNext}
-              aria-label="Next Period"
-              className={`inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200/80 cursor-pointer transition-all duration-200 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
+              aria-label="ถัดไป"
+              className={`w-7 h-7 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer active:scale-90 ${FOCUS_RING}`}
             >
-              <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg aria-hidden="true" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -582,8 +585,8 @@ export default function EventCalendar({
           {/* ─── DAY VIEW (Focused Single-Day Schedule & Activity Detail) ─── */}
           {viewMode === "Day" && (
             <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto bg-slate-50/30 space-y-4">
-              {/* Day Header Summary */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+              {/* Day Header Summary (ข้อ 7: ลบปุ่มซ้ำซ้อนออกแล้ว) */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
                     {dayTitleLabel}
@@ -594,20 +597,6 @@ export default function EventCalendar({
                       : "ไม่มีกิจกรรมหรือกำหนดการในวันนี้"}
                   </p>
                 </div>
-
-                {onCreateEvent && (
-                  <button
-                    type="button"
-                    onClick={onCreateEvent}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] transition-colors cursor-pointer self-start sm:self-auto shadow-2xs"
-                  >
-                    <svg aria-hidden="true" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    <span>เพิ่มกิจกรรม</span>
-                  </button>
-                )}
               </div>
 
               {/* Day Events List */}
