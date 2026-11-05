@@ -3,7 +3,10 @@
 import React from "react";
 import { useEventCard, UseEventCardProps } from "./useEventCard";
 
+export type EventCardVariant = "detailed" | "compact";
+
 export interface EventCardProps extends UseEventCardProps {
+  variant?: EventCardVariant;
   className?: string;
 }
 
@@ -18,7 +21,7 @@ const ICON_PROPS = {
   strokeLinejoin: "round",
 } as const;
 
-export default function EventCard({ event, onClick, onMenuClick, className = "" }: EventCardProps) {
+export default function EventCard({ event, onClick, onMenuClick, variant = "detailed", className = "" }: EventCardProps) {
   const {
     progressFillClass,
     progressPercent,
@@ -29,6 +32,29 @@ export default function EventCard({ event, onClick, onMenuClick, className = "" 
     handleClick,
     handleMenuClick,
   } = useEventCard({ event, onClick, onMenuClick });
+
+  if (variant === "compact") {
+    const leadAssignee = visibleAssignees[0];
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        title={event.eventName}
+        className={`w-full min-h-9 px-2 py-1.5 rounded-md flex items-center gap-2 text-left text-xs font-medium text-slate-900 cursor-pointer transition-colors duration-200 motion-reduce:transition-none hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] bg-emerald-200 ${className}`}
+      >
+        {leadAssignee && (
+          <span className="w-5 h-5 rounded-full bg-white/80 text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">
+            {leadAssignee.avatarUrl ? (
+              <img src={leadAssignee.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              leadAssignee.name.trim().charAt(0).toUpperCase()
+            )}
+          </span>
+        )}
+        <span className="truncate">{event.eventName || "-"}</span>
+      </button>
+    );
+  }
 
   // ponytail: title button's ::after stretches over the card (single focus target); the menu button sits above via z-10.
   // Add a compact single-day variant when the calendar needs it.

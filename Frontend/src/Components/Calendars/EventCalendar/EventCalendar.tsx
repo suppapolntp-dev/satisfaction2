@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import { EventItem, EventCategory } from "@/Types/event";
+import EventCard from "@/Components/Cards/EventCard";
 import {
   useEventCalendar,
   UseEventCalendarProps,
@@ -198,7 +199,7 @@ export default function EventCalendar({
     setSearchQuery,
     selectedCategory,
     setSelectedCategory,
-    monthCalendarCells,
+    monthWeeks,
     weekCalendarDays,
     weekRangeLabel,
     dayEvents,
@@ -517,62 +518,59 @@ export default function EventCalendar({
                 ))}
               </div>
 
-              <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-100 text-xs min-w-[680px]">
-                {monthCalendarCells.map((cell, idx) => (
-                  <div
-                    key={`${cell.dateString}-${idx}`}
-                    onClick={() => selectDate(cell.dateString)}
-                    className={`min-h-[104px] p-2 flex flex-col justify-between transition-colors motion-reduce:transition-none cursor-pointer hover:bg-slate-50/60 ${
-                      cell.isCurrentMonth ? "bg-white" : "bg-slate-50/30 text-slate-500"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectDate(cell.dateString);
-                        }}
-                        aria-label={cell.dateString}
-                        aria-current={cell.isToday ? "date" : undefined}
-                        className={`inline-flex items-center justify-center w-8 h-8 -m-1 rounded-full text-xs font-semibold cursor-pointer ${FOCUS_RING} ${
-                          cell.isToday
-                            ? "bg-[var(--primary-container)] text-white font-bold"
-                            : cell.isCurrentMonth
-                            ? "text-slate-800 hover:bg-slate-100"
-                            : "text-slate-500 hover:bg-slate-100"
-                        }`}
-                      >
-                        {cell.dayNumber}
-                      </button>
-
-                      {cell.events.length > 0 && (
-                        <span className="text-[10px] font-medium text-slate-500">
-                          {cell.events.length} {cell.events.length === 1 ? "event" : "events"}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Events chip list */}
-                    <div className="space-y-1 flex-1 overflow-y-auto max-h-[70px] [scrollbar-width:none]">
-                      {cell.events.map((event) => {
-                        const style = getCategoryStyle(event.eventCategory);
-                        return (
+              <div className="flex flex-col divide-y divide-slate-100 text-xs min-w-[680px]">
+                {monthWeeks.map((week) => (
+                  <div key={week.cells[0].dateString} className="relative">
+                    {/* Layer 1: day cells (date number, click to select) */}
+                    <div className="absolute inset-0 grid grid-cols-7 divide-x divide-slate-100">
+                      {week.cells.map((cell) => (
+                        <div
+                          key={cell.dateString}
+                          onClick={() => selectDate(cell.dateString)}
+                          className={`p-2 transition-colors motion-reduce:transition-none cursor-pointer hover:bg-slate-50/60 ${
+                            cell.isCurrentMonth ? "bg-white" : "bg-slate-50/30 text-slate-500"
+                          }`}
+                        >
                           <button
                             type="button"
-                            key={event.eventId}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (onSelectEvent) onSelectEvent(event);
+                              selectDate(cell.dateString);
                             }}
-                            className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] border font-medium truncate flex items-center gap-1.5 cursor-pointer transition-colors motion-reduce:transition-none ${FOCUS_RING_INSET} ${style.badgeClass}`}
-                            title={`${event.eventName} (${event.startTime || ""}-${event.endTime || ""})`}
+                            aria-label={cell.dateString}
+                            aria-current={cell.isToday ? "date" : undefined}
+                            className={`inline-flex items-center justify-center w-8 h-8 -m-1 rounded-full text-xs font-semibold cursor-pointer ${FOCUS_RING} ${
+                              cell.isToday
+                                ? "bg-[var(--primary-container)] text-white font-bold"
+                                : cell.isCurrentMonth
+                                ? "text-slate-800 hover:bg-slate-100"
+                                : "text-slate-500 hover:bg-slate-100"
+                            }`}
                           >
-                            <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dotClass}`} />
-                            <span className="truncate">{event.eventName}</span>
+                            {cell.dayNumber}
                           </button>
-                        );
-                      })}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Layer 2: event cards spanning day columns (pointer-events pass through gaps) */}
+                    <div className="relative grid grid-cols-7 gap-y-2 px-1 pt-11 pb-2 min-h-[136px] pointer-events-none">
+                      {week.segments.map((segment) => (
+                        <div
+                          key={`${segment.event.eventId}-${segment.startColumn}`}
+                          className="pointer-events-auto min-w-0 px-1"
+                          style={{
+                            gridColumn: `${segment.startColumn} / span ${segment.columnSpan}`,
+                            gridRow: segment.laneIndex + 1,
+                          }}
+                        >
+                          <EventCard
+                            event={segment.event}
+                            variant={segment.isMultiDay ? "detailed" : "compact"}
+                            onClick={onSelectEvent}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}

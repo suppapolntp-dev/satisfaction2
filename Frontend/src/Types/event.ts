@@ -16,6 +16,7 @@ export interface EventItem {
   eventId: string;
   eventName: string;
   eventDate: string; // YYYY-MM-DD
+  eventEndDate?: string | null; // YYYY-MM-DD; null/undefined = single-day
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   brandScope: string;
@@ -41,4 +42,17 @@ export interface CalendarCell {
   isCurrentMonth: boolean;
   isToday: boolean;
   events: EventItem[];
+}
+
+export interface CalendarEventSegment {
+  event: EventItem;
+  startColumn: number; // 1-based grid column within the week row
+  columnSpan: number;
+  laneIndex: number; // 0-based grid row within the week row
+  isMultiDay: boolean;
+}
+
+export interface CalendarWeek {
+  cells: CalendarCell[];
+  segments: CalendarEventSegment[];
 }

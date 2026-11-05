@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { EventItem, CalendarCell } from "@/Types/event";
+import { EventItem, CalendarCell, CalendarWeek, CalendarEventSegment } from "@/Types/event";
 
 export type CalendarViewMode = "Week" | "Month";
 
@@ -17,6 +17,14 @@ export function formatToYYYYMMDD(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function getEventEndDate(event: EventItem): string {
+  return event.eventEndDate && event.eventEndDate >= event.eventDate ? event.eventEndDate : event.eventDate;
+}
+
+function isEventOnDate(event: EventItem, dateString: string): boolean {
+  return event.eventDate <= dateString && dateString <= getEventEndDate(event);
 }
 
 export const MONTH_NAMES = [
@@ -202,7 +210,7 @@ export function useEventCalendar({
         dayNumber: dayNum,
         isCurrentMonth: false,
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => e.eventDate === dStr),
+        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
@@ -216,7 +224,7 @@ export function useEventCalendar({
         dayNumber: dayNum,
         isCurrentMonth: true,
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => e.eventDate === dStr),
+        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
@@ -232,12 +240,43 @@ export function useEventCalendar({
         dayNumber: dayNum,
         isCurrentMonth: false,
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => e.eventDate === dStr),
+        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
     return cells;
   }, [currentDate, safeEvents, todayStr]);
+
+  // ─── 1b. Month rows with multi-day event segments (lane-packed) ───
+  const monthWeeks = useMemo<CalendarWeek[]>(() => {
+    const weeks: CalendarWeek[] = [];
+    for (let offset = 0; offset < monthCalendarCells.length; offset += 7) {
+      const cells = monthCalendarCells.slice(offset, offset + 7);
+      const firstDay = cells[0].dateString;
+      const lastDay = cells[cells.length - 1].dateString;
+
+      const candidates = safeEvents
+        .filter((e) => e.eventDate <= lastDay && getEventEndDate(e) >= firstDay)
+        .map((event) => {
+          const endDate = getEventEndDate(event);
+          const startIndex = cells.findIndex((c) => c.dateString >= event.eventDate);
+          const endIndex = cells.filter((c) => c.dateString <= endDate).length - 1;
+          return { event, startIndex, endIndex, isMultiDay: endDate > event.eventDate };
+        })
+        .sort((a, b) => a.startIndex - b.startIndex || b.endIndex - a.endIndex);
+
+      const laneEndIndexes: number[] = [];
+      const segments: CalendarEventSegment[] = candidates.map(({ event, startIndex, endIndex, isMultiDay }) => {
+        let laneIndex = laneEndIndexes.findIndex((laneEnd) => laneEnd < startIndex);
+        if (laneIndex === -1) laneIndex = laneEndIndexes.length;
+        laneEndIndexes[laneIndex] = endIndex;
+        return { event, startColumn: startIndex + 1, columnSpan: endIndex - startIndex + 1, laneIndex, isMultiDay };
+      });
+
+      weeks.push({ cells, segments });
+    }
+    return weeks;
+  }, [monthCalendarCells, safeEvents]);
 
   // ─── 2. Week View Days Calculation (Monday to Sunday, Fireart style) ───
   const weekCalendarDays = useMemo<CalendarCell[]>(() => {
@@ -258,7 +297,7 @@ export function useEventCalendar({
         dayNumber: d.getDate(),
         isCurrentMonth: d.getMonth() === currentDate.getMonth(),
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => e.eventDate === dStr),
+        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
@@ -385,6 +424,7 @@ export function useEventCalendar({
     selectedCategory,
     setSelectedCategory,
     monthCalendarCells,
+    monthWeeks,
     weekCalendarDays,
     weekRangeLabel,
     dayEvents,
