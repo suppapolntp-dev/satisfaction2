@@ -24,6 +24,8 @@ const COMPACT_STYLE_BY_CATEGORY: Record<string, string> = {
 };
 const DEFAULT_COMPACT_STYLE = "bg-emerald-100/90 text-emerald-950 hover:bg-emerald-200/80";
 
+export const DEFAULT_BRAND_LOGO_FALLBACK = "https://cdn-icons-png.flaticon.com/512/456/456283.png";
+
 export interface UseEventCardProps {
   event: EventItem;
   columnSpan?: number;
@@ -128,6 +130,11 @@ export function useEventCard({
     onDelete?.(event);
   };
 
+  // โลโก้แบรนด์จากตัวแปร DTO พร้อมรูป Fallback จาก Flaticon ที่เตรียมไว้
+  const brandLogoUrl = useMemo(() => {
+    return event.brandLogoUrl || DEFAULT_BRAND_LOGO_FALLBACK;
+  }, [event.brandLogoUrl]);
+
   return {
     progressFillClass,
     compactStyleClass,
@@ -138,6 +145,7 @@ export function useEventCard({
     hiddenAssigneeCount,
     daySpan,
     displayTitle,
+    brandLogoUrl,
     isMenuOpen,
     menuRef,
     handleClick,

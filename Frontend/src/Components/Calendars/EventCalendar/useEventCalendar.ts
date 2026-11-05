@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { EventItem, CalendarCell, CalendarWeek, CalendarEventSegment } from "@/Types/event";
 
-export type CalendarViewMode = "Week" | "Month";
+export type CalendarViewMode = "Day" | "Week" | "Month";
 
 export interface UseEventCalendarProps {
   events?: EventItem[] | null;
@@ -345,25 +345,15 @@ export function useEventCalendar({
 
   // ─── 3. Day View Events (Filtered by Search Query & Category) ───
   const dayEvents = useMemo(() => {
-    let list = safeEvents.filter((e) => e.eventDate === currentDateStr);
+    return filteredEvents.filter((e) => isEventOnDate(e, currentDateStr));
+  }, [filteredEvents, currentDateStr]);
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter(
-        (e) =>
-          e.eventName.toLowerCase().includes(q) ||
-          e.brandScope.toLowerCase().includes(q) ||
-          (e.eventLocation && e.eventLocation.toLowerCase().includes(q)) ||
-          (e.description && e.description.toLowerCase().includes(q))
-      );
-    }
-
-    if (selectedCategory !== "ALL") {
-      list = list.filter((e) => e.eventCategory.toUpperCase() === selectedCategory);
-    }
-
-    return list;
-  }, [safeEvents, currentDateStr, searchQuery, selectedCategory]);
+  const dayTitleLabel = useMemo(() => {
+    const dayIndex = currentDate.getDay();
+    const thai = THAI_DAY_NAMES[dayIndex] || { full: "" };
+    const thMonth = THAI_MONTH_NAMES[currentDate.getMonth()];
+    return `${thai.full}ที่ ${currentDate.getDate()} ${thMonth} ${currentDate.getFullYear() + 543}`;
+  }, [currentDate]);
 
   // ─── Navigation Handlers ───
   const handlePrev = useCallback(() => {
@@ -457,6 +447,7 @@ export function useEventCalendar({
     weekLaneCount,
     weekRangeLabel,
     dayEvents,
+    dayTitleLabel,
     monthYearLabel,
     handlePrev,
     handleNext,

@@ -37,6 +37,7 @@ export default function EventCard({
     hiddenAssigneeCount,
     daySpan,
     displayTitle,
+    brandLogoUrl,
     isMenuOpen,
     menuRef,
     handleClick,
@@ -46,7 +47,7 @@ export default function EventCard({
   } = useEventCard({ event, columnSpan, onClick, onMenuClick, onEdit, onDelete });
 
   // ponytail: title button's ::after stretches over the card (single focus target); the menu button sits above via z-10.
-  // 1-day cards show title + 3-dot menu; multi-day cards show title + assignees + 3-dot menu.
+  // 1-day cards show title + 3-dot menu; multi-day cards show title + brand/assignees + 3-dot menu.
   return (
     <article
       className={`relative w-full flex flex-col justify-between gap-2 p-3 sm:p-4 rounded-lg bg-white border border-slate-200/80 shadow-[0_4px_12px_rgba(15,23,42,0.05)] transition-shadow duration-200 motion-reduce:transition-none hover:shadow-[0_8px_16px_rgba(15,23,42,0.10)] has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-[var(--primary-container)] ${className}`}
@@ -63,11 +64,22 @@ export default function EventCard({
         </button>
       </h3>
 
-      {/* ─── 2. FOOTER: assignees (if wide) · menu (right) ─── */}
-      <div className={`flex items-center gap-2 mt-1 ${daySpan > 1 && visibleAssignees.length > 0 ? "justify-between" : "justify-end"}`}>
+      {/* ─── 2. FOOTER: assignees & brand logo (if wide) · menu (right) ─── */}
+      <div className={`flex items-center gap-2 mt-1 ${daySpan > 1 ? "justify-between" : "justify-end"}`}>
         {/* If card is small (1-day), hide avatars and show only 3-dot menu */}
-        {daySpan > 1 && visibleAssignees.length > 0 && (
-          <div className="flex items-center gap-1">
+        {daySpan > 1 && (
+          <div className="flex items-center gap-1.5">
+            {event.brandScope && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">
+                <img
+                  src={brandLogoUrl}
+                  alt={event.brandScope}
+                  className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                />
+                <span className="truncate max-w-[65px]">{event.brandScope}</span>
+              </span>
+            )}
+            {visibleAssignees.length > 0 && (
             <ul className="flex items-center -space-x-1.5" aria-label="ผู้รับผิดชอบ">
               {visibleAssignees.map((assignee) => (
                 <li
@@ -83,11 +95,12 @@ export default function EventCard({
                 </li>
               ))}
               {hiddenAssigneeCount > 0 && (
-                <li className="w-6 h-6 rounded-full ring-2 ring-white bg-slate-100 text-slate-600 text-[11px] font-semibold flex items-center justify-center">
+                <li className="w-5 h-5 sm:w-6 sm:h-6 rounded-full ring-2 ring-white bg-slate-100 text-slate-600 text-[10px] sm:text-[11px] font-semibold flex items-center justify-center">
                   +{hiddenAssigneeCount}
                 </li>
               )}
             </ul>
+            )}
           </div>
         )}
 
