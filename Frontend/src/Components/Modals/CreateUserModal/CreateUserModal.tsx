@@ -21,19 +21,15 @@ export default function CreateUserModal({
 }: CreateUserModalProps) {
   const {
     formData,
-    branches,
     isBranchesLoading,
     branchSearchQuery,
     setBranchSearchQuery,
     branchesByBrand,
     expandedBrands,
     toggleBrandExpand,
-    focusedBranch,
-    setFocusedBranch,
     toggleBranch,
     selectAllBranches,
     clearAllBranches,
-    initials,
     isSubmitting,
     errorMessage,
     handleChange,
@@ -79,9 +75,14 @@ export default function CreateUserModal({
         {/* ─── 1. MODAL HEADER BAR ─── */}
         <div className="p-4 sm:px-6 sm:py-4 border-b border-slate-100 flex items-start justify-between gap-4 bg-white shrink-0">
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            {/* User Avatar Circle */}
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-base sm:text-lg shrink-0 shadow-xs select-none">
-              {initials}
+            {/* User Action Icon Squircle */}
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" y1="8" x2="19" y2="14" />
+                <line x1="22" y1="11" x2="16" y2="11" />
+              </svg>
             </div>
 
             <div className="min-w-0 flex-1 space-y-1">
@@ -274,38 +275,36 @@ export default function CreateUserModal({
                         <div className="p-1 space-y-0.5 divide-y divide-slate-50">
                           {brandBranches.map((branch) => {
                             const isChecked = targetBranches.includes(branch.name);
-                            const isFocused = focusedBranch?.id === branch.id;
 
                             return (
                               <div
                                 key={branch.id}
-                                onClick={() => setFocusedBranch(branch)}
-                                className={`flex items-center justify-between gap-2 p-2 rounded-xl text-xs transition-colors cursor-pointer ${
-                                  isFocused
-                                    ? "bg-blue-50/80 text-blue-900 border border-blue-200/70"
+                                onClick={() => toggleBranch(branch.name, branch)}
+                                className={`flex items-center justify-between gap-2.5 p-2 rounded-xl text-xs transition-colors cursor-pointer select-none ${
+                                  isChecked
+                                    ? "bg-blue-50 text-blue-900 border border-blue-200/80 font-semibold"
                                     : "hover:bg-slate-50 text-slate-700 border border-transparent"
                                 }`}
                               >
-                                <label
-                                  className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                   <input
                                     type="checkbox"
                                     checked={isChecked}
-                                    onChange={() => toggleBranch(branch.name, branch)}
+                                    onChange={() => {}} // Handled by row click
                                     className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer shrink-0"
                                   />
                                   <div className="min-w-0 flex-1">
-                                    <span className="block truncate font-medium">{branch.name}</span>
+                                    <span className="block truncate">{branch.name}</span>
                                     <span className="block text-[10px] text-slate-400 font-normal leading-tight">
                                       {branch.code} • {branch.province}
                                     </span>
                                   </div>
-                                </label>
+                                </div>
 
-                                {isFocused && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
+                                {isChecked && (
+                                  <svg className="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
                                 )}
                               </div>
                             );
@@ -445,99 +444,7 @@ export default function CreateUserModal({
               </select>
             </div>
 
-            {/* 3. รายละเอียดสาขาที่เลือกจาก SIDEBAR (FOCUSED BRANCH CARD) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                    <line x1="8" y1="21" x2="16" y2="21" />
-                    <line x1="12" y1="17" x2="12" y2="21" />
-                  </svg>
-                  <span>รายละเอียดสาขาที่เลือก (Branch Details from Sidebar)</span>
-                </h3>
-
-                {focusedBranch && (
-                  <span className="text-[11px] text-slate-500">
-                    คลิกเปลี่ยนสาขาที่ Sidebar ซ้ายได้ตลอดเวลา
-                  </span>
-                )}
-              </div>
-
-              {focusedBranch ? (
-                <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-slate-900">
-                          {focusedBranch.name}
-                        </h4>
-                        <span className="font-mono text-[11px] font-semibold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
-                          {focusedBranch.code}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        แบรนด์: <strong className="text-slate-700 font-semibold">{focusedBranch.brand}</strong> • ภูมิภาค: <strong className="text-slate-700 font-semibold">{focusedBranch.region}</strong>
-                      </p>
-                    </div>
-
-                    {/* Toggle Assignment Button */}
-                    <button
-                      type="button"
-                      onClick={() => toggleBranch(focusedBranch.name, focusedBranch)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                        targetBranches.includes(focusedBranch.name)
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100/70"
-                          : "bg-blue-600 text-white hover:bg-blue-700 shadow-xs"
-                      }`}
-                    >
-                      {targetBranches.includes(focusedBranch.name) ? (
-                        <>
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          <span>ผูกสิทธิ์สาขานี้แล้ว</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                          </svg>
-                          <span>เพิ่มสาขานี้ให้ผู้ใช้</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Branch Metrics Matrix */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
-                    <div className="p-2.5 rounded-xl bg-white border border-slate-200/70">
-                      <span className="block text-[10px] text-slate-400 font-medium">จังหวัด</span>
-                      <span className="block font-semibold text-slate-800 truncate">{focusedBranch.province || "-"}</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white border border-slate-200/70">
-                      <span className="block text-[10px] text-slate-400 font-medium">จำนวนตู้ Kiosk</span>
-                      <span className="block font-semibold text-slate-800">{focusedBranch.kioskCount || 0} ตู้</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white border border-slate-200/70">
-                      <span className="block text-[10px] text-slate-400 font-medium">คะแนนความพึงพอใจ</span>
-                      <span className="block font-semibold text-emerald-600">{focusedBranch.satisfaction ? `${focusedBranch.satisfaction}%` : "-"}</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white border border-slate-200/70">
-                      <span className="block text-[10px] text-slate-400 font-medium">สถานะสาขา</span>
-                      <span className="block font-semibold text-slate-800">{focusedBranch.status || "Active"}</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-400">
-                  คลิกเลือกสาขาจากเมนู Hierarchy ด้านซ้าย เพื่อดูข้อมูลจำเพาะและผูกสิทธิ์
-                </div>
-              )}
-            </div>
-
-            {/* 4. สรุปขอบเขตสาขาและแบรนด์ที่ผูก (Assigned Scopes Preview) */}
+            {/* 3. สรุปขอบเขตสาขาและแบรนด์ที่ผูก (Assigned Scopes Preview) */}
             <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-800">
