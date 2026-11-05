@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { EventItem, EventCategory, EventStatus } from "@/Types/event";
+import { branchService } from "@/Services/branchService";
 
 export interface UseEventEditModalProps {
   isOpen: boolean;
@@ -18,22 +19,6 @@ export interface BranchScopeNode {
   province: string;
   kioskCount: number;
 }
-
-export const MASTER_BRANCH_NODES: BranchScopeNode[] = [
-  { id: "BR-01", name: "Central World ชั้น 3", brand: "Mister Donut", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 4 },
-  { id: "BR-02", name: "Siam Paragon ชั้น G", brand: "Mister Donut", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 3 },
-  { id: "BR-03", name: "Future Park รังสิต", brand: "Mister Donut", region: "กรุงเทพฯ และปริมณฑล", province: "ปทุมธานี", kioskCount: 5 },
-  { id: "BR-04", name: "Mega Bangna ชั้น 1", brand: "Mister Donut", region: "กรุงเทพฯ และปริมณฑล", province: "สมุทรปราการ", kioskCount: 4 },
-  { id: "BR-05", name: "Central World ชั้น 2", brand: "The Coffee Club", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 2 },
-  { id: "BR-06", name: "Siam Paragon ชั้น 3", brand: "The Coffee Club", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 3 },
-  { id: "BR-07", name: "Central Festival เชียงใหม่", brand: "The Coffee Club", region: "ภาคเหนือ", province: "เชียงใหม่", kioskCount: 2 },
-  { id: "BR-08", name: "Central World โซน Beacon", brand: "Swensen's", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 4 },
-  { id: "BR-09", name: "Mega Bangna โซน FoodWalk", brand: "Swensen's", region: "กรุงเทพฯ และปริมณฑล", province: "สมุทรปราการ", kioskCount: 3 },
-  { id: "BR-10", name: "Central Rama 9", brand: "Swensen's", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 3 },
-  { id: "BR-11", name: "Siam Center ชั้น 2", brand: "KFC", region: "กรุงเทพฯ และปริมณฑล", province: "กรุงเทพมหานคร", kioskCount: 6 },
-  { id: "BR-12", name: "Future Park รังสิต ชั้น B", brand: "KFC", region: "กรุงเทพฯ และปริมณฑล", province: "ปทุมธานี", kioskCount: 5 },
-  { id: "BR-13", name: "Central Festival พัทยา", brand: "KFC", region: "ภาคตะวันออก", province: "ชลบุรี", kioskCount: 4 },
-];
 
 export const EVENT_CATEGORIES: { id: EventCategory; label: string; dot: string }[] = [
   { id: "CAMPAIGN", label: "แคมเปญการตลาด", dot: "bg-orange-500" },
@@ -78,18 +63,61 @@ export function useEventEditModal({
   onSave,
 }: UseEventEditModalProps) {
   const [formData, setFormData] = useState<Partial<EventItem>>({});
+  const [branches, setBranches] = useState<BranchScopeNode[]>([]);
+  const [isBranchesLoading, setIsBranchesLoading] = useState(false);
   const [branchSearchQuery, setBranchSearchQuery] = useState("");
-  const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({
-    "Mister Donut": true,
-    "The Coffee Club": true,
-    "Swensen's": true,
-    "KFC": true,
-  });
+  const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isEditing = Boolean(event);
 
+  // Load organizational branch scope from branchService
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadBranches() {
+      try {
+        setIsBranchesLoading(true);
+        // TODO: Connect API [get_branches]
+        const data = await branchService.getBranches();
+        if (isMounted) {
+          const mapped: BranchScopeNode[] = data.map((b) => ({
+            id: b.id,
+            name: b.name,
+            brand: b.brand,
+            region: b.region,
+            province: b.province,
+            kioskCount: b.kioskCount || 0,
+          }));
+          setBranches(mapped);
+
+          // Auto expand available brand groups
+          const brandsMap: Record<string, boolean> = {};
+          mapped.forEach((b) => {
+            if (b.brand) brandsMap[b.brand] = true;
+          });
+          setExpandedBrands(brandsMap);
+        }
+      } catch (err) {
+        console.error("[useEventEditModal] loadBranches error:", err);
+      } finally {
+        if (isMounted) {
+          setIsBranchesLoading(false);
+        }
+      }
+    }
+
+    if (isOpen) {
+      loadBranches();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  // Clean initial state (Strict API-Ready Mode)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -101,18 +129,17 @@ export function useEventEditModal({
     } else {
       const today = new Date().toISOString().split("T")[0];
       setFormData({
-        eventId: `EVT-${Date.now()}`,
         eventName: "",
         eventDate: today,
         eventEndDate: null,
         startTime: "09:00",
         endTime: "17:00",
-        brandScope: "Mister Donut",
+        brandScope: "",
         eventCategory: "CAMPAIGN",
         eventStatus: "Upcoming",
         eventLocation: "",
         description: "",
-        targetBranchNames: ["Central World ชั้น 3", "Siam Paragon ชั้น G"],
+        targetBranchNames: [],
       });
     }
     setBranchSearchQuery("");
@@ -146,9 +173,9 @@ export function useEventEditModal({
         : [...current, branchName];
 
       // Auto-derive brandScope from selected branch
-      let newBrand = prev.brandScope;
+      let newBrand = prev.brandScope || "";
       if (updated.length > 0) {
-        const found = MASTER_BRANCH_NODES.find((b) => b.name === updated[0]);
+        const found = branches.find((b) => b.name === updated[0]);
         if (found) newBrand = found.brand;
       }
 
@@ -158,14 +185,14 @@ export function useEventEditModal({
         targetBranchNames: updated,
       };
     });
-  }, []);
+  }, [branches]);
 
   const selectAllBranches = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
-      targetBranchNames: MASTER_BRANCH_NODES.map((b) => b.name),
+      targetBranchNames: branches.map((b) => b.name),
     }));
-  }, []);
+  }, [branches]);
 
   const clearAllBranches = useCallback(() => {
     setFormData((prev) => ({
@@ -183,7 +210,7 @@ export function useEventEditModal({
 
   // Filtered branch hierarchy for the left sidebar
   const filteredBranches = useMemo(() => {
-    let list = MASTER_BRANCH_NODES;
+    let list = branches;
     if (branchSearchQuery.trim()) {
       const q = branchSearchQuery.toLowerCase().trim();
       list = list.filter(
@@ -195,14 +222,15 @@ export function useEventEditModal({
       );
     }
     return list;
-  }, [branchSearchQuery]);
+  }, [branches, branchSearchQuery]);
 
   // Grouped by brand for the left tree view
   const branchesByBrand = useMemo(() => {
     const map: Record<string, BranchScopeNode[]> = {};
     filteredBranches.forEach((b) => {
-      if (!map[b.brand]) map[b.brand] = [];
-      map[b.brand].push(b);
+      const brandKey = b.brand || "CRG Brand";
+      if (!map[brandKey]) map[brandKey] = [];
+      map[brandKey].push(b);
     });
     return map;
   }, [filteredBranches]);
@@ -228,25 +256,37 @@ export function useEventEditModal({
         setIsSubmitting(true);
         setErrorMessage(null);
 
-        // Auto-assign computed status
         const finalStatus = computeEventStatus(formData.eventDate, formData.eventEndDate).status;
 
-        // Auto-derive brandScope if empty
-        let finalBrand = formData.brandScope || "Mister Donut";
+        let finalBrand = formData.brandScope || "";
         if (formData.targetBranchNames && formData.targetBranchNames.length > 0) {
-          const matchBranch = MASTER_BRANCH_NODES.find((b) => b.name === formData.targetBranchNames![0]);
+          const matchBranch = branches.find((b) => b.name === formData.targetBranchNames![0]);
           if (matchBranch) finalBrand = matchBranch.brand;
         }
 
         const payload: EventItem = {
-          ...(formData as EventItem),
-          brandScope: finalBrand,
-          eventStatus: finalStatus,
+          eventId: formData.eventId || `EVT-${Date.now()}`,
+          eventName: formData.eventName.trim(),
+          eventDate: formData.eventDate,
+          eventEndDate: formData.eventEndDate || null,
           startTime: formData.startTime || "09:00",
           endTime: formData.endTime || "17:00",
+          brandScope: finalBrand,
+          brandId: formData.brandId || null,
+          brandLogoUrl: formData.brandLogoUrl || null,
+          eventCategory: formData.eventCategory || "CAMPAIGN",
+          eventStatus: finalStatus,
           eventLocation: formData.targetBranchNames?.length
             ? `${formData.targetBranchNames.length} สาขาในเครือ`
             : "",
+          description: formData.description || null,
+          kioskThemeOverride: formData.kioskThemeOverride || null,
+          targetBranchIds: formData.targetBranchIds || [],
+          targetBranchNames: formData.targetBranchNames || [],
+          progressPercent: formData.progressPercent || 0,
+          commentCount: formData.commentCount || 0,
+          attachmentCount: formData.attachmentCount || 0,
+          assignees: formData.assignees || [],
         };
 
         await onSave(payload);
@@ -257,13 +297,14 @@ export function useEventEditModal({
         setIsSubmitting(false);
       }
     },
-    [formData, onSave, onClose]
+    [formData, branches, onSave, onClose]
   );
 
   return {
     formData,
     isEditing,
     isSubmitting,
+    isBranchesLoading,
     errorMessage,
     branchSearchQuery,
     setBranchSearchQuery,
