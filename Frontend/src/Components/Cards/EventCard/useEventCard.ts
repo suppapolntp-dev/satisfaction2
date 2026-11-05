@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { EventAssignee, EventItem } from "@/Types/event";
 
 const MAX_VISIBLE_ASSIGNEES = 3;
@@ -28,9 +28,33 @@ export interface UseEventCardProps {
   event: EventItem;
   onClick?: (event: EventItem) => void;
   onMenuClick?: (event: EventItem) => void;
+  onEdit?: (event: EventItem) => void;
+  onDelete?: (event: EventItem) => void;
 }
 
-export function useEventCard({ event, onClick, onMenuClick }: UseEventCardProps) {
+export function useEventCard({ event, onClick, onMenuClick, onEdit, onDelete }: UseEventCardProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
   const progressFillClass = useMemo(
     () => PROGRESS_FILL_BY_CATEGORY[(event.eventCategory || "").toUpperCase()] ?? DEFAULT_PROGRESS_FILL,
     [event.eventCategory]
@@ -59,7 +83,24 @@ export function useEventCard({ event, onClick, onMenuClick }: UseEventCardProps)
   }, [event.assignees]);
 
   const handleClick = () => onClick?.(event);
-  const handleMenuClick = () => onMenuClick?.(event);
+
+  const toggleMenu = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIsMenuOpen((prev) => !prev);
+    onMenuClick?.(event);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMenuOpen(false);
+    onEdit?.(event);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMenuOpen(false);
+    onDelete?.(event);
+  };
 
   return {
     progressFillClass,
@@ -69,7 +110,11 @@ export function useEventCard({ event, onClick, onMenuClick }: UseEventCardProps)
     attachmentCount,
     visibleAssignees,
     hiddenAssigneeCount,
+    isMenuOpen,
+    menuRef,
     handleClick,
-    handleMenuClick,
+    toggleMenu,
+    handleEdit,
+    handleDelete,
   };
 }

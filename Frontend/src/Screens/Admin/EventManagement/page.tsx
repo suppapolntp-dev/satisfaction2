@@ -67,6 +67,8 @@ export default function EventManagementScreen({
           onSelectDate={handleSelectDate}
           onSelectEvent={handleSelectEvent}
           onCreateEvent={handleCreateEvent}
+          onEditEvent={handleEditEvent}
+          onDeleteEvent={handleDeleteEvent}
         />
       )}
 

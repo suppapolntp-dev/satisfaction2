@@ -20,6 +20,8 @@ export interface EventCalendarProps extends UseEventCalendarProps {
   onRetry?: () => void;
   /** Call-to-action shown in the empty state */
   onCreateEvent?: () => void;
+  onEditEvent?: (event: EventItem) => void;
+  onDeleteEvent?: (event: EventItem) => void;
 }
 
 const CATEGORY_STYLES: Record<string, { label: string; badgeClass: string; dotClass: string }> = {
@@ -75,6 +77,8 @@ export default function EventCalendar({
   errorMessage = null,
   onRetry,
   onCreateEvent,
+  onEditEvent,
+  onDeleteEvent,
 }: EventCalendarProps) {
   const {
     currentDate,
@@ -430,6 +434,8 @@ export default function EventCalendar({
                             event={segment.event}
                             variant={segment.isMultiDay ? "detailed" : "compact"}
                             onClick={onSelectEvent}
+                            onEdit={onEditEvent}
+                            onDelete={onDeleteEvent}
                           />
                         </div>
                       ))}
@@ -559,6 +565,8 @@ export default function EventCalendar({
                           event={segment.event}
                           variant={segment.isMultiDay ? "detailed" : "compact"}
                           onClick={onSelectEvent}
+                          onEdit={onEditEvent}
+                          onDelete={onDeleteEvent}
                         />
                       </div>
                     ))}
