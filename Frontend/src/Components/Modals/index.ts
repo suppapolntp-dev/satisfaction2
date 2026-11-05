@@ -7,3 +7,7 @@ export { default as BranchModal } from "./BranchModal";
 export * from "./BranchModal";
 export { default as EventDetailModal } from "./EventDetailModal";
 export * from "./EventDetailModal";
+export { default as ConfirmDialogModal } from "./ConfirmDialogModal";
+export * from "./ConfirmDialogModal";
+export { default as EventEditModal } from "./EventEditModal";
+export * from "./EventEditModal";

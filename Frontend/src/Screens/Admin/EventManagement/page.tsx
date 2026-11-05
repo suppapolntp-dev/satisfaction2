@@ -5,6 +5,8 @@ import PageHeader from "@/Components/Headers/PageHeader";
 import EventCalendar from "@/Components/Calendars/EventCalendar";
 import EventTable from "@/Components/Tables/EventTable";
 import EventDetailModal from "@/Components/Modals/EventDetailModal";
+import EventEditModal from "@/Components/Modals/EventEditModal";
+import ConfirmDialogModal from "@/Components/Modals/ConfirmDialogModal";
 import {
   useEventManagementScreen,
   EventManagementTab,
@@ -23,12 +25,20 @@ export default function EventManagementScreen({
     events,
     isLoading,
     selectedEvent,
+    editingEvent,
+    isEditModalOpen,
+    deletingEvent,
+    isDeleteConfirmOpen,
     handleCloseSelectedEvent,
     handleTabChange,
     handleSelectDate,
     handleSelectEvent,
     handleEditEvent,
-    handleDeleteEvent,
+    handleCloseEditModal,
+    handleSaveEvent,
+    handleRequestDelete,
+    handleCloseDeleteConfirm,
+    handleConfirmDelete,
     handleCreateEvent,
   } = useEventManagementScreen({ initialTab });
 
@@ -71,7 +81,7 @@ export default function EventManagementScreen({
           onSelectEvent={handleSelectEvent}
           onCreateEvent={handleCreateEvent}
           onEditEvent={handleEditEvent}
-          onDeleteEvent={handleDeleteEvent}
+          onDeleteEvent={handleRequestDelete}
         />
       )}
 
@@ -81,17 +91,37 @@ export default function EventManagementScreen({
           events={events || []}
           isLoading={isLoading}
           onEditEvent={handleEditEvent}
-          onDeleteEvent={handleDeleteEvent}
+          onDeleteEvent={handleRequestDelete}
         />
       )}
 
-      {/* ─── MODAL: EVENT DETAILS POPUP ─── */}
+      {/* ─── MODAL 1: EVENT DETAILS POPUP ─── */}
       <EventDetailModal
         isOpen={Boolean(selectedEvent)}
         event={selectedEvent}
         onClose={handleCloseSelectedEvent}
         onEdit={handleEditEvent}
-        onDelete={handleDeleteEvent}
+        onDelete={handleRequestDelete}
+      />
+
+      {/* ─── MODAL 2: EVENT CREATE / EDIT MODAL (ข้อ 8) ─── */}
+      <EventEditModal
+        isOpen={isEditModalOpen}
+        event={editingEvent}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveEvent}
+      />
+
+      {/* ─── MODAL 3: REUSABLE DELETE CONFIRM MODAL (ข้อ 9) ─── */}
+      <ConfirmDialogModal
+        isOpen={isDeleteConfirmOpen}
+        title="ยืนยันการลบกิจกรรม"
+        description={`คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม "${deletingEvent?.eventName || "กิจกรรมนี้"}"? การกระทำนี้ไม่สามารถย้อนกลับได้`}
+        confirmLabel="ยืนยันการลบ"
+        cancelLabel="ยกเลิก"
+        variant="danger"
+        onClose={handleCloseDeleteConfirm}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

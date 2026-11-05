@@ -75,9 +75,6 @@ function createSampleEvents(): EventItem[] {
       kioskThemeOverride: "summer_theme",
       targetBranchIds: [],
       targetBranchNames: ["Central World", "Siam Paragon"],
-      progressPercent: 65,
-      commentCount: 21,
-      attachmentCount: 8,
       assignees: [
         { name: "Anan K." },
         { name: "Somchai T." },
@@ -102,9 +99,6 @@ function createSampleEvents(): EventItem[] {
       kioskThemeOverride: null,
       targetBranchIds: [],
       targetBranchNames: ["Mega Bangna"],
-      progressPercent: 20,
-      commentCount: 6,
-      attachmentCount: 2,
       assignees: [{ name: "Ploy M." }],
     },
     // ─── 4. Multi-day Spanning (อีก 3 วัน - อีก 5 วัน): Detailed White Card ───
@@ -144,6 +138,10 @@ export function useEventManagementScreen({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
+  const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deletingEvent, setDeletingEvent] = useState<EventItem | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const eventTabs: HeaderTabItem[] = useMemo(
     () => [
@@ -207,18 +205,50 @@ export function useEventManagementScreen({
   }, []);
 
   const handleEditEvent = useCallback((event: EventItem) => {
-    console.log("[useEventManagementScreen] handleEditEvent triggered:", event);
-    // TODO: Connect edit event modal/action
+    setEditingEvent(event);
+    setIsEditModalOpen(true);
   }, []);
 
-  const handleDeleteEvent = useCallback((event: EventItem) => {
-    console.log("[useEventManagementScreen] handleDeleteEvent triggered:", event);
-    setEvents((prev) => (prev ? prev.filter((e) => e.eventId !== event.eventId) : []));
+  const handleCloseEditModal = useCallback(() => {
+    setIsEditModalOpen(false);
+    setEditingEvent(null);
   }, []);
+
+  const handleSaveEvent = useCallback((savedEvent: EventItem) => {
+    setEvents((prev) => {
+      if (!prev) return [savedEvent];
+      const exists = prev.some((e) => e.eventId === savedEvent.eventId);
+      if (exists) {
+        return prev.map((e) => (e.eventId === savedEvent.eventId ? savedEvent : e));
+      }
+      return [savedEvent, ...prev];
+    });
+    setIsEditModalOpen(false);
+    setEditingEvent(null);
+  }, []);
+
+  const handleRequestDelete = useCallback((event: EventItem) => {
+    setDeletingEvent(event);
+    setIsDeleteConfirmOpen(true);
+  }, []);
+
+  const handleCloseDeleteConfirm = useCallback(() => {
+    setIsDeleteConfirmOpen(false);
+    setDeletingEvent(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deletingEvent) {
+      setEvents((prev) => (prev ? prev.filter((e) => e.eventId !== deletingEvent.eventId) : []));
+    }
+    setIsDeleteConfirmOpen(false);
+    setDeletingEvent(null);
+    setSelectedEvent(null);
+  }, [deletingEvent]);
 
   const handleCreateEvent = useCallback(() => {
-    console.log("[useEventManagementScreen] handleCreateEvent triggered");
-    // TODO: Connect API / Modal for creating an event
+    setEditingEvent(null);
+    setIsEditModalOpen(true);
   }, []);
 
   return {
@@ -228,12 +258,20 @@ export function useEventManagementScreen({
     isLoading,
     selectedDate,
     selectedEvent,
+    editingEvent,
+    isEditModalOpen,
+    deletingEvent,
+    isDeleteConfirmOpen,
     handleTabChange,
     handleSelectDate,
     handleSelectEvent,
     handleCloseSelectedEvent,
     handleEditEvent,
-    handleDeleteEvent,
+    handleCloseEditModal,
+    handleSaveEvent,
+    handleRequestDelete,
+    handleCloseDeleteConfirm,
+    handleConfirmDelete,
     handleCreateEvent,
   };
 }
