@@ -27,14 +27,14 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
 
   // ponytail: Enter selects the first command-palette match; add roving ArrowUp/ArrowDown index only if power-user keyboard nav is requested.
   return (
-    <div className="min-h-screen flex bg-[var(--background)] text-[var(--on-surface)] antialiased font-[var(--font-inter)]">
+    <div className="h-screen h-dvh flex overflow-hidden bg-[var(--background)] text-[var(--on-surface)] antialiased font-[var(--font-inter)]">
       {/* ─── 1. Floating Reusable Neo-Mint Sidebar ─── */}
       <Sidebar />
 
       {/* ─── 2. Responsive Main Workspace ─── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Floating Bento Top App Bar (Navbar) */}
-        <header className="sticky top-3 z-30 mx-3 mt-3 min-h-16 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors duration-200 motion-reduce:transition-none">
+        <header className="shrink-0 z-20 mx-3 mt-3 min-h-16 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors duration-200 motion-reduce:transition-none">
           <div className="flex items-center gap-3 min-w-0 shrink-0">
             {/* Mobile Hamburger Toggle (44x44px touch target) */}
             <button
@@ -108,8 +108,10 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
         </header>
 
         {/* Dynamic Nested Content Outlet */}
-        <main className="flex-1 p-3 sm:p-4 lg:p-6 max-w-7xl w-full mx-auto">
-          {children}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6 [scrollbar-width:thin]">
+          <div className="max-w-7xl w-full mx-auto pb-6">
+            {children}
+          </div>
         </main>
       </div>
 

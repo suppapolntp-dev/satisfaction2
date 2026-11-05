@@ -279,7 +279,7 @@ export default function Sidebar() {
       <aside
         id="side"
         aria-label="Main navigation"
-        className={`fixed inset-y-0 left-0 z-40 md:sticky md:top-3 md:m-3 md:h-[calc(100dvh-24px)] flex flex-col bg-white border border-slate-200/80 rounded-3xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] transition-[width,transform] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] select-none md:translate-x-0 shrink-0 min-w-0 ${
+        className={`fixed inset-y-0 left-0 z-40 md:relative md:top-0 md:m-3 md:h-[calc(100dvh-24px)] flex flex-col bg-white border border-slate-200/80 rounded-3xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] transition-[width,transform] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] select-none md:translate-x-0 shrink-0 min-w-0 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         } ${
           isSidebarCollapsed
