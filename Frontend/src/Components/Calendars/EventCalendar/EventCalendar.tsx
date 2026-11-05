@@ -56,44 +56,6 @@ const DEFAULT_CATEGORY_STYLE = {
   dotClass: "bg-slate-400",
 };
 
-// ─── FIREART CALENDAR BOOKING APP DESIGN SYSTEM TOKENS ───
-// accent = 4px left bar (Material-style), bg = soft tint, text = AA-contrast title color
-const FIREART_CATEGORY_STYLES: Record<
-  string,
-  { bg: string; accent: string; text: string; hover: string }
-> = {
-  CAMPAIGN: {
-    bg: "bg-orange-50",
-    accent: "border-l-orange-500",
-    text: "text-orange-900",
-    hover: "hover:bg-orange-100/90",
-  },
-  AUDIT: {
-    bg: "bg-emerald-50",
-    accent: "border-l-emerald-500",
-    text: "text-emerald-900",
-    hover: "hover:bg-emerald-100/90",
-  },
-  FIRMWARE: {
-    bg: "bg-blue-50",
-    accent: "border-l-blue-600",
-    text: "text-blue-900",
-    hover: "hover:bg-blue-100/90",
-  },
-  CALIBRATION: {
-    bg: "bg-purple-50",
-    accent: "border-l-purple-500",
-    text: "text-purple-900",
-    hover: "hover:bg-purple-100/90",
-  },
-  MAINTENANCE: {
-    bg: "bg-slate-100",
-    accent: "border-l-slate-500",
-    text: "text-slate-900",
-    hover: "hover:bg-slate-200/90",
-  },
-};
-
 // Localised short weekday (e.g. "จ.") derived from the date — no hardcoded weekday list
 const WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat("th-TH", { weekday: "short" });
 
@@ -102,76 +64,6 @@ const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]";
 const FOCUS_RING_INSET =
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary-container)]";
-
-const HOURS_24 = Array.from({ length: 24 }, (_, i) => i);
-const HOUR_HEIGHT = 65; // 65px ต่อชั่วโมงในสเกลสัปดาห์ Fireart Grid
-
-function parseTimeToMinutes(timeStr?: string, defaultMinutes = 540): number {
-  if (!timeStr) return defaultMinutes;
-  const parts = timeStr.split(":");
-  if (parts.length < 2) return defaultMinutes;
-  const h = parseInt(parts[0], 10);
-  const m = parseInt(parts[1], 10);
-  if (isNaN(h) || isNaN(m)) return defaultMinutes;
-  return h * 60 + m;
-}
-
-function formatHourLabel(hour: number): string {
-  if (hour === 0) return "12 AM";
-  if (hour < 12) return `${hour} AM`;
-  if (hour === 12) return "12 PM";
-  return `${hour - 12} PM`;
-}
-
-// ponytail: greedy lane assignment for overlapping events in a day column; upgrade to interval-graph coloring if >4 concurrent lanes need dynamic cascade
-function layoutDayEvents(events: EventItem[]) {
-  const sorted = [...events]
-    .map((event) => {
-      const startMin = parseTimeToMinutes(event.startTime, 540);
-      const endMin = parseTimeToMinutes(event.endTime, startMin + 60);
-      const durationMin = Math.max(endMin - startMin, 45);
-      return { event, startMin, endMin: startMin + durationMin, durationMin };
-    })
-    .sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
-
-  const clusters: (typeof sorted)[] = [];
-  let currentCluster: typeof sorted = [];
-  let clusterEnd = -1;
-
-  for (const item of sorted) {
-    if (currentCluster.length > 0 && item.startMin >= clusterEnd) {
-      clusters.push(currentCluster);
-      currentCluster = [];
-      clusterEnd = -1;
-    }
-    currentCluster.push(item);
-    clusterEnd = Math.max(clusterEnd, item.endMin);
-  }
-  if (currentCluster.length > 0) clusters.push(currentCluster);
-
-  return clusters.flatMap((cluster) => {
-    const laneEnds: number[] = [];
-    const placed = cluster.map((item, orderIndex) => {
-      let laneIndex = laneEnds.findIndex((end) => end <= item.startMin);
-      if (laneIndex === -1) {
-        laneIndex = laneEnds.length;
-        laneEnds.push(item.endMin);
-      } else {
-        laneEnds[laneIndex] = item.endMin;
-      }
-      return { ...item, laneIndex, orderIndex };
-    });
-    const totalLanes = Math.max(laneEnds.length, 1);
-    const hasTightStartCollision = cluster.some((a, i) =>
-      cluster.some((b, j) => i !== j && Math.abs(a.startMin - b.startMin) < 45)
-    );
-    return placed.map((item) => ({
-      ...item,
-      totalLanes,
-      hasTightStartCollision,
-    }));
-  });
-}
 
 export default function EventCalendar({
   events = [],
@@ -208,8 +100,6 @@ export default function EventCalendar({
     handleNext,
     handleToday,
     selectDate,
-    currentMinutes,
-    currentTimeFormatted,
   } = useEventCalendar({
     events,
     initialDate,
@@ -217,37 +107,7 @@ export default function EventCalendar({
     onSelectEvent,
   });
 
-  const timelineRef = useRef<HTMLDivElement>(null);
 
-  // Hover state for current time line tooltip
-  const [isTimeLineHovered, setIsTimeLineHovered] = useState(false);
-  const [timeLineTooltipX, setTimeLineTooltipX] = useState<number | null>(null);
-
-  const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const rawX = e.clientX - rect.left;
-    // Keep tooltip comfortably inside boundaries (min 60px, max rect.width - 60px)
-    const clampedX = Math.max(60, Math.min(rawX, rect.width - 60));
-    setTimeLineTooltipX(clampedX);
-  };
-
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Pass clicks through seamlessly to any event card or cell underneath the line hitbox
-    const lineEl = e.currentTarget;
-    lineEl.style.pointerEvents = "none";
-    const underlyingEl = document.elementFromPoint(e.clientX, e.clientY);
-    lineEl.style.pointerEvents = "";
-    if (underlyingEl && underlyingEl !== lineEl) {
-      (underlyingEl as HTMLElement).click();
-    }
-  };
-
-  // Auto-scroll timeline to daytime (~8 AM) in Week view
-  useEffect(() => {
-    if (viewMode === "Week" && timelineRef.current) {
-      timelineRef.current.scrollTop = 8 * HOUR_HEIGHT - 20; // 8:00 AM offset
-    }
-  }, [viewMode]);
 
   const getCategoryStyle = (category?: string) => {
     if (!category) return DEFAULT_CATEGORY_STYLE;
@@ -578,211 +438,100 @@ export default function EventCalendar({
             </div>
           )}
 
-          {/* ─── WEEK VIEW (Fireart Calendar Booking App 7-Day Time Grid) ─── */}
+          {/* ─── WEEK VIEW (7-Day Task Schedule Columns) ─── */}
           {viewMode === "Week" && (
-            <div className="flex-1 flex flex-col overflow-hidden bg-white">
+            <div className="flex-1 flex flex-col overflow-x-auto bg-slate-50/40">
               {/* Sticky Weekdays Header (7 Day Columns) */}
-              <div className="flex border-b border-slate-200 bg-white sticky top-0 z-20">
-                {/* Time Axis Gutter Header */}
-                <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 py-3 pr-3 text-right flex items-center justify-end bg-slate-50/50">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase select-none">GMT+7</span>
-                </div>
-
-                {/* 7 Day Column Headers */}
-                <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px]">
-                  {weekCalendarDays.map((day) => {
-                    const isToday = day.isToday;
-                    const isSelected = day.dateString === currentDateStr;
-                    return (
-                      <button
-                        type="button"
-                        key={day.dateString}
-                        onClick={() => selectDate(day.dateString)}
-                        aria-current={isToday ? "date" : undefined}
-                        aria-pressed={isSelected}
-                        className={`group py-2 px-2 min-h-[72px] flex flex-col items-center justify-center gap-1 cursor-pointer ${FOCUS_RING_INSET}`}
+              <div className="grid grid-cols-7 border-b border-slate-200/80 bg-white sticky top-0 z-10 min-w-[760px] divide-x divide-slate-100">
+                {weekCalendarDays.map((day) => {
+                  const isToday = day.isToday;
+                  const isSelected = day.dateString === currentDateStr;
+                  const eventCount = day.events.length;
+                  return (
+                    <button
+                      type="button"
+                      key={day.dateString}
+                      onClick={() => selectDate(day.dateString)}
+                      aria-current={isToday ? "date" : undefined}
+                      aria-pressed={isSelected}
+                      className={`group py-3 px-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors duration-200 motion-reduce:transition-none hover:bg-slate-50 ${FOCUS_RING_INSET} ${
+                        isSelected ? "bg-slate-50/80" : ""
+                      }`}
+                    >
+                      <span
+                        className={`text-xs font-semibold uppercase tracking-wider ${
+                          isToday ? "text-[var(--primary-container)] font-bold" : "text-slate-500"
+                        }`}
                       >
-                        <span
-                          className={`text-xs font-medium ${
-                            isToday ? "text-[var(--primary-container)]" : "text-slate-600"
-                          }`}
-                        >
-                          {WEEKDAY_SHORT_FORMATTER.format(day.date)}
-                        </span>
-                        <span
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold tabular-nums transition-colors duration-200 motion-reduce:transition-none ${
-                            isToday
-                              ? "bg-[var(--primary-container)] text-white"
-                              : isSelected
-                              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-2 ring-inset ring-[var(--primary-container)]"
-                              : "text-slate-900 group-hover:bg-slate-100"
-                          }`}
-                        >
-                          {day.dayNumber}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        {WEEKDAY_SHORT_FORMATTER.format(day.date)}
+                      </span>
+                      <span
+                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums transition-colors duration-200 motion-reduce:transition-none ${
+                          isToday
+                            ? "bg-[var(--primary-container)] text-white shadow-2xs"
+                            : isSelected
+                            ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-2 ring-inset ring-[var(--primary-container)]"
+                            : "text-slate-900 group-hover:bg-slate-200/60"
+                        }`}
+                      >
+                        {day.dayNumber}
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
+                          eventCount > 0
+                            ? "bg-slate-100 text-slate-700 font-bold"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        {eventCount > 0 ? `${eventCount} งาน` : "ว่าง"}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Weekly Time Grid Canvas */}
-              <div
-                ref={timelineRef}
-                className="relative flex-1 overflow-y-auto max-h-[660px] bg-white [scrollbar-width:thin]"
-              >
-                <div className="flex relative" style={{ height: `${24 * HOUR_HEIGHT}px` }}>
-                  {/* Left Gutter: Hour Axis (10 AM, 11 AM, 12 PM...) */}
-                  <div className="w-16 sm:w-20 shrink-0 border-r border-slate-200/80 select-none relative bg-slate-50/20">
-                    {HOURS_24.map((hour) => (
+              {/* 7 Day Task Columns */}
+              <div className="flex-1 p-3">
+                <div className="grid grid-cols-7 gap-3 min-w-[760px] items-start">
+                  {weekCalendarDays.map((day) => {
+                    const isSelected = day.dateString === currentDateStr;
+                    return (
                       <div
-                        key={hour}
-                        className="absolute right-3 -translate-y-1/2 text-[11px] font-medium text-slate-500 select-none pointer-events-none"
-                        style={{ top: `${hour * HOUR_HEIGHT}px` }}
+                        key={day.dateString}
+                        className={`flex flex-col gap-2.5 p-2 rounded-2xl transition-colors duration-200 min-h-[460px] ${
+                          isSelected ? "bg-white/80 ring-1 ring-slate-200/90" : "bg-transparent"
+                        }`}
                       >
-                        {hour !== 0 && formatHourLabel(hour)}
+                        {day.events.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-slate-200/90 text-center min-h-[140px] bg-white/40">
+                            <span className="text-[11px] font-medium text-slate-500">ไม่มีกิจกรรม</span>
+                            {onCreateEvent && (
+                              <button
+                                type="button"
+                                onClick={onCreateEvent}
+                                className={`mt-2 text-[10px] font-semibold text-[var(--primary-container)] hover:underline cursor-pointer ${FOCUS_RING}`}
+                              >
+                                + เพิ่มงาน
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          day.events.map((event) => {
+                            const isMultiDay =
+                              event.eventEndDate && event.eventEndDate > event.eventDate;
+                            return (
+                              <EventCard
+                                key={`${event.eventId}-${day.dateString}`}
+                                event={event}
+                                variant={isMultiDay ? "detailed" : "compact"}
+                                onClick={onSelectEvent}
+                              />
+                            );
+                          })
+                        )}
                       </div>
-                    ))}
-                  </div>
-
-                  {/* 7 Days Columns Grid */}
-                  <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] relative">
-                    {/* Live Current Time Line running across all 7 days with interactive hover tooltip */}
-                    <div
-                      role="region"
-                      aria-label={`เส้นระบุเวลาปัจจุบัน: ${currentTimeFormatted}`}
-                      tabIndex={0}
-                      onClick={handleTimelineClick}
-                      onMouseEnter={(e) => {
-                        setIsTimeLineHovered(true);
-                        handleTimelineMouseMove(e);
-                      }}
-                      onMouseMove={handleTimelineMouseMove}
-                      onMouseLeave={() => setIsTimeLineHovered(false)}
-                      onFocus={() => {
-                        setIsTimeLineHovered(true);
-                        setTimeLineTooltipX(80);
-                      }}
-                      onBlur={() => setIsTimeLineHovered(false)}
-                      className="absolute left-0 right-0 z-20 group cursor-pointer flex items-center h-4 -mt-2 transition-all outline-none"
-                      style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px` }}
-                      title={`เวลาปัจจุบัน ${currentTimeFormatted}`}
-                    >
-                      {/* Left Dot with hover scale & accent */}
-                      <div className="w-2.5 h-2.5 rounded-full bg-slate-950 -ml-1.5 shadow-xs group-hover:scale-125 group-hover:bg-[var(--primary-container)] transition-all shrink-0" />
-
-                      {/* Horizontal Line with subtle accent on hover */}
-                      <div className="h-[2px] bg-slate-950 group-hover:bg-[var(--primary-container)] group-hover:h-[3px] flex-1 transition-all" />
-
-                      {/* Floating Tooltip Pill showing live current time */}
-                      {isTimeLineHovered && (
-                        <div
-                          role="tooltip"
-                          className="absolute -top-9 -translate-x-1/2 pointer-events-none z-30 bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-lg tabular-nums whitespace-nowrap flex items-center gap-1.5 transition-transform animate-in fade-in zoom-in-95"
-                          style={{
-                            left: `${timeLineTooltipX ?? 60}px`,
-                          }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>เวลาปัจจุบัน {currentTimeFormatted}</span>
-                          <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-1.5 h-1.5 bg-slate-900 rotate-45" />
-                        </div>
-                      )}
-                    </div>
-
-                    {weekCalendarDays.map((day) => {
-                      return (
-                        <div key={day.dateString} className="relative h-full">
-                          {/* Hourly Horizontal Rules for each column */}
-                          {HOURS_24.map((hour) => (
-                            <div
-                              key={hour}
-                              className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
-                              style={{ top: `${hour * HOUR_HEIGHT}px` }}
-                            />
-                          ))}
-
-                          {/* Events placed inside this Day Column */}
-                          {layoutDayEvents(day.events).map(
-                            ({
-                              event,
-                              startMin,
-                              durationMin,
-                              laneIndex,
-                              orderIndex,
-                              totalLanes,
-                              hasTightStartCollision,
-                            }) => {
-                              const style =
-                                FIREART_CATEGORY_STYLES[event.eventCategory.toUpperCase()] ||
-                                FIREART_CATEGORY_STYLES.MAINTENANCE;
-
-                              // When overlapping events start >=45m apart, cascade lanes (88-92% width)
-                              // so titles, times, and brand pills never squish into 45px slivers.
-                              const isCascaded = totalLanes > 1 && !hasTightStartCollision;
-                              const stepPct = isCascaded
-                                ? Math.min(12, Math.floor(36 / Math.max(totalLanes - 1, 1)))
-                                : 100 / totalLanes;
-                              const leftPct = isCascaded ? laneIndex * stepPct : laneIndex * (100 / totalLanes);
-                              const widthPct = isCascaded
-                                ? laneIndex === 0 && totalLanes > 1
-                                  ? 92
-                                  : 100 - leftPct
-                                : 100 / totalLanes;
-
-                              return (
-                                <button
-                                  type="button"
-                                  key={event.eventId}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onSelectEvent) onSelectEvent(event);
-                                  }}
-                                  aria-label={`${event.eventName} ${event.startTime} - ${event.endTime}`}
-                                  style={{
-                                    top: `${(startMin / 60) * HOUR_HEIGHT}px`,
-                                    height: `${Math.max((durationMin / 60) * HOUR_HEIGHT, 44)}px`,
-                                    left: `calc(${leftPct}% + 2px)`,
-                                    width: `calc(${widthPct}% - 4px)`,
-                                    zIndex: 10 + orderIndex,
-                                  }}
-                                  className={`absolute rounded-xl border-l-4 p-2 text-left flex flex-col justify-start items-start gap-1 shadow-xs ring-1 ${
-                                    totalLanes > 1 ? "ring-white/90 shadow-sm" : "ring-black/5"
-                                  } transition-[background-color,box-shadow] duration-200 motion-reduce:transition-none hover:shadow-md hover:!z-40 focus-visible:!z-40 cursor-pointer overflow-hidden ${FOCUS_RING_INSET} ${style.bg} ${style.accent} ${style.hover}`}
-                                  title={`${event.eventName} (${event.startTime} - ${event.endTime})${
-                                    event.brandScope ? ` • ${event.brandScope}` : ""
-                                  }`}
-                                >
-                                  {/* 1. Compact Time Range Header (never wraps) */}
-                                  <span className="block w-full text-[11px] font-semibold text-slate-600 leading-none tabular-nums whitespace-nowrap truncate">
-                                    {event.startTime}–{event.endTime}
-                                  </span>
-
-                                  {/* 2. Event Title (top-aligned right under time) */}
-                                  <span
-                                    className={`block w-full text-xs font-bold leading-snug break-words ${
-                                      durationMin >= 120 ? "line-clamp-3" : "line-clamp-2"
-                                    } ${style.text}`}
-                                  >
-                                    {event.eventName}
-                                  </span>
-
-                                  {/* 3. Brand Pill Badge (top-aligned, no bottom gap or clipping) */}
-                                  {durationMin >= 60 && event.brandScope && (
-                                    <span className="mt-0.5 inline-flex items-center max-w-full min-w-0 rounded-md bg-white/85 px-1.5 py-0.5 text-[11px] font-medium text-slate-700 ring-1 ring-black/5 shadow-2xs">
-                                      <span className="min-w-0 whitespace-nowrap truncate">
-                                        {event.brandScope}
-                                      </span>
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            }
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

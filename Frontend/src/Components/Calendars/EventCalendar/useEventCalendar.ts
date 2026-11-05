@@ -85,30 +85,26 @@ export function useEventCalendar({
 
   const safeEvents = useMemo(() => events || [], [events]);
 
+  const filteredEvents = useMemo(() => {
+    let list = safeEvents;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (e) =>
+          e.eventName.toLowerCase().includes(q) ||
+          e.brandScope.toLowerCase().includes(q) ||
+          (e.eventLocation && e.eventLocation.toLowerCase().includes(q)) ||
+          (e.description && e.description.toLowerCase().includes(q))
+      );
+    }
+    if (selectedCategory !== "ALL") {
+      list = list.filter((e) => (e.eventCategory || "").toUpperCase() === selectedCategory);
+    }
+    return list;
+  }, [safeEvents, searchQuery, selectedCategory]);
+
   const todayStr = useMemo(() => formatToYYYYMMDD(new Date()), []);
   const currentDateStr = useMemo(() => formatToYYYYMMDD(currentDate), [currentDate]);
-
-  // ─── Live Current Time & Minute Offset ───
-  const [currentMinutes, setCurrentMinutes] = useState<number>(() => {
-    const now = new Date();
-    return now.getHours() * 60 + now.getMinutes();
-  });
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentMinutes(now.getHours() * 60 + now.getMinutes());
-    };
-    updateTime();
-    const timer = setInterval(updateTime, 10000); // Sync every 10s
-    return () => clearInterval(timer);
-  }, []);
-
-  const currentTimeFormatted = useMemo(() => {
-    const hours = Math.floor(currentMinutes / 60);
-    const minutes = currentMinutes % 60;
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} น.`;
-  }, [currentMinutes]);
 
   // ─── Mini Calendar Calculations (Google Calendar Sidebar) ───
   const miniYear = miniDate.getFullYear();
@@ -210,7 +206,7 @@ export function useEventCalendar({
         dayNumber: dayNum,
         isCurrentMonth: false,
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
+        events: filteredEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
@@ -224,7 +220,7 @@ export function useEventCalendar({
         dayNumber: dayNum,
         isCurrentMonth: true,
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
+        events: filteredEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
@@ -240,12 +236,12 @@ export function useEventCalendar({
         dayNumber: dayNum,
         isCurrentMonth: false,
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
+        events: filteredEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
     return cells;
-  }, [currentDate, safeEvents, todayStr]);
+  }, [currentDate, filteredEvents, todayStr]);
 
   // ─── 1b. Month rows with multi-day event segments (lane-packed) ───
   const monthWeeks = useMemo<CalendarWeek[]>(() => {
@@ -255,7 +251,7 @@ export function useEventCalendar({
       const firstDay = cells[0].dateString;
       const lastDay = cells[cells.length - 1].dateString;
 
-      const candidates = safeEvents
+      const candidates = filteredEvents
         .filter((e) => e.eventDate <= lastDay && getEventEndDate(e) >= firstDay)
         .map((event) => {
           const endDate = getEventEndDate(event);
@@ -276,7 +272,7 @@ export function useEventCalendar({
       weeks.push({ cells, segments });
     }
     return weeks;
-  }, [monthCalendarCells, safeEvents]);
+  }, [monthCalendarCells, filteredEvents]);
 
   // ─── 2. Week View Days Calculation (Monday to Sunday, Fireart style) ───
   const weekCalendarDays = useMemo<CalendarCell[]>(() => {
@@ -297,12 +293,12 @@ export function useEventCalendar({
         dayNumber: d.getDate(),
         isCurrentMonth: d.getMonth() === currentDate.getMonth(),
         isToday: dStr === todayStr,
-        events: safeEvents.filter((e) => isEventOnDate(e, dStr)),
+        events: filteredEvents.filter((e) => isEventOnDate(e, dStr)),
       });
     }
 
     return days;
-  }, [currentDate, safeEvents, todayStr]);
+  }, [currentDate, filteredEvents, todayStr]);
 
   const weekRangeLabel = useMemo(() => {
     if (weekCalendarDays.length === 0) return "";
@@ -433,8 +429,6 @@ export function useEventCalendar({
     handleNext,
     handleToday,
     selectDate,
-    currentMinutes,
-    currentTimeFormatted,
     onSelectDate,
     onSelectEvent,
   };
