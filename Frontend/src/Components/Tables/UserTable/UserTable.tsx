@@ -2,7 +2,12 @@
 
 import React, { useRef, useEffect } from "react";
 import { UserModel, UserTierLevel, UserStatus } from "@/Types/user";
-import { useUserTable, UserTableSortField } from "./useUserTable";
+import {
+  useUserTable,
+  UserTableSortField,
+  USER_TABLE_COLUMNS,
+  UserTableColumnKey,
+} from "./useUserTable";
 
 export interface UserTableProps {
   users?: UserModel[];
@@ -88,6 +93,8 @@ export default function UserTable({
   className = "",
 }: UserTableProps) {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const columnsMenuRef = useRef<HTMLDivElement | null>(null);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
 
   const {
     searchKeyword,
@@ -106,63 +113,294 @@ export default function UserTable({
     activeMenuUserId,
     setActiveMenuUserId,
     hasActiveFilters,
+    visibleColumns,
+    isColumnsMenuOpen,
+    setIsColumnsMenuOpen,
+    isExportMenuOpen,
+    setIsExportMenuOpen,
+    toggleColumnVisibility,
+    resetColumnVisibility,
+    selectedUserIds,
+    toggleSelectUser,
+    toggleSelectAll,
+    clearSelection,
+    isAllCurrentPageSelected,
+    isSomeCurrentPageSelected,
+    statusCounts,
+    exportData,
     handleSort,
     handlePageChange,
     handleResetFilters,
   } = useUserTable({ users, initialPageSize: 8 });
 
-  // Close actions menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setActiveMenuUserId(null);
       }
+      if (columnsMenuRef.current && !columnsMenuRef.current.contains(event.target as Node)) {
+        setIsColumnsMenuOpen(false);
+      }
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setIsExportMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setActiveMenuUserId]);
+  }, [setActiveMenuUserId, setIsColumnsMenuOpen, setIsExportMenuOpen]);
+
+  const visibleColumnCount = Object.values(visibleColumns).filter(Boolean).length;
+
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeCurrentPageSelected;
+    }
+  }, [isSomeCurrentPageSelected]);
 
   return (
     <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {/* ─── 1. TOOLBAR & CONTROLS ─── */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        {/* Search & Filters */}
-        <div className="flex flex-1 flex-wrap items-center gap-2.5">
-          {/* Search Input */}
-          <div className="relative flex-1 min-w-[220px] max-w-sm">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      {/* ─── 1. TOP TOOLBAR: SEARCH, COLUMNS SELECTOR, EXPORT, & ADD USER (Fardo Design) ─── */}
+      <div className="p-4 sm:p-5 border-b border-slate-100 bg-white flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="Buscar por usuario, email, rol o sucursal..."
+            className="w-full pl-9.5 pr-8 py-2 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder-slate-400 transition-all"
+          />
+          {searchKeyword && (
+            <button
+              type="button"
+              onClick={() => setSearchKeyword("")}
+              className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+              aria-label="Clear search"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </span>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="Search by name, ID, email, role..."
-              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder-slate-400 transition-all"
-            />
-            {searchKeyword && (
-              <button
-                type="button"
-                onClick={() => setSearchKeyword("")}
-                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-                aria-label="Clear search"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+            </button>
+          )}
+        </div>
+
+        {/* Action Controls: Column Selector, Export Dropdown, Add User */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Column Visibility Selector Dropdown (Columnas ▾) */}
+          <div className="relative" ref={columnsMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsColumnsMenuOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18" />
+                <path d="M15 3v18" />
+              </svg>
+              <span>Columnas</span>
+              <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+
+            {isColumnsMenuOpen && (
+              <div className="absolute right-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-slate-200/90 p-2.5 z-30 space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between pb-1.5 mb-1 border-b border-slate-100 text-[11px] font-bold text-slate-700">
+                  <span>Columnas visibles</span>
+                  <button
+                    type="button"
+                    onClick={resetColumnVisibility}
+                    className="text-blue-600 hover:underline font-normal text-[10px]"
+                  >
+                    Restablecer
+                  </button>
+                </div>
+                {USER_TABLE_COLUMNS.map((col) => {
+                  const isChecked = visibleColumns[col.key] !== false;
+                  return (
+                    <label
+                      key={col.key}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs hover:bg-slate-50 text-slate-700 cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleColumnVisibility(col.key)}
+                        className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer"
+                      />
+                      <span className="truncate">{col.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          {/* Tier Filter Dropdown */}
+          {/* Export Dropdown Button (Exportar ▾ - Tal como la ves) */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsExportMenuOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Exportar</span>
+              {selectedUserIds.size > 0 && (
+                <span className="px-1.5 py-0.2 bg-blue-500 text-white rounded-full text-[10px] font-bold">
+                  {selectedUserIds.size}
+                </span>
+              )}
+              <svg className="w-3 h-3 text-blue-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-1 w-64 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3.5 py-2 border-b border-slate-100 text-[11px] text-slate-500">
+                  {selectedUserIds.size > 0 ? (
+                    <span>
+                      Exportando <strong className="text-slate-800">{selectedUserIds.size}</strong> filas seleccionadas
+                    </span>
+                  ) : (
+                    <span>
+                      Exportando <strong className="text-slate-800">{totalItems}</strong> filas (según filtros)
+                    </span>
+                  )}
+                  <span className="block text-[10px] text-slate-400 mt-0.5">
+                    {visibleColumnCount} columnas visibles aplicadas
+                  </span>
+                </div>
+
+                {/* CSV */}
+                <button
+                  type="button"
+                  onClick={() => exportData("csv")}
+                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    CSV
+                  </div>
+                  <div>
+                    <span className="block text-xs font-semibold text-slate-800">CSV Spreadsheet (.csv)</span>
+                    <span className="block text-[10px] text-slate-400">Excel & Google Sheets (UTF-8 BOM)</span>
+                  </div>
+                </button>
+
+                {/* XLSX */}
+                <button
+                  type="button"
+                  onClick={() => exportData("xlsx")}
+                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    XLS
+                  </div>
+                  <div>
+                    <span className="block text-xs font-semibold text-slate-800">Excel Workbook (.xls)</span>
+                    <span className="block text-[10px] text-slate-400">Hoja de cálculo estructurada</span>
+                  </div>
+                </button>
+
+                {/* JSON */}
+                <button
+                  type="button"
+                  onClick={() => exportData("json")}
+                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">
+                    {`{}`}
+                  </div>
+                  <div>
+                    <span className="block text-xs font-semibold text-slate-800">JSON Dataset (.json)</span>
+                    <span className="block text-[10px] text-slate-400">Datos limpios para APIs y sistemas</span>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Add User Button */}
+          {onAddUser && (
+            <button
+              type="button"
+              onClick={onAddUser}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add User</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ─── 2. SECONDARY FILTER TOOLBAR: STATUS TABS & TIER PILL (Fardo Filterbar) ─── */}
+      <div className="px-4 py-3 sm:px-5 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+        {/* Status Filter Segmented Tabs */}
+        <div className="flex items-center gap-1.5 bg-slate-200/60 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setStatusFilter("All")}
+            className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+              statusFilter === "All"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Todos ({statusCounts.all})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("Active")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+              statusFilter === "Active"
+                ? "bg-white text-emerald-800 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Active ({statusCounts.active})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("Inactive")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+              statusFilter === "Inactive"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+            <span>Inactive ({statusCounts.inactive})</span>
+          </button>
+        </div>
+
+        {/* Tier Scope Selector & Reset */}
+        <div className="flex items-center gap-2">
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value)}
-            className="py-2 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="py-1.5 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           >
             <option value="All">All Tiers (ทุกระดับสิทธิ์)</option>
             <option value="Super Admin">Super Admin</option>
@@ -173,89 +411,91 @@ export default function UserTable({
             <option value="Custom Scope">Custom Scope</option>
           </select>
 
-          {/* Status Filter Dropdown */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="py-2 px-3 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-          >
-            <option value="All">All Status (ทุกสถานะ)</option>
-            <option value="Active">Active (เปิดใช้งาน)</option>
-            <option value="Inactive">Inactive (ปิดใช้งาน)</option>
-          </select>
-
           {hasActiveFilters && (
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1.5 transition-colors"
+              className="text-xs text-blue-600 hover:text-blue-700 font-semibold px-2 py-1 transition-colors cursor-pointer"
             >
-              Reset Filters
+              Reset
             </button>
           )}
         </div>
-
-        {/* Action Button */}
-        {onAddUser && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onAddUser}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span>Add User</span>
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* ─── 2. DATA TABLE AREA ─── */}
+      {/* ─── 3. DATA TABLE AREA WITH DYNAMIC COLUMNS & ROW SELECTION ─── */}
       <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full border-collapse text-left text-sm text-slate-600">
           <thead className="bg-slate-50/80 border-b border-slate-200/80">
             <tr>
-              <SortHeaderCell
-                label="User ID & Tier"
-                field="userCode"
-                activeField={sortField}
-                direction={sortDirection}
-                onSort={handleSort}
-              />
-              <SortHeaderCell
-                label="Full Name & Account"
-                field="name"
-                activeField={sortField}
-                direction={sortDirection}
-                onSort={handleSort}
-              />
-              <SortHeaderCell
-                label="Role"
-                field="role"
-                activeField={sortField}
-                direction={sortDirection}
-                onSort={handleSort}
-              />
-              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Assigned Scope
+              {/* Checkbox Select All */}
+              <th scope="col" className="px-4 py-3.5 w-10 text-center">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllCurrentPageSelected}
+                  onChange={toggleSelectAll}
+                  aria-label="Seleccionar todos"
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer"
+                />
               </th>
-              <SortHeaderCell
-                label="Status"
-                field="status"
-                activeField={sortField}
-                direction={sortDirection}
-                onSort={handleSort}
-              />
-              <SortHeaderCell
-                label="Created Date"
-                field="createdDate"
-                activeField={sortField}
-                direction={sortDirection}
-                onSort={handleSort}
-              />
+
+              {visibleColumns.userCode && (
+                <SortHeaderCell
+                  label="User ID & Tier"
+                  field="userCode"
+                  activeField={sortField}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+
+              {visibleColumns.name && (
+                <SortHeaderCell
+                  label="Full Name & Account"
+                  field="name"
+                  activeField={sortField}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+
+              {visibleColumns.role && (
+                <SortHeaderCell
+                  label="Role"
+                  field="role"
+                  activeField={sortField}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+
+              {visibleColumns.scope && (
+                <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Assigned Scope
+                </th>
+              )}
+
+              {visibleColumns.status && (
+                <SortHeaderCell
+                  label="Status"
+                  field="status"
+                  activeField={sortField}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+
+              {visibleColumns.createdDate && (
+                <SortHeaderCell
+                  label="Created Date"
+                  field="createdDate"
+                  activeField={sortField}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+
               <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
                 Actions
               </th>
@@ -266,31 +506,46 @@ export default function UserTable({
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
                 <tr key={`user-skeleton-${index}`} className="animate-pulse">
-                  <td className="px-5 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-20 mb-1.5" />
-                    <div className="h-3 bg-slate-100 rounded w-16" />
+                  <td className="px-4 py-4 text-center">
+                    <div className="w-4 h-4 bg-slate-200 rounded mx-auto" />
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
-                      <div className="space-y-1.5">
-                        <div className="h-4 bg-slate-200 rounded w-32" />
-                        <div className="h-3 bg-slate-100 rounded w-24" />
+                  {visibleColumns.userCode && (
+                    <td className="px-5 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-20 mb-1.5" />
+                      <div className="h-3 bg-slate-100 rounded w-16" />
+                    </td>
+                  )}
+                  {visibleColumns.name && (
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="h-4 bg-slate-200 rounded w-32" />
+                          <div className="h-3 bg-slate-100 rounded w-24" />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="h-5 bg-slate-200 rounded-md w-24" />
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-36" />
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="h-5 bg-slate-200 rounded-full w-16" />
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-24" />
-                  </td>
+                    </td>
+                  )}
+                  {visibleColumns.role && (
+                    <td className="px-5 py-4">
+                      <div className="h-5 bg-slate-200 rounded-md w-24" />
+                    </td>
+                  )}
+                  {visibleColumns.scope && (
+                    <td className="px-5 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-36" />
+                    </td>
+                  )}
+                  {visibleColumns.status && (
+                    <td className="px-5 py-4">
+                      <div className="h-5 bg-slate-200 rounded-full w-16" />
+                    </td>
+                  )}
+                  {visibleColumns.createdDate && (
+                    <td className="px-5 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-24" />
+                    </td>
+                  )}
                   <td className="px-5 py-4 text-right">
                     <div className="h-7 w-7 bg-slate-200 rounded-lg ml-auto" />
                   </td>
@@ -300,7 +555,7 @@ export default function UserTable({
             {/* Empty State */}
             {!isLoading && paginatedUsers.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-12 text-center">
+                <td colSpan={visibleColumnCount + 2} className="px-5 py-12 text-center">
                   <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
                     <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
                       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -322,7 +577,7 @@ export default function UserTable({
                       <button
                         type="button"
                         onClick={handleResetFilters}
-                        className="px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                       >
                         Clear Filters
                       </button>
@@ -338,6 +593,7 @@ export default function UserTable({
                 const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || "U";
                 const isMenuOpen = activeMenuUserId === user.id;
                 const isActiveStatus = user.status === "Active";
+                const isRowSelected = selectedUserIds.has(user.id);
 
                 const brandsCount = user.assignedBrands?.length ?? 0;
                 const branchesCount = user.assignedBranches?.length ?? 0;
@@ -345,88 +601,113 @@ export default function UserTable({
                 return (
                   <tr
                     key={user.id}
-                    className="hover:bg-slate-50/80 transition-colors group"
+                    className={`transition-colors group ${
+                      isRowSelected ? "bg-blue-50/50 hover:bg-blue-50/80" : "hover:bg-slate-50/80"
+                    }`}
                   >
-                    {/* User Code & Tier */}
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col gap-1 items-start">
-                        <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
-                          {user.userCode ?? "-"}
-                        </span>
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${getTierBadgeClass(
-                            user.tierLevel
-                          )}`}
-                        >
-                          {user.tierLevel ?? "-"}
-                        </span>
-                      </div>
+                    {/* Row Checkbox */}
+                    <td className="px-4 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isRowSelected}
+                        onChange={() => toggleSelectUser(user.id)}
+                        aria-label={`Seleccionar ${user.firstName}`}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer"
+                      />
                     </td>
+
+                    {/* User Code & Tier */}
+                    {visibleColumns.userCode && (
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
+                            {user.userCode ?? "-"}
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${getTierBadgeClass(
+                              user.tierLevel
+                            )}`}
+                          >
+                            {user.tierLevel ?? "-"}
+                          </span>
+                        </div>
+                      </td>
+                    )}
 
                     {/* Name & Account */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 select-none shadow-xs">
-                          {initials}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-slate-900 truncate">
-                            {user.firstName} {user.lastName}
+                    {visibleColumns.name && (
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 select-none shadow-xs">
+                            {initials}
                           </div>
-                          <div className="text-xs text-slate-500 font-mono truncate">
-                            {user.email ?? "-"}
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">
+                              {user.firstName} {user.lastName}
+                            </div>
+                            <div className="text-xs text-slate-500 font-mono truncate">
+                              {user.email ?? "-"}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
+                    )}
 
                     {/* Role */}
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/80">
-                        {user.role ?? "-"}
-                      </span>
-                    </td>
+                    {visibleColumns.role && (
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/80">
+                          {user.role ?? "-"}
+                        </span>
+                      </td>
+                    )}
 
                     {/* Assigned Scope */}
-                    <td className="px-5 py-4">
-                      <div className="space-y-1 text-xs">
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <span className="font-medium text-slate-400">Brand:</span>
-                          <span className="truncate max-w-[160px] text-slate-700 font-medium">
-                            {brandsCount > 0 ? user.assignedBrands!.join(", ") : user.brand ?? "All"}
-                          </span>
+                    {visibleColumns.scope && (
+                      <td className="px-5 py-4">
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <span className="font-medium text-slate-400">Brand:</span>
+                            <span className="truncate max-w-[160px] text-slate-700 font-medium">
+                              {brandsCount > 0 ? user.assignedBrands!.join(", ") : user.brand ?? "All"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <span className="font-medium text-slate-400">Branch:</span>
+                            <span className="truncate max-w-[160px] text-slate-700 font-medium">
+                              {branchesCount > 0 ? `${branchesCount} สาขา` : user.branch ?? "All"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <span className="font-medium text-slate-400">Branch:</span>
-                          <span className="truncate max-w-[160px] text-slate-700 font-medium">
-                            {branchesCount > 0 ? `${branchesCount} สาขา` : user.branch ?? "All"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
+                    )}
 
                     {/* Status Badge */}
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          isActiveStatus
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
-                            : "bg-slate-100 text-slate-600 border-slate-200/80"
-                        }`}
-                      >
+                    {visibleColumns.status && (
+                      <td className="px-5 py-4">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isActiveStatus ? "bg-emerald-600" : "bg-slate-400"
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            isActiveStatus
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
+                              : "bg-slate-100 text-slate-600 border-slate-200/80"
                           }`}
-                        />
-                        {user.status ?? "-"}
-                      </span>
-                    </td>
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isActiveStatus ? "bg-emerald-600" : "bg-slate-400"
+                            }`}
+                          />
+                          {user.status ?? "-"}
+                        </span>
+                      </td>
+                    )}
 
                     {/* Created Date */}
-                    <td className="px-5 py-4 text-xs text-slate-500 font-mono">
-                      {user.createdDate ?? "-"}
-                    </td>
+                    {visibleColumns.createdDate && (
+                      <td className="px-5 py-4 text-xs text-slate-500 font-mono">
+                        {user.createdDate ?? "-"}
+                      </td>
+                    )}
 
                     {/* Actions Menu */}
                     <td className="px-5 py-4 text-right">
@@ -434,7 +715,7 @@ export default function UserTable({
                         <button
                           type="button"
                           onClick={() => setActiveMenuUserId(isMenuOpen ? null : user.id)}
-                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           aria-label="User actions"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -453,7 +734,7 @@ export default function UserTable({
                                   setActiveMenuUserId(null);
                                   onEditUser(user);
                                 }}
-                                className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
                               >
                                 <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                   <path d="M12 20h9" />
@@ -470,7 +751,7 @@ export default function UserTable({
                                   setActiveMenuUserId(null);
                                   onToggleStatus(user);
                                 }}
-                                className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
                               >
                                 <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                   <rect x="1" y="5" width="22" height="14" rx="7" ry="7" />
@@ -489,7 +770,7 @@ export default function UserTable({
                                     setActiveMenuUserId(null);
                                     onDeleteUser(user);
                                   }}
-                                  className="w-full px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                  className="w-full px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors cursor-pointer"
                                 >
                                   <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polyline points="3 6 5 6 21 6" />
@@ -510,10 +791,23 @@ export default function UserTable({
         </table>
       </div>
 
-      {/* ─── 3. PAGINATION FOOTER ─── */}
+      {/* ─── 4. TABLE FOOTER (Fardo Summary & Pagination) ─── */}
       <div className="p-4 sm:px-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-        <div>
-          {totalItems > 0 ? (
+        <div className="flex items-center gap-3">
+          {selectedUserIds.size > 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/70">
+                {selectedUserIds.size} filas seleccionadas ({selectedUserIds.size} รายการที่เลือก)
+              </span>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="text-slate-400 hover:text-slate-700 font-medium hover:underline cursor-pointer"
+              >
+                Limpiar selección (ล้างค่า)
+              </button>
+            </div>
+          ) : totalItems > 0 ? (
             <span>
               Showing{" "}
               <strong className="text-slate-800 font-semibold">
@@ -536,7 +830,7 @@ export default function UserTable({
               type="button"
               disabled={currentPage <= 1}
               onClick={() => handlePageChange(currentPage - 1)}
-              className="p-1.5 text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-1.5 text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
               aria-label="Previous page"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -552,7 +846,7 @@ export default function UserTable({
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
-              className="p-1.5 text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-1.5 text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
               aria-label="Next page"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
