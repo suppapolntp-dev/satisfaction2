@@ -345,18 +345,12 @@ export default function EventEditModal({
               </div>
             </div>
 
-            {/* Card 3: สาขาที่ร่วมรายการ (Live Sync จากแถบซ้าย!) */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2.5">
+            {/* Card 3: สาขาที่ร่วมรายการ (กะทัดรัดแบบ Avatar Stack + Text Truncate ตาม image_3971f6.png) */}
+            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <svg aria-hidden="true" className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <span className="text-xs font-bold text-slate-800">
-                    สาขาเป้าหมายที่เลือก ({targetBranches.length} สาขา)
-                  </span>
-                </div>
+                <span className="text-xs font-bold text-slate-800">
+                  สาขาเป้าหมายที่เลือก ({targetBranches.length} สาขา)
+                </span>
                 {targetBranches.length > 0 && (
                   <button
                     type="button"
@@ -369,27 +363,36 @@ export default function EventEditModal({
               </div>
 
               {targetBranches.length === 0 ? (
-                <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-400">
-                  ยังไม่ได้เลือกสาขา (สามารถคลิกติ๊กเลือกสาขาได้จากแถบด้านซ้ายมือ)
+                <div className="py-2.5 px-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs text-slate-400 text-center">
+                  ยังไม่ได้เลือกสาขา (เลือกจากแถบด้านซ้ายมือ)
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1">
-                  {targetBranches.map((branchName) => (
-                    <span
-                      key={branchName}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-900 text-xs font-semibold"
-                    >
-                      <span className="truncate max-w-[200px]">{branchName}</span>
-                      <button
-                        type="button"
-                        onClick={() => toggleBranch(branchName)}
-                        className="hover:text-rose-600 cursor-pointer text-slate-400"
-                        title="ลบออก"
+                <div className="flex items-center gap-2.5 py-2 px-3 rounded-xl bg-slate-50/80 border border-slate-200/80">
+                  {/* Monogram circle stack */}
+                  <div className="flex items-center -space-x-1.5 shrink-0 overflow-hidden" aria-label="รายการสาขา">
+                    {targetBranches.slice(0, 4).map((name) => (
+                      <span
+                        key={name}
+                        title={name}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-800 ring-2 ring-white shrink-0"
                       >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
+                        {name.trim().charAt(0)}
+                      </span>
+                    ))}
+                    {targetBranches.length > 4 && (
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 ring-2 ring-white shrink-0">
+                        +{targetBranches.length - 4}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Inline comma-separated text string with truncation */}
+                  <span
+                    className="truncate text-xs font-medium text-slate-700 min-w-0"
+                    title={targetBranches.join(", ")}
+                  >
+                    {targetBranches.join(", ")}
+                  </span>
                 </div>
               )}
             </div>
