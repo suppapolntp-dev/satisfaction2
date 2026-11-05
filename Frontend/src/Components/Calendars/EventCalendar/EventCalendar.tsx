@@ -432,6 +432,7 @@ export default function EventCalendar({
                         >
                           <EventCard
                             event={segment.event}
+                            columnSpan={segment.columnSpan}
                             variant={segment.isMultiDay ? "detailed" : "compact"}
                             onClick={onSelectEvent}
                             onEdit={onEditEvent}
@@ -563,6 +564,7 @@ export default function EventCalendar({
                       >
                         <EventCard
                           event={segment.event}
+                          columnSpan={segment.columnSpan}
                           variant={segment.isMultiDay ? "detailed" : "compact"}
                           onClick={onSelectEvent}
                           onEdit={onEditEvent}

@@ -23,6 +23,7 @@ const ICON_PROPS = {
 
 export default function EventCard({
   event,
+  columnSpan,
   onClick,
   onMenuClick,
   onEdit,
@@ -36,13 +37,14 @@ export default function EventCard({
     progressPercent,
     visibleAssignees,
     hiddenAssigneeCount,
+    displayTitle,
     isMenuOpen,
     menuRef,
     handleClick,
     toggleMenu,
     handleEdit,
     handleDelete,
-  } = useEventCard({ event, onClick, onMenuClick, onEdit, onDelete });
+  } = useEventCard({ event, columnSpan, onClick, onMenuClick, onEdit, onDelete });
 
   if (variant === "compact") {
     const leadAssignee = visibleAssignees[0];
@@ -62,7 +64,7 @@ export default function EventCard({
             )}
           </span>
         )}
-        <span className="truncate">{event.eventName || "-"}</span>
+        <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">{displayTitle}</span>
       </button>
     );
   }
@@ -90,9 +92,10 @@ export default function EventCard({
         <button
           type="button"
           onClick={handleClick}
-          className="block w-full text-left text-sm font-semibold text-slate-900 leading-snug line-clamp-2 cursor-pointer after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+          title={event.eventName}
+          className="block w-full text-left text-xs sm:text-sm font-semibold text-slate-900 leading-snug truncate whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
         >
-          {event.eventName || "-"}
+          {displayTitle}
         </button>
       </h3>
 
