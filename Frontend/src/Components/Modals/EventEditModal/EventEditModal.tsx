@@ -5,7 +5,6 @@ import {
   useEventEditModal,
   UseEventEditModalProps,
   EVENT_CATEGORIES,
-  COMMON_BRANDS,
 } from "./useEventEditModal";
 import { DEFAULT_BRAND_LOGO_FALLBACK } from "@/Components/Cards/EventCard";
 
@@ -33,6 +32,7 @@ export default function EventEditModal({
     toggleBranch,
     selectAllBranches,
     clearAllBranches,
+    computedStatus,
     handleChange,
     handleSubmit,
   } = useEventEditModal({ isOpen, event, onClose, onSave });
@@ -107,7 +107,7 @@ export default function EventEditModal({
         {/* ─── 3. SPLIT WORKSPACE BODY (Left: Scope Tree | Right: Event Form) ─── */}
         <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-100 flex-1 overflow-hidden min-h-0">
           
-          {/* ─── LEFT PANEL: SCOPE HIERARCHY TREEVIEW (ตาม image_2680fd.png) ─── */}
+          {/* ─── LEFT PANEL: SCOPE HIERARCHY TREEVIEW ─── */}
           <aside className="w-full lg:w-80 xl:w-88 shrink-0 flex flex-col bg-slate-50/50 p-4 sm:p-5 overflow-hidden">
             {/* Header + Quick Actions */}
             <div className="flex items-center justify-between mb-2.5">
@@ -140,7 +140,7 @@ export default function EventEditModal({
               </div>
             </div>
 
-            {/* Filter Search Input (image_2680fd.png) */}
+            {/* Filter Search Input */}
             <div className="mb-3">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200/90 text-slate-600 shadow-2xs focus-within:border-[var(--primary-container)]">
                 <svg aria-hidden="true" className="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -178,7 +178,6 @@ export default function EventEditModal({
                   const selectedInBrandCount = branches.filter((b) =>
                     targetBranches.includes(b.name)
                   ).length;
-                  const isAllInBrandSelected = selectedInBrandCount === branches.length;
 
                   return (
                     <div
@@ -255,7 +254,7 @@ export default function EventEditModal({
 
           {/* ─── RIGHT PANEL: EVENT FORM CONFIGURATION WORKSPACE ─── */}
           <main className="flex-1 flex flex-col p-5 sm:p-6 overflow-y-auto bg-white space-y-4">
-            {/* Card 1: ชื่อกิจกรรม & หมวดหมู่ */}
+            {/* Card 1: ชื่อกิจกรรม & หมวดหมู่ (เหลือง 1: ทำเป็น Dropdown) */}
             <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3.5">
               <div className="space-y-1.5">
                 <label htmlFor="eventName" className="block text-xs font-bold text-slate-800">
@@ -272,68 +271,39 @@ export default function EventEditModal({
                 />
               </div>
 
-              {/* Category Selector Pills */}
+              {/* เหลือง 1: เปลี่ยนหมวดหมู่กิจกรรมเป็น Single-Select Dropdown */}
               <div className="space-y-1.5">
-                <span className="block text-xs font-bold text-slate-800">หมวดหมู่กิจกรรม</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {EVENT_CATEGORIES.map((cat) => {
-                    const isSelected = (formData.eventCategory || "").toUpperCase() === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleChange("eventCategory", cat.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all ${
-                          isSelected
-                            ? "bg-slate-900 text-white shadow-xs font-bold"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-transparent"
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
-                        <span>{cat.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <label htmlFor="eventCategory" className="block text-xs font-bold text-slate-800">
+                  หมวดหมู่กิจกรรม
+                </label>
+                <select
+                  id="eventCategory"
+                  value={formData.eventCategory || "CAMPAIGN"}
+                  onChange={(e) => handleChange("eventCategory", e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
+                >
+                  {EVENT_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Brand & Status Selector */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                <div className="space-y-1.5">
-                  <label htmlFor="brandScope" className="block text-xs font-bold text-slate-800">
-                    แบรนด์เจ้าภาพ
-                  </label>
-                  <select
-                    id="brandScope"
-                    value={formData.brandScope || COMMON_BRANDS[0]}
-                    onChange={(e) => handleChange("brandScope", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
-                  >
-                    {COMMON_BRANDS.map((b) => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label htmlFor="eventStatus" className="block text-xs font-bold text-slate-800">
-                    สถานะการดำเนินงาน
-                  </label>
-                  <select
-                    id="eventStatus"
-                    value={formData.eventStatus || "Active"}
-                    onChange={(e) => handleChange("eventStatus", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
-                  >
-                    <option value="Upcoming">Upcoming (รอเริ่ม)</option>
-                    <option value="Active">Active (กำลังดำเนินงาน)</option>
-                    <option value="Completed">Completed (เสร็จสิ้น)</option>
-                  </select>
-                </div>
+              {/* แดง 1 & 2: ลบแบรนด์เจ้าภาพ & สถานะแบบกรอกเองออก เปลี่ยนเป็นสถานะคำนวณอัตโนมัติ (รอวันมาถึง / จบแล้ว) */}
+              <div className="flex items-center gap-2.5 pt-1.5 border-t border-slate-100">
+                <span className="text-xs font-bold text-slate-700">สถานะกิจกรรม:</span>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${computedStatus.badgeClass}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${computedStatus.dotClass}`} />
+                  <span>{computedStatus.label}</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  (ตรวจจากวันเวลาอัตโนมัติ)
+                </span>
               </div>
             </div>
 
-            {/* Card 2: กำหนดการ & เวลา (Unified Schedule Card) */}
+            {/* Card 2: กำหนดการ (เหลือง 2: กำหนดแค่วันที่เริ่มต้นและสิ้นสุดพอ ตัดเวลาออก) */}
             <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
               <div className="flex items-center gap-2">
                 <svg aria-hidden="true" className="w-4 h-4 text-[var(--primary-container)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -342,7 +312,7 @@ export default function EventEditModal({
                   <line x1="8" y1="2" x2="8" y2="6" />
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
-                <span className="text-xs font-bold text-slate-800">กำหนดการและเวลา</span>
+                <span className="text-xs font-bold text-slate-800">กำหนดการจัดกิจกรรม (ระบุแค่วันที่)</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -369,32 +339,6 @@ export default function EventEditModal({
                     type="date"
                     value={formData.eventEndDate || ""}
                     onChange={(e) => handleChange("eventEndDate", e.target.value || null)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="startTime" className="block text-[11px] font-medium text-slate-600 mb-1">
-                    เวลาเริ่มงาน
-                  </label>
-                  <input
-                    id="startTime"
-                    type="time"
-                    value={formData.startTime || "09:00"}
-                    onChange={(e) => handleChange("startTime", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="endTime" className="block text-[11px] font-medium text-slate-600 mb-1">
-                    เวลาเลิกงาน
-                  </label>
-                  <input
-                    id="endTime"
-                    type="time"
-                    value={formData.endTime || "17:00"}
-                    onChange={(e) => handleChange("endTime", e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
                   />
                 </div>
@@ -450,35 +394,19 @@ export default function EventEditModal({
               )}
             </div>
 
-            {/* Card 4: สถานที่ & คำอธิบาย */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3.5">
-              <div className="space-y-1.5">
-                <label htmlFor="eventLocation" className="block text-xs font-bold text-slate-800">
-                  สถานที่หลัก / จุดสังเกต
-                </label>
-                <input
-                  id="eventLocation"
-                  type="text"
-                  value={formData.eventLocation || ""}
-                  onChange={(e) => handleChange("eventLocation", e.target.value)}
-                  placeholder="เช่น Central World ชั้น 3 โซน Beacon หรือ ทุกสาขากรุงเทพฯ"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="description" className="block text-xs font-bold text-slate-800">
-                  คำอธิบายรายละเอียด
-                </label>
-                <textarea
-                  id="description"
-                  rows={2}
-                  value={formData.description || ""}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  placeholder="ระบุเป้าหมายของกิจกรรม โปรโมชั่น หรือรายละเอียดงานซ่อมบำรุง..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
-                />
-              </div>
+            {/* Card 4: คำอธิบายรายละเอียด (รูป 1: ลบสถานที่หลัก/จุดสังเกตที่ไม่จำเป็นออกแล้ว เหลือแค่คำอธิบาย) */}
+            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5">
+              <label htmlFor="description" className="block text-xs font-bold text-slate-800">
+                คำอธิบายรายละเอียดกิจกรรม
+              </label>
+              <textarea
+                id="description"
+                rows={3}
+                value={formData.description || ""}
+                onChange={(e) => handleChange("description", e.target.value)}
+                placeholder="ระบุเป้าหมายของกิจกรรม โปรโมชั่น หรือรายละเอียดงานซ่อมบำรุง..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
+              />
             </div>
           </main>
         </div>

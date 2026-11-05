@@ -43,14 +43,33 @@ export const EVENT_CATEGORIES: { id: EventCategory; label: string; dot: string }
   { id: "MAINTENANCE", label: "ซ่อมบำรุงประจำรอบ", dot: "bg-slate-500" },
 ];
 
-export const COMMON_BRANDS = [
-  "Mister Donut",
-  "The Coffee Club",
-  "Swensen's",
-  "KFC",
-  "Auntie Anne's",
-  "Ootoya",
-];
+// Helper คำนวณ 2 สถานะอัตโนมัติ: "รอวันมาถึง" กับ "จบแล้ว" โดยตรวจจากวันเวลา
+export function computeEventStatus(eventDate?: string, eventEndDate?: string | null) {
+  if (!eventDate) {
+    return {
+      status: "Upcoming" as EventStatus,
+      label: "รอวันมาถึง",
+      badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
+      dotClass: "bg-emerald-500 animate-pulse",
+    };
+  }
+  const today = new Date().toISOString().split("T")[0];
+  const finalEndDate = eventEndDate && eventEndDate >= eventDate ? eventEndDate : eventDate;
+  if (finalEndDate < today) {
+    return {
+      status: "Completed" as EventStatus,
+      label: "จบแล้ว",
+      badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+      dotClass: "bg-slate-400",
+    };
+  }
+  return {
+    status: "Upcoming" as EventStatus,
+    label: "รอวันมาถึง",
+    badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
+    dotClass: "bg-emerald-500 animate-pulse",
+  };
+}
 
 export function useEventEditModal({
   isOpen,
@@ -88,9 +107,9 @@ export function useEventEditModal({
         eventEndDate: null,
         startTime: "09:00",
         endTime: "17:00",
-        brandScope: COMMON_BRANDS[0],
+        brandScope: "Mister Donut",
         eventCategory: "CAMPAIGN",
-        eventStatus: "Active",
+        eventStatus: "Upcoming",
         eventLocation: "",
         description: "",
         targetBranchNames: ["Central World ชั้น 3", "Siam Paragon ชั้น G"],
@@ -125,8 +144,17 @@ export function useEventEditModal({
       const updated = current.includes(branchName)
         ? current.filter((b) => b !== branchName)
         : [...current, branchName];
+
+      // Auto-derive brandScope from selected branch
+      let newBrand = prev.brandScope;
+      if (updated.length > 0) {
+        const found = MASTER_BRANCH_NODES.find((b) => b.name === updated[0]);
+        if (found) newBrand = found.brand;
+      }
+
       return {
         ...prev,
+        brandScope: newBrand,
         targetBranchNames: updated,
       };
     });
@@ -179,6 +207,11 @@ export function useEventEditModal({
     return map;
   }, [filteredBranches]);
 
+  // คำนวณ 2 สถานะอัตโนมัติ (รอวันมาถึง / จบแล้ว)
+  const computedStatus = useMemo(() => {
+    return computeEventStatus(formData.eventDate, formData.eventEndDate);
+  }, [formData.eventDate, formData.eventEndDate]);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -194,7 +227,29 @@ export function useEventEditModal({
       try {
         setIsSubmitting(true);
         setErrorMessage(null);
-        await onSave(formData as EventItem);
+
+        // Auto-assign computed status
+        const finalStatus = computeEventStatus(formData.eventDate, formData.eventEndDate).status;
+
+        // Auto-derive brandScope if empty
+        let finalBrand = formData.brandScope || "Mister Donut";
+        if (formData.targetBranchNames && formData.targetBranchNames.length > 0) {
+          const matchBranch = MASTER_BRANCH_NODES.find((b) => b.name === formData.targetBranchNames![0]);
+          if (matchBranch) finalBrand = matchBranch.brand;
+        }
+
+        const payload: EventItem = {
+          ...(formData as EventItem),
+          brandScope: finalBrand,
+          eventStatus: finalStatus,
+          startTime: formData.startTime || "09:00",
+          endTime: formData.endTime || "17:00",
+          eventLocation: formData.targetBranchNames?.length
+            ? `${formData.targetBranchNames.length} สาขาในเครือ`
+            : "",
+        };
+
+        await onSave(payload);
         onClose();
       } catch (err: any) {
         setErrorMessage(err?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
@@ -218,6 +273,7 @@ export function useEventEditModal({
     toggleBranch,
     selectAllBranches,
     clearAllBranches,
+    computedStatus,
     handleChange,
     handleSubmit,
   };
