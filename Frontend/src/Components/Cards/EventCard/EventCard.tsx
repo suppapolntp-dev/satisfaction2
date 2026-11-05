@@ -24,6 +24,7 @@ const ICON_PROPS = {
 export default function EventCard({ event, onClick, onMenuClick, variant = "detailed", className = "" }: EventCardProps) {
   const {
     progressFillClass,
+    compactStyleClass,
     progressPercent,
     commentCount,
     attachmentCount,
@@ -40,7 +41,7 @@ export default function EventCard({ event, onClick, onMenuClick, variant = "deta
         type="button"
         onClick={handleClick}
         title={event.eventName}
-        className={`w-full min-h-9 px-2 py-1.5 rounded-md flex items-center gap-2 text-left text-xs font-medium text-slate-900 cursor-pointer transition-colors duration-200 motion-reduce:transition-none hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] bg-emerald-200 ${className}`}
+        className={`w-full min-h-9 px-2.5 py-1.5 rounded-md flex items-center gap-2 text-left text-xs font-semibold cursor-pointer transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] ${compactStyleClass} ${className}`}
       >
         {leadAssignee && (
           <span className="w-5 h-5 rounded-full bg-white/80 text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">

@@ -21,12 +21,25 @@ function createSampleEvents(): EventItem[] {
   tomorrow.setDate(today.getDate() + 1);
   const tomorrowStr = formatToYYYYMMDD(tomorrow);
 
+  const inTwoDays = new Date(today);
+  inTwoDays.setDate(today.getDate() + 2);
+  const inTwoDaysStr = formatToYYYYMMDD(inTwoDays);
+
+  const inThreeDays = new Date(today);
+  inThreeDays.setDate(today.getDate() + 3);
+  const inThreeDaysStr = formatToYYYYMMDD(inThreeDays);
+
+  const inFiveDays = new Date(today);
+  inFiveDays.setDate(today.getDate() + 5);
+  const inFiveDaysStr = formatToYYYYMMDD(inFiveDays);
+
   return [
-    // ─── วันนี้: 3 แบรนด์จัดกิจกรรมพร้อมกัน (แยกตามแถว/คอลัมน์ของแบรนด์) ───
+    // ─── 1. Single-day: Compact Variant (พาสเทลแถบเดี่ยว) ───
     {
       eventId: "EVT-TODAY-001",
       eventName: "อัปเดต Firmware ระบบตู้ Kiosk ประจำสาขา",
       eventDate: todayStr,
+      eventEndDate: null,
       startTime: "08:30",
       endTime: "11:30",
       brandScope: "The Coffee Club",
@@ -39,11 +52,17 @@ function createSampleEvents(): EventItem[] {
       kioskThemeOverride: null,
       targetBranchIds: [],
       targetBranchNames: ["Central World"],
+      progressPercent: 100,
+      commentCount: 4,
+      attachmentCount: 1,
+      assignees: [{ name: "Krit P." }],
     },
+    // ─── 2. Multi-day Spanning (วันนี้ - อีก 2 วัน): Detailed White Card ───
     {
       eventId: "EVT-TODAY-002",
       eventName: "แคมเปญวันเด็ก แจกโดนัทและของขวัญ",
       eventDate: todayStr,
+      eventEndDate: inTwoDaysStr,
       startTime: "10:00",
       endTime: "16:00",
       brandScope: "Mister Donut",
@@ -51,16 +70,26 @@ function createSampleEvents(): EventItem[] {
       brandLogoUrl: "/images/brands/mister-donut.svg",
       eventLocation: "ทุกสาขากรุงเทพฯ และปริมณฑล",
       eventCategory: "CAMPAIGN",
-      eventStatus: "Upcoming",
+      eventStatus: "Active",
       description: "กิจกรรมประเมินความพึงพอใจและแจกคูปองโดนัทฟรี",
       kioskThemeOverride: "summer_theme",
       targetBranchIds: [],
       targetBranchNames: ["Central World", "Siam Paragon"],
+      progressPercent: 65,
+      commentCount: 21,
+      attachmentCount: 8,
+      assignees: [
+        { name: "Anan K." },
+        { name: "Somchai T." },
+        { name: "Ploy M." },
+      ],
     },
+    // ─── 3. Single-day Compact ───
     {
       eventId: "EVT-TODAY-003",
       eventName: "ตรวจมาตรฐานความสะอาดและสุขอนามัย Q1",
       eventDate: todayStr,
+      eventEndDate: null,
       startTime: "13:00",
       endTime: "17:00",
       brandScope: "Swensen's",
@@ -73,12 +102,17 @@ function createSampleEvents(): EventItem[] {
       kioskThemeOverride: null,
       targetBranchIds: [],
       targetBranchNames: ["Mega Bangna"],
+      progressPercent: 20,
+      commentCount: 6,
+      attachmentCount: 2,
+      assignees: [{ name: "Ploy M." }],
     },
-    // ─── วันพรุ่งนี้ ───
+    // ─── 4. Multi-day Spanning (อีก 3 วัน - อีก 5 วัน): Detailed White Card ───
     {
-      eventId: "EVT-TOMORROW-004",
+      eventId: "EVT-FUTURE-004",
       eventName: "แคมเปญแลกรับเครื่องดื่มต้อนรับสมาชิกใหม่",
-      eventDate: tomorrowStr,
+      eventDate: inThreeDaysStr,
+      eventEndDate: inFiveDaysStr,
       startTime: "09:00",
       endTime: "15:00",
       brandScope: "The Coffee Club",
@@ -91,6 +125,13 @@ function createSampleEvents(): EventItem[] {
       kioskThemeOverride: null,
       targetBranchIds: [],
       targetBranchNames: ["Siam Paragon"],
+      progressPercent: 35,
+      commentCount: 16,
+      attachmentCount: 2,
+      assignees: [
+        { name: "Beam S." },
+        { name: "Nut R." },
+      ],
     },
   ];
 }
