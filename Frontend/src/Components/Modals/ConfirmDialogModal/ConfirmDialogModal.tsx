@@ -3,20 +3,22 @@
 import React from "react";
 import { useConfirmDialogModal } from "./useConfirmDialogModal";
 
+export type ConfirmVariant = "danger" | "warning" | "primary";
+
 export interface ConfirmDialogModalProps {
   isOpen: boolean;
   title?: string;
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: "danger" | "warning" | "primary";
+  variant?: ConfirmVariant;
   isLoading?: boolean;
   onConfirm: () => void | Promise<void>;
   onClose: () => void;
   className?: string;
 }
 
-export default function ConfirmDialogModal({
+export function ConfirmDialogModal({
   isOpen,
   title = "ยืนยันการทำรายการ",
   description = "คุณแน่ใจหรือไม่ว่าต้องการดำเนินการนี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
@@ -123,3 +125,5 @@ export default function ConfirmDialogModal({
     </div>
   );
 }
+
+export default ConfirmDialogModal;
