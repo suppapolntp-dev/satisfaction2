@@ -30,19 +30,22 @@ export interface UseOrgTreeOptions {
 }
 
 function getAllBranchesFromBrand(brand: BrandItem): string[] {
-  return (brand.regions || []).flatMap((r) =>
+  const branches = (brand.regions || []).flatMap((r) =>
     (r.provinces || []).flatMap((p) => (p.branches || []).map((b) => b.name))
   );
+  return Array.from(new Set(branches));
 }
 
 function getAllBranchesFromRegion(region: RegionItem): string[] {
-  return (region.provinces || []).flatMap((p) =>
+  const branches = (region.provinces || []).flatMap((p) =>
     (p.branches || []).map((b) => b.name)
   );
+  return Array.from(new Set(branches));
 }
 
 function getAllBranchesFromProvince(province: ProvinceItem): string[] {
-  return (province.branches || []).map((b) => b.name);
+  const branches = (province.branches || []).map((b) => b.name);
+  return Array.from(new Set(branches));
 }
 
 export function useOrgTree(options: UseOrgTreeOptions = {}) {
@@ -246,8 +249,8 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
       };
     }
     // SUPER_ADMIN
-    const allBranches = brandHierarchy.flatMap(getAllBranchesFromBrand);
-    const allBrands = brandHierarchy.map((b) => b.name);
+    const allBranches = Array.from(new Set(brandHierarchy.flatMap(getAllBranchesFromBrand)));
+    const allBrands = Array.from(new Set(brandHierarchy.map((b) => b.name)));
     return {
       scopePath: "All Organizations (สำนักงานใหญ่)",
       scopeTitle: "All Organization",

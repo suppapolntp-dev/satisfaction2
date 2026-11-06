@@ -74,11 +74,11 @@ export default function CreateUserModal({
         className="relative z-10 w-full max-w-5xl xl:max-w-6xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
       >
         {/* ─── 1. MODAL HEADER BAR ─── */}
-        <div className="p-4 sm:px-6 sm:py-4 border-b border-slate-100 flex items-start justify-between gap-4 bg-white shrink-0">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
+          <div className="flex items-center gap-3.5 min-w-0">
             {/* User Action Icon Squircle */}
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <line x1="19" y1="8" x2="19" y2="14" />
@@ -86,24 +86,23 @@ export default function CreateUserModal({
               </svg>
             </div>
 
-            <div className="min-w-0 flex-1 space-y-1">
+            <div className="min-w-0">
               <h2
                 id="create-user-modal-title"
-                className="text-base sm:text-xl font-bold text-slate-950 tracking-tight leading-snug truncate"
+                className="text-base sm:text-lg font-bold text-slate-950 tracking-tight leading-snug truncate"
               >
                 {isEditMode
                   ? (fullName ? `แก้ไขข้อมูล: ${fullName}` : "แก้ไขข้อมูลผู้ใช้งาน (Edit User Profile)")
                   : (fullName || "เพิ่มผู้ใช้งานใหม่ (Create New User)")}
               </h2>
 
-              {/* Live Preview Metadata: Tier Badge + Scope Path + Monogram Stack */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
                   {formData.tierLevel}
                 </span>
 
                 <span
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[280px] sm:max-w-[360px]"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[320px]"
                   title={formData.dataAccessScope}
                 >
                   <svg className="w-3 h-3 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -111,38 +110,6 @@ export default function CreateUserModal({
                   </svg>
                   <span className="truncate">{formData.dataAccessScope || "All Organizations"}</span>
                 </span>
-
-                <div
-                  className="flex items-center gap-2 pl-2 border-l border-slate-200 min-w-0"
-                  title={targetBranches.join(", ")}
-                >
-                  {targetBranches.length === 0 ? (
-                    <span className="text-xs text-slate-400 font-medium">
-                      ยังไม่ได้เลือกสาขาที่ดูแล
-                    </span>
-                  ) : (
-                    <>
-                      <div className="flex items-center -space-x-1.5 shrink-0 overflow-hidden">
-                        {targetBranches.slice(0, 3).map((name) => (
-                          <span
-                            key={name}
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-800 ring-2 ring-white shrink-0"
-                          >
-                            {name.trim().charAt(0).toUpperCase()}
-                          </span>
-                        ))}
-                        {targetBranches.length > 3 && (
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 ring-2 ring-white shrink-0">
-                            +{targetBranches.length - 3}
-                          </span>
-                        )}
-                      </div>
-                      <span className="truncate text-xs font-medium text-slate-700 max-w-[200px] sm:max-w-[260px]">
-                        {targetBranches.length} สาขา
-                      </span>
-                    </>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -168,10 +135,10 @@ export default function CreateUserModal({
         )}
 
         {/* ─── 3. SPLIT WORKSPACE BODY (Left: Scope Tree | Right: Details Form) ─── */}
-        <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-100 flex-1 overflow-hidden min-h-0">
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr] flex-1 overflow-hidden min-h-0">
           
-          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR (Identical to Dashboard Analyses) ─── */}
-          <aside className="w-full lg:w-80 xl:w-84 shrink-0 flex flex-col bg-slate-50/50 border-b lg:border-b-0 lg:border-r border-slate-100 overflow-hidden">
+          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR ─── */}
+          <aside className="border-r border-slate-100 bg-slate-50/50 flex flex-col overflow-hidden h-full">
             <OrgHierarchyTreeSidebar
               brandHierarchy={orgTree.brandHierarchy}
               searchQuery={orgTree.searchQuery}
@@ -189,12 +156,12 @@ export default function CreateUserModal({
               onSelectProvince={orgTree.selectProvince}
               onSelectBranch={orgTree.selectBranch}
               collapsible={false}
-              className="w-full border-0 rounded-none shadow-none bg-transparent"
+              className="w-full h-full border-0 rounded-none shadow-none bg-transparent"
             />
           </aside>
 
-          {/* ─── RIGHT PANEL: USER FORM & FOCUSED BRANCH DETAILS ─── */}
-          <main className="flex-1 flex flex-col p-5 sm:p-6 overflow-y-auto bg-white space-y-5 custom-scrollbar">
+          {/* ─── RIGHT PANEL: USER FORM & ASSIGNED SCOPE DETAILS ─── */}
+          <main className="p-5 sm:p-6 overflow-y-auto bg-white space-y-5 custom-scrollbar">
             
             {/* 1. ข้อมูลส่วนตัวผู้ใช้งาน */}
             <div className="space-y-3">
@@ -335,59 +302,68 @@ export default function CreateUserModal({
             </div>
 
             {/* 2. ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope) & ระดับขอบเขตสิทธิ์องค์กร (Tier Level) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
-              {/* ช่อง DataAccess Scope */}
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-slate-700">
-                  ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope) <span className="text-red-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3 text-blue-600 pointer-events-none">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.dataAccessScope || "All Organizations (สำนักงานใหญ่)"}
-                    title={formData.dataAccessScope}
-                    placeholder="เลือกจาก Tree ด้านซ้าย"
-                    className="h-9 w-full pl-9 pr-3 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold truncate cursor-default focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
-                </div>
-                <span className="text-[10px] text-slate-400 block truncate">
-                  ระดับ: {orgTree.activeScopeInfo.tier} ({orgTree.activeScopeInfo.title})
-                </span>
-              </div>
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span>ขอบเขตสิทธิ์องค์กรและการเข้าถึงข้อมูล (Data Access & Scope Permissions)</span>
+              </h3>
 
-              {/* ระดับขอบเขตสิทธิ์องค์กร (Data Access Tier Level) */}
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-slate-700">
-                  ระดับขอบเขตสิทธิ์องค์กร (Tier Level) <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.tierLevel}
-                  onChange={(e) => handleChange("tierLevel", e.target.value)}
-                  className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold"
-                >
-                  {userConfig.tiers.map((tier) => (
-                    <option key={tier.id} value={tier.nameEn}>
-                      {tier.nameTh}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-[10px] text-slate-400 block truncate">
-                  ปรับอัตโนมัติตาม Node ที่เลือก หรือกำหนดเองได้
-                </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* ช่อง DataAccess Scope */}
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope)
+                  </label>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3 text-blue-600 pointer-events-none">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      readOnly
+                      value={formData.dataAccessScope || "All Organizations (สำนักงานใหญ่)"}
+                      title={formData.dataAccessScope}
+                      placeholder="เลือกจาก Tree ด้านซ้าย"
+                      className="h-9 w-full pl-9 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold truncate cursor-default"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    ระดับ: {orgTree.activeScopeInfo.tier} ({orgTree.activeScopeInfo.title})
+                  </span>
+                </div>
+
+                {/* ระดับขอบเขตสิทธิ์องค์กร (Data Access Tier Level) */}
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    ระดับขอบเขตสิทธิ์องค์กร (Tier Level) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.tierLevel}
+                    onChange={(e) => handleChange("tierLevel", e.target.value)}
+                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold"
+                  >
+                    {userConfig.tiers.map((tier) => (
+                      <option key={tier.id} value={tier.nameEn}>
+                        {tier.nameTh}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    ปรับอัตโนมัติตาม Node ที่เลือก หรือกำหนดเองได้
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* 3. สรุปขอบเขตสาขาและแบรนด์ที่ผูก (Assigned Scopes Preview) */}
-            <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-2">
+            <div className="space-y-2.5 pt-2 border-t border-slate-100">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-800">
-                  สาขาทั้งหมดในขอบเขต ({targetBranches.length} สาขา)
+                  สาขาในขอบเขตการดูแล ({targetBranches.length} สาขา)
                 </span>
                 <div className="flex items-center gap-2 text-[10px] font-semibold">
                   <button
@@ -409,19 +385,21 @@ export default function CreateUserModal({
               </div>
 
               {targetBranches.length === 0 ? (
-                <p className="text-xs text-slate-400">ยังไม่มีสาขาที่ได้รับมอบหมาย</p>
+                <p className="text-xs text-slate-400 py-3 bg-slate-50/50 rounded-xl text-center border border-dashed border-slate-200">
+                  ยังไม่มีสาขาที่ได้รับมอบหมายในขอบเขตนี้
+                </p>
               ) : (
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1.5 bg-slate-50/50 rounded-2xl border border-slate-100">
                   {targetBranches.map((branchName) => (
                     <span
                       key={branchName}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white border border-slate-200 text-slate-800 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-white border border-slate-200/90 text-slate-800 shadow-2xs"
                     >
                       <span>{branchName}</span>
                       <button
                         type="button"
                         onClick={() => toggleBranch(branchName)}
-                        className="text-slate-400 hover:text-rose-600 ml-0.5 cursor-pointer"
+                        className="text-slate-400 hover:text-rose-600 cursor-pointer"
                         aria-label={`Remove ${branchName}`}
                       >
                         ✕
@@ -432,8 +410,8 @@ export default function CreateUserModal({
               )}
             </div>
 
-            {/* 5. Account Status Toggle */}
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            {/* 4. Account Status Toggle */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700">
                 สถานะบัญชี (Account Status)
               </span>
@@ -453,7 +431,7 @@ export default function CreateUserModal({
         </div>
 
         {/* ─── 4. MODAL FOOTER ─── */}
-        <div className="p-4 sm:px-6 border-t border-slate-100 bg-slate-50/70 flex justify-end gap-3 shrink-0">
+        <div className="px-6 py-3.5 border-t border-slate-100 bg-slate-50/70 flex justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
