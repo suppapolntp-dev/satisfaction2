@@ -367,8 +367,18 @@ export default function UserTable({
 
               {visibleColumns.userCode && (
                 <SortHeaderCell
-                  label="User ID & Tier"
+                  label="User ID"
                   field="userCode"
+                  activeField={sortField}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+
+              {visibleColumns.tierLevel && (
+                <SortHeaderCell
+                  label="Tier Level"
+                  field="tierLevel"
                   activeField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
@@ -411,16 +421,6 @@ export default function UserTable({
                 />
               )}
 
-              {visibleColumns.createdDate && (
-                <SortHeaderCell
-                  label="Created Date"
-                  field="createdDate"
-                  activeField={sortField}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-
               <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
                 Actions
               </th>
@@ -436,8 +436,12 @@ export default function UserTable({
                   </td>
                   {visibleColumns.userCode && (
                     <td className="px-5 py-4">
-                      <div className="h-4 bg-slate-200 rounded w-20 mb-1.5" />
-                      <div className="h-3 bg-slate-100 rounded w-16" />
+                      <div className="h-4 bg-slate-200 rounded w-20" />
+                    </td>
+                  )}
+                  {visibleColumns.tierLevel && (
+                    <td className="px-5 py-4">
+                      <div className="h-5 bg-slate-200 rounded-md w-24" />
                     </td>
                   )}
                   {visibleColumns.name && (
@@ -464,11 +468,6 @@ export default function UserTable({
                   {visibleColumns.status && (
                     <td className="px-5 py-4">
                       <div className="h-5 bg-slate-200 rounded-full w-16" />
-                    </td>
-                  )}
-                  {visibleColumns.createdDate && (
-                    <td className="px-5 py-4">
-                      <div className="h-4 bg-slate-200 rounded w-24" />
                     </td>
                   )}
                   <td className="px-5 py-4 text-right">
@@ -541,21 +540,25 @@ export default function UserTable({
                       />
                     </td>
 
-                    {/* User Code & Tier */}
+                    {/* User ID */}
                     {visibleColumns.userCode && (
                       <td className="px-5 py-4">
-                        <div className="flex flex-col gap-1 items-start">
-                          <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
-                            {user.userCode ?? "-"}
-                          </span>
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${getTierBadgeClass(
-                              user.tierLevel
-                            )}`}
-                          >
-                            {user.tierLevel ?? "-"}
-                          </span>
-                        </div>
+                        <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-md inline-block">
+                          {user.userCode ?? "-"}
+                        </span>
+                      </td>
+                    )}
+
+                    {/* Tier Level */}
+                    {visibleColumns.tierLevel && (
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${getTierBadgeClass(
+                            user.tierLevel
+                          )}`}
+                        >
+                          {user.tierLevel ?? "-"}
+                        </span>
                       </td>
                     )}
 
@@ -624,13 +627,6 @@ export default function UserTable({
                           />
                           {user.status ?? "-"}
                         </span>
-                      </td>
-                    )}
-
-                    {/* Created Date */}
-                    {visibleColumns.createdDate && (
-                      <td className="px-5 py-4 text-xs text-slate-500 font-mono">
-                        {user.createdDate ?? "-"}
                       </td>
                     )}
 

@@ -6,22 +6,21 @@ import { useUserSettings } from "@/Lib/useUserSettings";
 
 export type UserTableSortField =
   | "userCode"
+  | "tierLevel"
   | "name"
   | "email"
   | "role"
-  | "tierLevel"
-  | "status"
-  | "createdDate";
+  | "status";
 
 export type UserTableSortDirection = "asc" | "desc";
 
 export type UserTableColumnKey =
   | "userCode"
+  | "tierLevel"
   | "name"
   | "role"
   | "scope"
-  | "status"
-  | "createdDate";
+  | "status";
 
 export interface ColumnDefinition {
   key: UserTableColumnKey;
@@ -29,12 +28,12 @@ export interface ColumnDefinition {
 }
 
 export const USER_TABLE_COLUMNS: ColumnDefinition[] = [
-  { key: "userCode", label: "User ID & Tier" },
+  { key: "userCode", label: "User ID" },
+  { key: "tierLevel", label: "Tier Level" },
   { key: "name", label: "Full Name & Email" },
   { key: "role", label: "Role" },
   { key: "scope", label: "Assigned Scope" },
   { key: "status", label: "Status" },
-  { key: "createdDate", label: "Created Date" },
 ];
 
 export interface UseUserTableOptions {
@@ -60,11 +59,11 @@ export function useUserTable({
   // Column visibility state (Fardo style)
   const [visibleColumns, setVisibleColumns] = useState<Record<UserTableColumnKey, boolean>>({
     userCode: true,
+    tierLevel: true,
     name: true,
     role: true,
     scope: true,
     status: true,
-    createdDate: true,
   });
   const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -91,11 +90,11 @@ export function useUserTable({
   const resetColumnVisibility = useCallback(() => {
     setVisibleColumns({
       userCode: true,
+      tierLevel: true,
       name: true,
       role: true,
       scope: true,
       status: true,
-      createdDate: true,
     });
   }, []);
 
@@ -181,9 +180,6 @@ export function useUserTable({
           break;
         case "status":
           comparison = (userA.status ?? "").localeCompare(userB.status ?? "");
-          break;
-        case "createdDate":
-          comparison = (userA.createdDate ?? "").localeCompare(userB.createdDate ?? "");
           break;
         default:
           comparison = 0;
@@ -298,6 +294,8 @@ export function useUserTable({
             switch (col.key) {
               case "userCode":
                 rowData["UserCode"] = user.userCode;
+                break;
+              case "tierLevel":
                 rowData["TierLevel"] = user.tierLevel;
                 break;
               case "name":
@@ -313,9 +311,6 @@ export function useUserTable({
                 break;
               case "status":
                 rowData["Status"] = user.status;
-                break;
-              case "createdDate":
-                rowData["CreatedDate"] = user.createdDate || "-";
                 break;
             }
           });
@@ -335,7 +330,9 @@ export function useUserTable({
         const headers: string[] = [];
         activeColumns.forEach((col) => {
           if (col.key === "userCode") {
-            headers.push("User Code", "Tier Level");
+            headers.push("User ID");
+          } else if (col.key === "tierLevel") {
+            headers.push("Tier Level");
           } else if (col.key === "name") {
             headers.push("Full Name", "Email");
           } else if (col.key === "role") {
@@ -344,8 +341,6 @@ export function useUserTable({
             headers.push("Assigned Brands", "Assigned Branches");
           } else if (col.key === "status") {
             headers.push("Status");
-          } else if (col.key === "createdDate") {
-            headers.push("Created Date");
           }
         });
 
@@ -354,7 +349,9 @@ export function useUserTable({
           const fields: string[] = [];
           activeColumns.forEach((col) => {
             if (col.key === "userCode") {
-              fields.push(`"${user.userCode || ""}"`, `"${user.tierLevel || ""}"`);
+              fields.push(`"${user.userCode || ""}"`);
+            } else if (col.key === "tierLevel") {
+              fields.push(`"${user.tierLevel || ""}"`);
             } else if (col.key === "name") {
               const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
               fields.push(`"${fullName}"`, `"${user.email || ""}"`);
@@ -366,8 +363,6 @@ export function useUserTable({
               fields.push(`"${brands}"`, `"${branches}"`);
             } else if (col.key === "status") {
               fields.push(`"${user.status || ""}"`);
-            } else if (col.key === "createdDate") {
-              fields.push(`"${user.createdDate || ""}"`);
             }
           });
           return fields.join(",");
@@ -387,7 +382,9 @@ export function useUserTable({
         const headers: string[] = [];
         activeColumns.forEach((col) => {
           if (col.key === "userCode") {
-            headers.push("User Code", "Tier Level");
+            headers.push("User ID");
+          } else if (col.key === "tierLevel") {
+            headers.push("Tier Level");
           } else if (col.key === "name") {
             headers.push("Full Name", "Email");
           } else if (col.key === "role") {
@@ -396,8 +393,6 @@ export function useUserTable({
             headers.push("Assigned Brands", "Assigned Branches");
           } else if (col.key === "status") {
             headers.push("Status");
-          } else if (col.key === "createdDate") {
-            headers.push("Created Date");
           }
         });
 
@@ -406,7 +401,9 @@ export function useUserTable({
             const cells: string[] = [];
             activeColumns.forEach((col) => {
               if (col.key === "userCode") {
-                cells.push(`<td>${user.userCode || ""}</td>`, `<td>${user.tierLevel || ""}</td>`);
+                cells.push(`<td>${user.userCode || ""}</td>`);
+              } else if (col.key === "tierLevel") {
+                cells.push(`<td>${user.tierLevel || ""}</td>`);
               } else if (col.key === "name") {
                 const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
                 cells.push(`<td>${fullName}</td>`, `<td>${user.email || ""}</td>`);
@@ -418,8 +415,6 @@ export function useUserTable({
                 cells.push(`<td>${brands}</td>`, `<td>${branches}</td>`);
               } else if (col.key === "status") {
                 cells.push(`<td>${user.status || ""}</td>`);
-              } else if (col.key === "createdDate") {
-                cells.push(`<td>${user.createdDate || ""}</td>`);
               }
             });
             return `<tr>${cells.join("")}</tr>`;
