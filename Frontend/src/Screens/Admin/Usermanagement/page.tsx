@@ -5,7 +5,6 @@ import PageHeader from "@/Components/Headers/PageHeader";
 import UserMetricCards from "@/Components/Cards/UserMetricCards";
 import UserTable from "@/Components/Tables/UserTable";
 import CreateUserModal from "@/Components/Modals/CreateUserModal";
-import EditUserModal from "@/Components/Modals/EditUserModal";
 import ConfirmDialogModal from "@/Components/Modals/ConfirmDialogModal";
 import { useUsermanagementScreen } from "./useUsermanagementScreen";
 
@@ -55,23 +54,20 @@ export default function UsermanagementScreen() {
         onDeleteUser={handleRequestDelete}
       />
 
-      {/* ─── 4. CREATE USER MODAL ─── */}
+      {/* ─── 4. CREATE / EDIT USER MODAL (REUSED MODAL COMPONENT) ─── */}
       <CreateUserModal
-        isOpen={isCreateModalOpen}
-        availableBrands={availableBrands}
-        availableBranches={availableBranches}
-        onClose={handleCloseCreateModal}
-        onSave={handleSaveCreateUser}
-      />
-
-      {/* ─── 5. EDIT USER MODAL ─── */}
-      <EditUserModal
-        isOpen={isEditModalOpen}
+        isOpen={isCreateModalOpen || isEditModalOpen}
         user={editingUser}
         availableBrands={availableBrands}
         availableBranches={availableBranches}
-        onClose={handleCloseEditModal}
-        onSave={handleSaveEditUser}
+        onClose={editingUser ? handleCloseEditModal : handleCloseCreateModal}
+        onSave={async (userData) => {
+          if (editingUser) {
+            await handleSaveEditUser(editingUser.id, userData);
+          } else {
+            await handleSaveCreateUser(userData);
+          }
+        }}
       />
 
       {/* ─── 6. DELETE CONFIRMATION DIALOG ─── */}

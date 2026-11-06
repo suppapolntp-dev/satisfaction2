@@ -1,20 +1,22 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { CreateUserPayload } from "@/Types/user";
+import { UserModel, CreateUserPayload, UpdateUserPayload } from "@/Types/user";
 import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
 import { useCreateUserModal } from "./useCreateUserModal";
 
 export interface CreateUserModalProps {
   isOpen: boolean;
+  user?: UserModel | null;
   availableBrands?: string[];
   availableBranches?: string[];
   onClose: () => void;
-  onSave?: (userData: CreateUserPayload) => Promise<void> | void;
+  onSave?: (userData: any) => Promise<void> | void;
 }
 
 export default function CreateUserModal({
   isOpen,
+  user,
   availableBrands = [],
   availableBranches = [],
   onClose,
@@ -23,6 +25,7 @@ export default function CreateUserModal({
   const {
     userConfig,
     formData,
+    isEditMode,
     orgTree,
     toggleBranch,
     selectAllBranches,
@@ -33,6 +36,7 @@ export default function CreateUserModal({
     handleSubmit,
   } = useCreateUserModal({
     isOpen,
+    user,
     availableBrands,
     availableBranches,
     onSave,
@@ -87,7 +91,9 @@ export default function CreateUserModal({
                 id="create-user-modal-title"
                 className="text-base sm:text-xl font-bold text-slate-950 tracking-tight leading-snug truncate"
               >
-                {fullName || "เพิ่มผู้ใช้งานใหม่ (Create New User)"}
+                {isEditMode
+                  ? (fullName ? `แก้ไขข้อมูล: ${fullName}` : "แก้ไขข้อมูลผู้ใช้งาน (Edit User Profile)")
+                  : (fullName || "เพิ่มผู้ใช้งานใหม่ (Create New User)")}
               </h2>
 
               {/* Live Preview Metadata: Tier Badge + Scope Path + Monogram Stack */}
@@ -233,16 +239,34 @@ export default function CreateUserModal({
 
                 {/* Email Address */}
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    อีเมล (Corporate Email) <span className="text-red-500">*</span>
+                  <label className="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                    <span>
+                      อีเมล (Corporate Email) <span className="text-red-500">*</span>
+                    </span>
+                    {isEditMode && (
+                      <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                        <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        (ล็อกไม่อนุญาตให้แก้ไข)
+                      </span>
+                    )}
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                     placeholder="somchai@company.com"
-                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
-                    required
+                    required={!isEditMode}
+                    readOnly={isEditMode}
+                    disabled={isEditMode}
+                    title={isEditMode ? "อีเมลบัญชีผู้ใช้ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
+                    className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
+                      isEditMode
+                        ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                        : "bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+                    }`}
                   />
                 </div>
 
@@ -262,15 +286,31 @@ export default function CreateUserModal({
 
                 {/* User Code */}
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    รหัสพนักงาน (User Code)
+                  <label className="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                    <span>รหัสพนักงาน (User ID)</span>
+                    {isEditMode && (
+                      <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                        <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        (ล็อกไม่อนุญาตให้แก้ไข)
+                      </span>
+                    )}
                   </label>
                   <input
                     type="text"
                     value={formData.userCode}
                     onChange={(e) => handleChange("userCode", e.target.value)}
                     placeholder="EMP-101"
-                    className="h-9 w-full px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
+                    readOnly={isEditMode}
+                    disabled={isEditMode}
+                    title={isEditMode ? "รหัสพนักงาน / User ID ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
+                    className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
+                      isEditMode
+                        ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                        : "bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+                    }`}
                   />
                 </div>
 
@@ -433,7 +473,11 @@ export default function CreateUserModal({
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
             )}
-            <span>{isSubmitting ? "Creating User..." : "Save User"}</span>
+            <span>
+              {isSubmitting
+                ? (isEditMode ? "Updating..." : "Creating User...")
+                : (isEditMode ? "Save Changes" : "Save User")}
+            </span>
           </button>
         </div>
       </form>

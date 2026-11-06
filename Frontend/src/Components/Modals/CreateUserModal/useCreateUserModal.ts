@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { CreateUserPayload, UserTierLevel, UserStatus } from "@/Types/user";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { UserModel, CreateUserPayload, UpdateUserPayload, UserTierLevel, UserStatus } from "@/Types/user";
 import { HierarchyScopeLevel } from "@/Types/dataAccess";
 import { useUserSettings } from "@/Lib/useUserSettings";
 import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
@@ -22,18 +22,21 @@ export interface CreateUserFormData {
 
 export interface UseCreateUserModalOptions {
   isOpen: boolean;
+  user?: UserModel | null;
   availableBrands?: string[];
   availableBranches?: string[];
-  onSave?: (userData: CreateUserPayload) => Promise<void> | void;
+  onSave?: (userData: CreateUserPayload | UpdateUserPayload) => Promise<void> | void;
   onClose: () => void;
 }
 
 export function useCreateUserModal({
   isOpen,
+  user,
   onSave,
   onClose,
 }: UseCreateUserModalOptions) {
   const { userConfig } = useUserSettings();
+  const isEditMode = Boolean(user);
 
   const [formData, setFormData] = useState<CreateUserFormData>({
     userCode: "",
@@ -52,9 +55,15 @@ export function useCreateUserModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Track initial population phase to prevent orgTree mount from overwriting user data
+  const isInitialMountRef = useRef(true);
+
   // ─── 5-Tier Org Hierarchy Tree Hook (Identical to Dashboard Analyses) ───
   const orgTree = useOrgTree({
     onScopeChange: (scopeInfo) => {
+      if (isEditMode && isInitialMountRef.current) {
+        return;
+      }
       const tierMap: Record<HierarchyScopeLevel, UserTierLevel> = {
         SUPER_ADMIN: "Super Admin",
         BRAND: "Brand Owner",
@@ -74,26 +83,73 @@ export function useCreateUserModal({
     },
   });
 
-  // Reset form when modal opens
+  // Populate or reset form when modal opens or user changes
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        userCode: `EMP-${Math.floor(100 + Math.random() * 900)}`,
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        role: "Manager",
-        tierLevel: "Super Admin",
-        dataAccessScope: orgTree.scopePath || "All Organizations (สำนักงานใหญ่)",
-        assignedBrands: orgTree.targetBrands || [],
-        assignedBranches: orgTree.targetBranches || [],
-        status: "Active",
-      });
+      if (user) {
+        // Edit Mode: populate from existing user
+        isInitialMountRef.current = true;
+
+        const initialBranches = user.assignedBranches && user.assignedBranches.length > 0
+          ? [...user.assignedBranches]
+          : user.branch && user.branch !== "-"
+          ? [user.branch]
+          : [];
+
+        const initialBrands = user.assignedBrands && user.assignedBrands.length > 0
+          ? [...user.assignedBrands]
+          : user.brand && user.brand !== "ทุกแบรนด์"
+          ? [user.brand]
+          : [];
+
+        const initialScope = user.dataAccessScope || (
+          initialBranches.length > 0
+            ? initialBranches.join(", ")
+            : initialBrands.length > 0
+            ? initialBrands.join(", ")
+            : "All Organizations (สำนักงานใหญ่)"
+        );
+
+        setFormData({
+          userCode: user.userCode || user.id || "",
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          role: user.role || "Manager",
+          tierLevel: user.tierLevel || "Area Manager (AM)",
+          dataAccessScope: initialScope,
+          assignedBrands: initialBrands,
+          assignedBranches: initialBranches,
+          status: user.status === "Inactive" ? "Inactive" : "Active",
+        });
+
+        const timer = setTimeout(() => {
+          isInitialMountRef.current = false;
+        }, 100);
+
+        return () => clearTimeout(timer);
+      } else {
+        // Create Mode: reset to fresh defaults
+        isInitialMountRef.current = false;
+        setFormData({
+          userCode: `EMP-${Math.floor(100 + Math.random() * 900)}`,
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          role: "Manager",
+          tierLevel: "Super Admin",
+          dataAccessScope: orgTree.scopePath || "All Organizations (สำนักงานใหญ่)",
+          assignedBrands: orgTree.targetBrands || [],
+          assignedBranches: orgTree.targetBranches || [],
+          status: "Active",
+        });
+      }
       setErrorMessage(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, orgTree.scopePath, orgTree.targetBrands, orgTree.targetBranches]);
+  }, [isOpen, user, orgTree.scopePath, orgTree.targetBrands, orgTree.targetBranches]);
 
   const handleChange = useCallback((field: keyof CreateUserFormData, value: unknown) => {
     setFormData((prev) => ({
@@ -156,16 +212,19 @@ export function useCreateUserModal({
         setErrorMessage("กรุณาระบุนามสกุล (Last Name)");
         return;
       }
-      if (!trimmedEmail) {
-        setErrorMessage("กรุณาระบุอีเมล (Email Address)");
-        return;
-      }
 
-      // Basic email syntax check
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedEmail)) {
-        setErrorMessage("รูปแบบอีเมลไม่ถูกต้อง");
-        return;
+      if (!isEditMode) {
+        if (!trimmedEmail) {
+          setErrorMessage("กรุณาระบุอีเมล (Email Address)");
+          return;
+        }
+
+        // Basic email syntax check
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          setErrorMessage("รูปแบบอีเมลไม่ถูกต้อง");
+          return;
+        }
       }
 
       setIsSubmitting(true);
@@ -174,10 +233,11 @@ export function useCreateUserModal({
       try {
         if (onSave) {
           await onSave({
-            userCode: formData.userCode.trim(),
+            ...(user ? { id: user.id } : {}),
+            userCode: user ? (user.userCode || formData.userCode) : formData.userCode.trim(),
             firstName: trimmedFirstName,
             lastName: trimmedLastName,
-            email: trimmedEmail,
+            email: user ? user.email : trimmedEmail, // Locked when editing
             phone: formData.phone.trim() || undefined,
             role: formData.role,
             tierLevel: formData.tierLevel,
@@ -189,18 +249,23 @@ export function useCreateUserModal({
         }
         onClose();
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการสร้างบัญชีผู้ใช้";
+        const message = err instanceof Error
+          ? err.message
+          : isEditMode
+          ? "เกิดข้อผิดพลาดในการแก้ไขบัญชีผู้ใช้"
+          : "เกิดข้อผิดพลาดในการสร้างบัญชีผู้ใช้";
         setErrorMessage(message);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [formData, onSave, onClose]
+    [formData, user, isEditMode, onSave, onClose]
   );
 
   return {
     userConfig,
     formData,
+    isEditMode,
     orgTree,
     toggleBranch,
     selectAllBranches,
