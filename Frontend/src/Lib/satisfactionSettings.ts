@@ -30,6 +30,12 @@ export interface SatisfactionConfig {
   eventGreetingEn?: string;
   eventThankYouTh?: string;
   eventThankYouEn?: string;
+  labelSad?: string;
+  labelNeutral?: string;
+  labelHappy?: string;
+  iconSad?: string;
+  iconNeutral?: string;
+  iconHappy?: string;
 }
 
 export const DEFAULT_SATISFACTION_CONFIG: SatisfactionConfig = {

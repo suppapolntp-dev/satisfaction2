@@ -64,7 +64,7 @@ export default function DataAccessModal({
       setFormEmail(editingUser.userEmail || "");
       setFormPhone(editingUser.userPhone || "");
       setFormTier(editingUser.tierLevel || "Area Manager (AM)");
-      setFormStatus(editingUser.status || "Active");
+      setFormStatus(editingUser.status === "Inactive" ? "Inactive" : "Active");
       setFormSelectedBrands(editingUser.assignedBrands || []);
       setFormSelectedRegions(editingUser.assignedRegions || []);
       setFormSelectedProvinces(editingUser.assignedProvinces || []);

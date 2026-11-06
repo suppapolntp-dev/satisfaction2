@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { CreateUserPayload, UserTierLevel, UserStatus } from "@/Types/user";
-import { BranchModel } from "@/Types/branch";
-import { branchService } from "@/Services/branchService";
+import { HierarchyScopeLevel } from "@/Types/dataAccess";
 import { useUserSettings } from "@/Lib/useUserSettings";
+import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
 
 export interface CreateUserFormData {
   userCode: string;
@@ -14,6 +14,7 @@ export interface CreateUserFormData {
   phone: string;
   role: string;
   tierLevel: UserTierLevel;
+  dataAccessScope: string;
   assignedBrands: string[];
   assignedBranches: string[];
   status: UserStatus;
@@ -29,8 +30,6 @@ export interface UseCreateUserModalOptions {
 
 export function useCreateUserModal({
   isOpen,
-  availableBrands = [],
-  availableBranches = [],
   onSave,
   onClose,
 }: UseCreateUserModalOptions) {
@@ -43,65 +42,37 @@ export function useCreateUserModal({
     email: "",
     phone: "",
     role: "Manager",
-    tierLevel: "Area Manager (AM)",
+    tierLevel: "Super Admin",
+    dataAccessScope: "All Organizations (สำนักงานใหญ่)",
     assignedBrands: [],
     assignedBranches: [],
     status: "Active",
   });
 
-  const [branches, setBranches] = useState<BranchModel[]>([]);
-  const [isBranchesLoading, setIsBranchesLoading] = useState(false);
-  const [branchSearchQuery, setBranchSearchQuery] = useState("");
-  const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
-  const [focusedBranch, setFocusedBranch] = useState<BranchModel | null>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load branches from service on open
-  useEffect(() => {
-    let isMounted = true;
+  // ─── 5-Tier Org Hierarchy Tree Hook (Identical to Dashboard Analyses) ───
+  const orgTree = useOrgTree({
+    onScopeChange: (scopeInfo) => {
+      const tierMap: Record<HierarchyScopeLevel, UserTierLevel> = {
+        SUPER_ADMIN: "Super Admin",
+        BRAND: "Brand Owner",
+        REGION: "Regional Manager (RM)",
+        PROVINCE: "Area Manager (AM)",
+        BRANCH: "Branch Staff",
+        CUSTOM_SCOPE: "Custom Scope",
+      };
 
-    async function loadBranches() {
-      if (!isOpen) return;
-      try {
-        setIsBranchesLoading(true);
-        const data = await branchService.getBranches();
-        if (isMounted) {
-          if (Array.isArray(data) && data.length > 0) {
-            setBranches(data);
-            setFocusedBranch(data[0]);
-          } else if (availableBranches.length > 0) {
-            const fallbackBranches: BranchModel[] = availableBranches.map((name, idx) => ({
-              id: `br-${idx}`,
-              code: `CRG-${idx + 1}`,
-              name,
-              brand: availableBrands[0] || "General",
-              region: "Central",
-              province: "Bangkok",
-              kioskCount: 2,
-              satisfaction: 92,
-              status: "Active",
-            }));
-            setBranches(fallbackBranches);
-            setFocusedBranch(fallbackBranches[0]);
-          }
-        }
-      } catch (err) {
-        console.error("[useCreateUserModal] loadBranches error:", err);
-      } finally {
-        if (isMounted) {
-          setIsBranchesLoading(false);
-        }
-      }
-    }
-
-    loadBranches();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, availableBranches, availableBrands]);
+      setFormData((prev) => ({
+        ...prev,
+        dataAccessScope: scopeInfo.scopePath,
+        tierLevel: tierMap[scopeInfo.level] || prev.tierLevel,
+        assignedBrands: scopeInfo.targetBrands,
+        assignedBranches: scopeInfo.targetBranches,
+      }));
+    },
+  });
 
   // Reset form when modal opens
   useEffect(() => {
@@ -113,49 +84,16 @@ export function useCreateUserModal({
         email: "",
         phone: "",
         role: "Manager",
-        tierLevel: "Area Manager (AM)",
-        assignedBrands: [],
-        assignedBranches: [],
+        tierLevel: "Super Admin",
+        dataAccessScope: orgTree.scopePath || "All Organizations (สำนักงานใหญ่)",
+        assignedBrands: orgTree.targetBrands || [],
+        assignedBranches: orgTree.targetBranches || [],
         status: "Active",
       });
-      setBranchSearchQuery("");
       setErrorMessage(null);
       setIsSubmitting(false);
     }
-  }, [isOpen]);
-
-  // Filtered branches by search query
-  const filteredBranches = useMemo(() => {
-    if (!branchSearchQuery.trim()) return branches;
-    const query = branchSearchQuery.toLowerCase().trim();
-    return branches.filter(
-      (b) =>
-        b.name.toLowerCase().includes(query) ||
-        b.code.toLowerCase().includes(query) ||
-        (b.brand && b.brand.toLowerCase().includes(query)) ||
-        (b.province && b.province.toLowerCase().includes(query))
-    );
-  }, [branches, branchSearchQuery]);
-
-  // Group branches by brand
-  const branchesByBrand = useMemo(() => {
-    const map: Record<string, BranchModel[]> = {};
-    filteredBranches.forEach((branch) => {
-      const brandKey = branch.brand || "General";
-      if (!map[brandKey]) {
-        map[brandKey] = [];
-      }
-      map[brandKey].push(branch);
-    });
-    return map;
-  }, [filteredBranches]);
-
-  const toggleBrandExpand = useCallback((brandName: string) => {
-    setExpandedBrands((prev) => ({
-      ...prev,
-      [brandName]: prev[brandName] === undefined ? false : !prev[brandName],
-    }));
-  }, []);
+  }, [isOpen, orgTree.scopePath, orgTree.targetBrands, orgTree.targetBranches]);
 
   const handleChange = useCallback((field: keyof CreateUserFormData, value: unknown) => {
     setFormData((prev) => ({
@@ -164,60 +102,34 @@ export function useCreateUserModal({
     }));
   }, []);
 
-  // Toggle a single branch selection
-  const toggleBranch = useCallback(
-    (branchName: string, branchObj?: BranchModel) => {
-      setFormData((prev) => {
-        const isSelected = prev.assignedBranches.includes(branchName);
-        const updatedBranches = isSelected
-          ? prev.assignedBranches.filter((b) => b !== branchName)
-          : [...prev.assignedBranches, branchName];
+  // Toggle or remove a specific branch from the assigned scope chips
+  const toggleBranch = useCallback((branchName: string) => {
+    setFormData((prev) => {
+      const isSelected = prev.assignedBranches.includes(branchName);
+      const updatedBranches = isSelected
+        ? prev.assignedBranches.filter((b) => b !== branchName)
+        : [...prev.assignedBranches, branchName];
+      return {
+        ...prev,
+        assignedBranches: updatedBranches,
+      };
+    });
+  }, []);
 
-        const relatedBrands = new Set(prev.assignedBrands);
-        if (branchObj?.brand) {
-          if (!isSelected) {
-            relatedBrands.add(branchObj.brand);
-          } else {
-            const stillHasBrand = branches.some(
-              (b) => b.brand === branchObj.brand && updatedBranches.includes(b.name)
-            );
-            if (!stillHasBrand) {
-              relatedBrands.delete(branchObj.brand);
-            }
-          }
-        }
-
-        return {
-          ...prev,
-          assignedBranches: updatedBranches,
-          assignedBrands: Array.from(relatedBrands),
-        };
-      });
-
-      if (branchObj) {
-        setFocusedBranch(branchObj);
-      }
-    },
-    [branches]
-  );
-
-  // Select all branches in scope
+  // Select all branches from hierarchy
   const selectAllBranches = useCallback(() => {
-    const allNames = branches.map((b) => b.name);
-    const allBrands = Array.from(new Set(branches.map((b) => b.brand).filter(Boolean)));
     setFormData((prev) => ({
       ...prev,
-      assignedBranches: allNames,
-      assignedBrands: allBrands,
+      assignedBranches: orgTree.targetBranches,
+      assignedBrands: orgTree.targetBrands,
     }));
-  }, [branches]);
+  }, [orgTree.targetBranches, orgTree.targetBrands]);
 
   // Clear all branches
   const clearAllBranches = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
       assignedBranches: [],
-      assignedBrands: [],
     }));
   }, []);
 
@@ -269,6 +181,7 @@ export function useCreateUserModal({
             phone: formData.phone.trim() || undefined,
             role: formData.role,
             tierLevel: formData.tierLevel,
+            dataAccessScope: formData.dataAccessScope,
             assignedBrands: formData.assignedBrands,
             assignedBranches: formData.assignedBranches,
             status: formData.status,
@@ -288,15 +201,7 @@ export function useCreateUserModal({
   return {
     userConfig,
     formData,
-    branches,
-    isBranchesLoading,
-    branchSearchQuery,
-    setBranchSearchQuery,
-    branchesByBrand,
-    expandedBrands,
-    toggleBrandExpand,
-    focusedBranch,
-    setFocusedBranch,
+    orgTree,
     toggleBranch,
     selectAllBranches,
     clearAllBranches,

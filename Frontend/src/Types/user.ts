@@ -18,6 +18,7 @@ export interface UserModel {
   role: string;
   roleId?: string;
   tierLevel: UserTierLevel;
+  dataAccessScope?: string;
   brand?: string;
   assignedBrands?: string[];
   region?: string;
@@ -53,6 +54,7 @@ export interface CreateUserPayload {
   roleId?: string;
   role: string;
   tierLevel: UserTierLevel;
+  dataAccessScope?: string;
   assignedBrands?: string[];
   assignedRegions?: string[];
   assignedProvinces?: string[];
@@ -63,3 +65,5 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload extends Partial<CreateUserPayload> {
   id: string;
 }
+
+export type ImportedUserModel = UserModel;

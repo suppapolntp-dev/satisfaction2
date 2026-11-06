@@ -53,3 +53,24 @@ export interface UserDataAccessRole {
   canExport?: boolean;
   canManageScope?: boolean;
 }
+
+export interface UserAccessRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhone?: string;
+  tierLevel: string;
+  assignedBrands: string[];
+  assignedRegions: string[];
+  assignedProvinces: string[];
+  assignedBranches: string[];
+  permissions: {
+    canViewSuperAdminOverview: boolean;
+    canViewBrandRegionalGrid: boolean;
+    canViewRegionalProvinceGrid: boolean;
+    canViewProvincialBranchGrid: boolean;
+    canViewBranchKiosksGrid: boolean;
+  };
+  status: string;
+}

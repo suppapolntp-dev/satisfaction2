@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   BrandItem,
   RegionItem,
@@ -8,16 +8,80 @@ import {
   BranchItem,
   HierarchyScopeLevel,
 } from "@/Types/dataAccess";
+import { dataAccessService } from "@/Services/dataAccessService";
+
+export interface OrgScopeChangeInfo {
+  level: HierarchyScopeLevel;
+  brand: BrandItem | null;
+  region: RegionItem | null;
+  province: ProvinceItem | null;
+  branch: BranchItem | null;
+  scopePath: string;
+  scopeTitle: string;
+  targetBranches: string[];
+  targetBrands: string[];
+}
 
 export interface UseOrgTreeOptions {
   data?: BrandItem[];
   initialScopeLevel?: HierarchyScopeLevel;
   initialExpandedNodes?: Record<string, boolean>;
+  onScopeChange?: (scopeInfo: OrgScopeChangeInfo) => void;
+}
+
+function getAllBranchesFromBrand(brand: BrandItem): string[] {
+  return (brand.regions || []).flatMap((r) =>
+    (r.provinces || []).flatMap((p) => (p.branches || []).map((b) => b.name))
+  );
+}
+
+function getAllBranchesFromRegion(region: RegionItem): string[] {
+  return (region.provinces || []).flatMap((p) =>
+    (p.branches || []).map((b) => b.name)
+  );
+}
+
+function getAllBranchesFromProvince(province: ProvinceItem): string[] {
+  return (province.branches || []).map((b) => b.name);
 }
 
 export function useOrgTree(options: UseOrgTreeOptions = {}) {
-  // TODO: Connect API [organization_hierarchy_tree]
-  const brandHierarchy = options.data ?? [];
+  const [internalData, setInternalData] = useState<BrandItem[]>(options.data ?? []);
+  const [isLoading, setIsLoading] = useState<boolean>(!options.data || options.data.length === 0);
+
+  // Load hierarchy tree if not provided via props
+  useEffect(() => {
+    let isMounted = true;
+    if (options.data && options.data.length > 0) {
+      setInternalData(options.data);
+      setIsLoading(false);
+      return;
+    }
+
+    async function loadTree() {
+      try {
+        setIsLoading(true);
+        const tree = await dataAccessService.getHierarchyTree();
+        if (isMounted) {
+          setInternalData(tree || []);
+        }
+      } catch (err) {
+        console.error("[useOrgTree] loadTree error:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadTree();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [options.data]);
+
+  const brandHierarchy = internalData;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedScopeLevel, setSelectedScopeLevel] = useState<HierarchyScopeLevel>(
@@ -134,6 +198,86 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
     };
   }, [selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
 
+  // Compute detailed path and assigned scopes
+  const scopeDetails = useMemo(() => {
+    if (selectedScopeLevel === "BRANCH" && selectedBranch) {
+      const bName = selectedBrand?.name || "";
+      const rName = selectedRegion?.name || "";
+      const pName = selectedProvince?.name || "";
+      const brName = selectedBranch.name;
+      const path = [bName, rName, pName, brName].filter(Boolean).join(" > ");
+      return {
+        scopePath: path || brName,
+        scopeTitle: brName,
+        targetBranches: [brName],
+        targetBrands: bName ? [bName] : [],
+      };
+    }
+    if (selectedScopeLevel === "PROVINCE" && selectedProvince) {
+      const bName = selectedBrand?.name || "";
+      const rName = selectedRegion?.name || "";
+      const pName = selectedProvince.name;
+      const path = [bName, rName, pName].filter(Boolean).join(" > ");
+      return {
+        scopePath: path || pName,
+        scopeTitle: `จ.${pName}`,
+        targetBranches: getAllBranchesFromProvince(selectedProvince),
+        targetBrands: bName ? [bName] : [],
+      };
+    }
+    if (selectedScopeLevel === "REGION" && selectedRegion) {
+      const bName = selectedBrand?.name || "";
+      const rName = selectedRegion.name;
+      const path = [bName, rName].filter(Boolean).join(" > ");
+      return {
+        scopePath: path || rName,
+        scopeTitle: rName,
+        targetBranches: getAllBranchesFromRegion(selectedRegion),
+        targetBrands: bName ? [bName] : [],
+      };
+    }
+    if (selectedScopeLevel === "BRAND" && selectedBrand) {
+      const bName = selectedBrand.name;
+      return {
+        scopePath: bName,
+        scopeTitle: bName,
+        targetBranches: getAllBranchesFromBrand(selectedBrand),
+        targetBrands: [bName],
+      };
+    }
+    // SUPER_ADMIN
+    const allBranches = brandHierarchy.flatMap(getAllBranchesFromBrand);
+    const allBrands = brandHierarchy.map((b) => b.name);
+    return {
+      scopePath: "All Organizations (สำนักงานใหญ่)",
+      scopeTitle: "All Organization",
+      targetBranches: allBranches,
+      targetBrands: allBrands,
+    };
+  }, [selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch, brandHierarchy]);
+
+  // Notify onScopeChange callback
+  const onScopeChangeRef = useRef(options.onScopeChange);
+  useEffect(() => {
+    onScopeChangeRef.current = options.onScopeChange;
+  }, [options.onScopeChange]);
+
+  useEffect(() => {
+    if (onScopeChangeRef.current) {
+      onScopeChangeRef.current({
+        level: selectedScopeLevel,
+        brand: selectedBrand,
+        region: selectedRegion,
+        province: selectedProvince,
+        branch: selectedBranch,
+        scopePath: scopeDetails.scopePath,
+        scopeTitle: scopeDetails.scopeTitle,
+        targetBranches: scopeDetails.targetBranches,
+        targetBrands: scopeDetails.targetBrands,
+      });
+    }
+  }, [selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch, scopeDetails]);
+
   // Filtered tree
   const filteredBrands = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -178,6 +322,8 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
     searchQuery,
     setSearchQuery,
     brandHierarchy: filteredBrands,
+    rawBrandHierarchy: brandHierarchy,
+    isLoading,
     selectedScopeLevel,
     selectedBrand,
     selectedRegion,
@@ -191,5 +337,9 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
     selectProvince,
     selectBranch,
     activeScopeInfo,
+    scopePath: scopeDetails.scopePath,
+    scopeTitle: scopeDetails.scopeTitle,
+    targetBranches: scopeDetails.targetBranches,
+    targetBrands: scopeDetails.targetBrands,
   };
 }

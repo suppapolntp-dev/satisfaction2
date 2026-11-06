@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { CreateUserPayload } from "@/Types/user";
+import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
 import { useCreateUserModal } from "./useCreateUserModal";
 
 export interface CreateUserModalProps {
@@ -22,12 +23,7 @@ export default function CreateUserModal({
   const {
     userConfig,
     formData,
-    isBranchesLoading,
-    branchSearchQuery,
-    setBranchSearchQuery,
-    branchesByBrand,
-    expandedBrands,
-    toggleBrandExpand,
+    orgTree,
     toggleBranch,
     selectAllBranches,
     clearAllBranches,
@@ -94,10 +90,20 @@ export default function CreateUserModal({
                 {fullName || "เพิ่มผู้ใช้งานใหม่ (Create New User)"}
               </h2>
 
-              {/* Live Preview Metadata: Tier Badge + Selected Branches Monogram Stack */}
+              {/* Live Preview Metadata: Tier Badge + Scope Path + Monogram Stack */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
                   {formData.tierLevel}
+                </span>
+
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[280px] sm:max-w-[360px]"
+                  title={formData.dataAccessScope}
+                >
+                  <svg className="w-3 h-3 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span className="truncate">{formData.dataAccessScope || "All Organizations"}</span>
                 </span>
 
                 <div
@@ -125,8 +131,8 @@ export default function CreateUserModal({
                           </span>
                         )}
                       </div>
-                      <span className="truncate text-xs font-medium text-slate-700 max-w-[240px] sm:max-w-[340px]">
-                        {targetBranches.length} สาขา ({targetBranches.join(", ")})
+                      <span className="truncate text-xs font-medium text-slate-700 max-w-[200px] sm:max-w-[260px]">
+                        {targetBranches.length} สาขา
                       </span>
                     </>
                   )}
@@ -158,165 +164,27 @@ export default function CreateUserModal({
         {/* ─── 3. SPLIT WORKSPACE BODY (Left: Scope Tree | Right: Details Form) ─── */}
         <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-100 flex-1 overflow-hidden min-h-0">
           
-          {/* ─── LEFT PANEL: BRANCH SELECTION SIDEBAR ─── */}
-          <aside className="w-full lg:w-80 xl:w-88 shrink-0 flex flex-col bg-slate-50/50 p-4 sm:p-5 overflow-hidden">
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-1.5">
-                <svg aria-hidden="true" className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                  BRANCH HIERARCHY
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold">
-                <button
-                  type="button"
-                  onClick={selectAllBranches}
-                  className="text-blue-600 hover:underline cursor-pointer"
-                >
-                  เลือกทั้งหมด
-                </button>
-                <span className="text-slate-300">•</span>
-                <button
-                  type="button"
-                  onClick={clearAllBranches}
-                  className="text-slate-500 hover:text-rose-600 cursor-pointer"
-                >
-                  ล้างค่า
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Search Input */}
-            <div className="mb-3">
-              <div className="flex items-center gap-2 px-3 h-9 rounded-xl bg-white border border-slate-200/90 text-slate-600 shadow-2xs focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                <svg aria-hidden="true" className="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  type="text"
-                  value={branchSearchQuery}
-                  onChange={(e) => setBranchSearchQuery(e.target.value)}
-                  placeholder="ค้นหาแบรนด์หรือสาขา..."
-                  aria-label="ค้นหาแบรนด์หรือสาขา"
-                  className="w-full bg-transparent border-none outline-none text-xs text-slate-800 placeholder-slate-400"
-                />
-                {branchSearchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setBranchSearchQuery("")}
-                    aria-label="ล้างคำค้นหา"
-                    className="text-slate-400 hover:text-slate-700 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Branch Tree List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-              {isBranchesLoading ? (
-                <div className="p-8 text-center text-xs text-slate-400">
-                  กำลังโหลดข้อมูลสาขา...
-                </div>
-              ) : Object.keys(branchesByBrand).length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-400">
-                  ไม่พบสาขาที่ตรงกับการค้นหา
-                </div>
-              ) : (
-                Object.entries(branchesByBrand).map(([brandName, brandBranches]) => {
-                  const isExpanded = expandedBrands[brandName] !== false;
-                  const selectedInBrandCount = brandBranches.filter((b) =>
-                    targetBranches.includes(b.name)
-                  ).length;
-
-                  return (
-                    <div
-                      key={brandName}
-                      className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden transition-all"
-                    >
-                      {/* Brand Header Accordion */}
-                      <div className="p-2.5 flex items-center justify-between bg-slate-50/70 border-b border-slate-100">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => toggleBrandExpand(brandName)}
-                            aria-label={`ย่อหรือขยาย ${brandName}`}
-                            className="p-0.5 text-slate-400 hover:text-slate-700 cursor-pointer"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <polyline points="9 18 15 12 9 6" />
-                            </svg>
-                          </button>
-
-                          <span className="text-xs font-bold text-slate-800 truncate">
-                            {brandName}
-                          </span>
-                        </div>
-
-                        <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                          {selectedInBrandCount}/{brandBranches.length}
-                        </span>
-                      </div>
-
-                      {/* Branches under Brand */}
-                      {isExpanded && (
-                        <div className="p-1 space-y-0.5 divide-y divide-slate-50">
-                          {brandBranches.map((branch) => {
-                            const isChecked = targetBranches.includes(branch.name);
-
-                            return (
-                              <div
-                                key={branch.id}
-                                onClick={() => toggleBranch(branch.name, branch)}
-                                className={`flex items-center justify-between gap-2.5 p-2 rounded-xl text-xs transition-colors cursor-pointer select-none ${
-                                  isChecked
-                                    ? "bg-blue-50 text-blue-900 border border-blue-200/80 font-semibold"
-                                    : "hover:bg-slate-50 text-slate-700 border border-transparent"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => {}} // Handled by row click
-                                    className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer shrink-0"
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <span className="block truncate">{branch.name}</span>
-                                    <span className="block text-[10px] text-slate-400 font-normal leading-tight">
-                                      {branch.code} • {branch.province}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {isChecked && (
-                                  <svg className="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
+          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR (Identical to Dashboard Analyses) ─── */}
+          <aside className="w-full lg:w-80 xl:w-84 shrink-0 flex flex-col bg-slate-50/50 border-b lg:border-b-0 lg:border-r border-slate-100 overflow-hidden">
+            <OrgHierarchyTreeSidebar
+              brandHierarchy={orgTree.brandHierarchy}
+              searchQuery={orgTree.searchQuery}
+              onSearchChange={orgTree.setSearchQuery}
+              selectedScopeLevel={orgTree.selectedScopeLevel}
+              selectedBrand={orgTree.selectedBrand}
+              selectedRegion={orgTree.selectedRegion}
+              selectedProvince={orgTree.selectedProvince}
+              selectedBranch={orgTree.selectedBranch}
+              expandedNodes={orgTree.expandedNodes}
+              onToggleNode={orgTree.toggleNode}
+              onSelectSuperAdmin={orgTree.selectSuperAdmin}
+              onSelectBrand={orgTree.selectBrand}
+              onSelectRegion={orgTree.selectRegion}
+              onSelectProvince={orgTree.selectProvince}
+              onSelectBranch={orgTree.selectBranch}
+              collapsible={false}
+              className="w-full border-0 rounded-none shadow-none bg-transparent"
+            />
           </aside>
 
           {/* ─── RIGHT PANEL: USER FORM & FOCUSED BRANCH DETAILS ─── */}
@@ -426,39 +294,78 @@ export default function CreateUserModal({
               </div>
             </div>
 
-            {/* 2. ระดับขอบเขตสิทธิ์องค์กร (Tier Level) */}
-            <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1.5">
-              <label className="block text-xs font-bold text-slate-900">
-                ระดับขอบเขตสิทธิ์องค์กร (Data Access Tier Level) <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.tierLevel}
-                onChange={(e) => handleChange("tierLevel", e.target.value)}
-                className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold"
-              >
-                {userConfig.tiers.map((tier) => (
-                  <option key={tier.id} value={tier.nameEn}>
-                    {tier.nameTh}
-                  </option>
-                ))}
-              </select>
+            {/* 2. ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope) & ระดับขอบเขตสิทธิ์องค์กร (Tier Level) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+              {/* ช่อง DataAccess Scope */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-slate-700">
+                  ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-blue-600 pointer-events-none">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    readOnly
+                    value={formData.dataAccessScope || "All Organizations (สำนักงานใหญ่)"}
+                    title={formData.dataAccessScope}
+                    placeholder="เลือกจาก Tree ด้านซ้าย"
+                    className="h-9 w-full pl-9 pr-3 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold truncate cursor-default focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <span className="text-[10px] text-slate-400 block truncate">
+                  ระดับ: {orgTree.activeScopeInfo.tier} ({orgTree.activeScopeInfo.title})
+                </span>
+              </div>
+
+              {/* ระดับขอบเขตสิทธิ์องค์กร (Data Access Tier Level) */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-slate-700">
+                  ระดับขอบเขตสิทธิ์องค์กร (Tier Level) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.tierLevel}
+                  onChange={(e) => handleChange("tierLevel", e.target.value)}
+                  className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold"
+                >
+                  {userConfig.tiers.map((tier) => (
+                    <option key={tier.id} value={tier.nameEn}>
+                      {tier.nameTh}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[10px] text-slate-400 block truncate">
+                  ปรับอัตโนมัติตาม Node ที่เลือก หรือกำหนดเองได้
+                </span>
+              </div>
             </div>
 
             {/* 3. สรุปขอบเขตสาขาและแบรนด์ที่ผูก (Assigned Scopes Preview) */}
             <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-800">
-                  สาขาทั้งหมดที่เลือกให้ผู้ใช้งาน ({targetBranches.length} สาขา)
+                  สาขาทั้งหมดในขอบเขต ({targetBranches.length} สาขา)
                 </span>
-                {targetBranches.length > 0 && (
+                <div className="flex items-center gap-2 text-[10px] font-semibold">
+                  <button
+                    type="button"
+                    onClick={selectAllBranches}
+                    className="text-blue-600 hover:underline cursor-pointer"
+                  >
+                    เลือกทั้งหมด
+                  </button>
+                  <span className="text-slate-300">•</span>
                   <button
                     type="button"
                     onClick={clearAllBranches}
-                    className="text-[11px] text-rose-600 hover:underline cursor-pointer"
+                    className="text-slate-500 hover:text-rose-600 cursor-pointer"
                   >
                     ลบทั้งหมด
                   </button>
-                )}
+                </div>
               </div>
 
               {targetBranches.length === 0 ? (

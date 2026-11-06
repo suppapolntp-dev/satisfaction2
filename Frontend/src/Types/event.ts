@@ -56,3 +56,5 @@ export interface CalendarWeek {
   cells: CalendarCell[];
   segments: CalendarEventSegment[];
 }
+
+export type ScheduledEventItem = EventItem;

@@ -6,29 +6,28 @@ import { useBranchModal } from "./useBranchModal";
 
 export interface BranchModalProps {
   isOpen: boolean;
-  branch: BranchModel | null;
+  branch?: BranchModel | null;
+  editingBranch?: BranchModel | null;
   currentScopeContext?: {
     brandName?: string;
     regionName?: string;
     provinceName?: string;
   };
+  masterBrands?: string[];
   onClose: () => void;
-  onSave: (branchData: {
-    id?: string;
-    code: string;
-    name: string;
-    kioskCount: number;
-    status: "Active" | "Inactive";
-  }) => Promise<void> | void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onSave: (branchData: any) => Promise<void> | void;
 }
 
 export default function BranchModal({
   isOpen,
   branch,
+  editingBranch,
   currentScopeContext,
   onClose,
   onSave,
 }: BranchModalProps) {
+  const targetBranch = editingBranch ?? branch ?? null;
   const {
     formData,
     isSubmitting,
@@ -37,7 +36,7 @@ export default function BranchModal({
     handleSubmit,
   } = useBranchModal({
     isOpen,
-    branch,
+    branch: targetBranch,
     onSave,
     onClose,
   });

@@ -88,6 +88,7 @@ export default function UserImportExportModal({
           if (Array.isArray(rawData)) {
             importedList = rawData.map((item, index) => ({
               id: item.id || `IMP-${Date.now()}-${index}`,
+              userCode: item.userCode || `EMP-${100 + index}`,
               firstName: item.firstName || item.first_name || "Unknown",
               lastName: item.lastName || item.last_name || "",
               email: item.email || `user${index}@imported.com`,
@@ -97,6 +98,7 @@ export default function UserImportExportModal({
               province: item.province || "-",
               branch: item.branch || "All Branches",
               role: item.role || "Manager",
+              tierLevel: item.tierLevel || "Branch Staff",
               status: (item.status === "Inactive" ? "Inactive" : "Active") as "Active" | "Inactive",
             }));
           } else {
@@ -117,6 +119,7 @@ export default function UserImportExportModal({
               const parsedStatus = (cols[headers.indexOf("status")] || cols[9] || "Active").toLowerCase();
               importedList.push({
                 id: `IMP-${Date.now()}-${i}`,
+                userCode: `EMP-${100 + i}`,
                 firstName: cols[headers.indexOf("firstname")] || cols[0] || "User",
                 lastName: cols[headers.indexOf("lastname")] || cols[1] || "",
                 email: cols[headers.indexOf("email")] || cols[2] || `user${i}@imported.com`,
@@ -126,6 +129,7 @@ export default function UserImportExportModal({
                 province: cols[headers.indexOf("province")] || cols[6] || "-",
                 branch: cols[headers.indexOf("branch")] || cols[7] || "All Branches",
                 role: cols[headers.indexOf("role")] || cols[8] || "Manager",
+                tierLevel: "Branch Staff",
                 status: parsedStatus.includes("inact") ? "Inactive" : "Active",
               });
             }
@@ -166,7 +170,7 @@ export default function UserImportExportModal({
   const handleExecuteExport = () => {
     let usersToExport = currentUsers;
     if (exportBrandFilter !== "All") {
-      usersToExport = usersToExport.filter((u) => u.brand.includes(exportBrandFilter));
+      usersToExport = usersToExport.filter((u) => Boolean(u.brand && u.brand.includes(exportBrandFilter)));
     }
 
     if (usersToExport.length === 0) {

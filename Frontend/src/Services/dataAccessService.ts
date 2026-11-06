@@ -1,4 +1,4 @@
-  import { apiClient } from "./apiClient";
+import { apiClient } from "./apiClient";
 import { 
   UserAccessRecord, 
   BrandItem, 
@@ -7,6 +7,10 @@ import {
   ProvinceItem,
   RegionItem,
 } from "@/Types/dataAccess";
+import { BrandModel } from "@/Types/brand";
+import { BranchModel } from "@/Types/branch";
+import { brandService } from "./brandService";
+import { branchService } from "./branchService";
 
 export type { 
   UserAccessRecord, 
@@ -16,6 +20,61 @@ export type {
   ProvinceItem,
   RegionItem,
 };
+
+export function buildHierarchyTree(brands: BrandModel[], branches: BranchModel[]): BrandItem[] {
+  if (!brands || brands.length === 0) return [];
+  return brands.map((b, bIdx) => {
+    const relatedBranches = (branches || []).filter(
+      (br) =>
+        (Boolean(br.brand) && br.brand.includes(b.brandName)) ||
+        (br.brands && br.brands.includes(b.brandName))
+    );
+
+    // Group by region
+    const regionsMap = new Map<string, BranchModel[]>();
+    relatedBranches.forEach((br) => {
+      const reg = br.region || "ภูมิภาคทั่วไป";
+      if (!regionsMap.has(reg)) regionsMap.set(reg, []);
+      regionsMap.get(reg)!.push(br);
+    });
+
+    const regionsList: RegionItem[] = Array.from(regionsMap.entries()).map(([regName, regBranches], rIdx) => {
+      // Group by province
+      const provMap = new Map<string, BranchModel[]>();
+      regBranches.forEach((br) => {
+        const prov = br.province || "จังหวัดทั่วไป";
+        if (!provMap.has(prov)) provMap.set(prov, []);
+        provMap.get(prov)!.push(br);
+      });
+
+      const provincesList: ProvinceItem[] = Array.from(provMap.entries()).map(([provName, provBranches], pIdx) => ({
+        id: `PRV_${bIdx}_${rIdx}_${pIdx}`,
+        name: provName,
+        branches: provBranches.map((br) => ({
+          id: br.id,
+          code: br.code,
+          name: br.name,
+          brandName: br.brand,
+          kiosksCount: br.kioskCount || 1,
+          csatScore: br.satisfaction ? `${br.satisfaction}%` : "-",
+        })),
+      }));
+
+      return {
+        id: `REG_${bIdx}_${rIdx}`,
+        name: regName,
+        provinces: provincesList,
+      };
+    });
+
+    return {
+      id: b.id,
+      code: b.brandId || b.brandName.slice(0, 3).toUpperCase(),
+      name: b.brandName,
+      regions: regionsList,
+    };
+  });
+}
 
 export function computePermissionsByTier(tier: string) {
   switch (tier) {
@@ -118,5 +177,25 @@ export const dataAccessService = {
     } catch {}
 
     return true;
+  },
+
+  async getHierarchyTree(): Promise<BrandItem[]> {
+    try {
+      const response = await apiClient.get<BrandItem[]>("/organization/hierarchy");
+      if (response.success && Array.isArray(response.data) && response.data.length > 0) {
+        return response.data;
+      }
+    } catch {}
+
+    try {
+      const [brands, branches] = await Promise.all([
+        brandService.getBrands(),
+        branchService.getBranches(),
+      ]);
+      return buildHierarchyTree(brands, branches);
+    } catch (err) {
+      console.error("[dataAccessService.getHierarchyTree] error:", err);
+      return [];
+    }
   },
 };
