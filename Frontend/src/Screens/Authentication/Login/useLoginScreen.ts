@@ -33,6 +33,12 @@ export function useLoginScreen(): UseLoginScreenReturn {
           throw new Error("ข้อมูลการเข้าสู่ระบบไม่ครบถ้วน กรุณากรอก Corporate ID และรหัสผ่าน");
         }
 
+        // จำลอง Session Token สำหรับโหมด Development
+        if (typeof document !== "undefined") {
+          document.cookie = "satisfaction_access_token=dev_token; path=/; max-age=86400; SameSite=Lax";
+          localStorage.setItem("satisfaction_access_token", "dev_token");
+        }
+
         // นำทางไปยัง Dashboard ของระบบแอดมิน
         router.push("/dashboard");
       } catch (err: unknown) {

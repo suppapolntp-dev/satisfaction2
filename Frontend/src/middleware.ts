@@ -9,6 +9,14 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get("satisfaction_access_token")?.value;
     const { pathname } = request.nextUrl;
 
+    // 0. ในโหมด Development: ปลดล็อกชั่วคราวให้เข้าดูหน้าจอและทดสอบ UI ได้อย่างอิสระ
+    if (process.env.NODE_ENV === "development") {
+        if (pathname === "/") {
+            return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+        return NextResponse.next();
+    }
+
     // 1. ถ้ายังไม่ได้ Login แล้วพยายามเข้าหน้าที่มีการป้องกัน -> Redirect ไป /login
     const isPublicPath = 
         pathname.startsWith("/login") || 
