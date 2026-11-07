@@ -10,6 +10,20 @@ export interface ApiResponse<T = any> {
     timestamp: string;
 }
 
+export const API_MODE_STORAGE_KEY = "satisfaction_api_mode_enabled";
+
+export function isApiModeEnabled(): boolean {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(API_MODE_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
+}
+
+export function setApiModeEnabled(enabled: boolean): void {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(API_MODE_STORAGE_KEY, enabled ? "true" : "false");
+    window.dispatchEvent(new CustomEvent("satisfaction:api-mode-change", { detail: { enabled } }));
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5005/api";
 
 export function getAuthToken(): string | null {
@@ -74,6 +88,18 @@ async function ensureDevToken(): Promise<string | null> {
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    // ตรวจสอบโหมด API จากปุ่ม Toggle ที่ Navbar (หากปิด API ให้จำลองคืนค่าว่างเพื่อให้เห็น Empty State)
+    if (!isApiModeEnabled()) {
+        console.log(`[apiClient] API mode is DISABLED by Navbar toggle. Returning empty response for ${endpoint}`);
+        return {
+            success: true,
+            message: "API mode disabled (Empty state preview)",
+            data: null as any,
+            errors: null,
+            timestamp: new Date().toISOString(),
+        };
+    }
+
     let token = getAuthToken();
 
     if (!token && !endpoint.includes("/auth/")) {

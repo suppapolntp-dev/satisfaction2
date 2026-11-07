@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, isApiModeEnabled } from "./apiClient";
 import { BrandModel } from "@/Types/brand";
 
 export type { BrandModel };
@@ -43,6 +43,9 @@ export const DEFAULT_DEV_BRANDS: BrandModel[] = [
 export const brandService = {
   // TODO: Connect API [get_brands]
   async getBrands(): Promise<BrandModel[]> {
+    if (!isApiModeEnabled()) {
+      return [];
+    }
     try {
       console.log("[brandService.getBrands] Requesting GET /brands...");
       const response = await apiClient.get<BackendBrandDto[]>("/brands");

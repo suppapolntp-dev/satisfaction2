@@ -8,6 +8,7 @@ import { userService } from "@/Services/userService";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
 import { useUserSettings } from "@/Lib/useUserSettings";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 export type UserManagementScreenTab = "users" | "dataaccess";
 
@@ -18,6 +19,7 @@ export interface UseUsermanagementScreenProps {
 export function useUsermanagementScreen({
   initialTab,
 }: UseUsermanagementScreenProps = {}) {
+  const { isApiEnabled } = useApiMode();
   const { userConfig } = useUserSettings();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -74,7 +76,7 @@ export function useUsermanagementScreen({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isApiEnabled]);
 
   // Tab Management
   const userManagementTabs: HeaderTabItem[] = useMemo(

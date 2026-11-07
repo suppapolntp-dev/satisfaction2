@@ -11,10 +11,12 @@ export type UserStatus = "Active" | "Inactive";
 export interface UserModel {
   id: string;
   userCode: string;
+  corporateId?: string;
   firstName: string;
   lastName: string;
   email: string;
   phone?: string;
+  password?: string;
   role: string;
   roleId?: string;
   tierLevel: UserTierLevel;
@@ -46,6 +48,7 @@ export interface UserOverviewMetrics {
 
 export interface CreateUserPayload {
   userCode?: string;
+  corporateId?: string;
   firstName: string;
   lastName: string;
   email: string;

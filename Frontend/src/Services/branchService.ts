@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, isApiModeEnabled } from "./apiClient";
 import { BranchModel } from "@/Types/branch";
 
 export type { BranchModel };
@@ -50,6 +50,9 @@ export const DEFAULT_DEV_BRANCHES: BranchModel[] = [
 export const branchService = {
   // TODO: Connect API [get_branches]
   async getBranches(): Promise<BranchModel[]> {
+    if (!isApiModeEnabled()) {
+      return [];
+    }
     try {
       console.log("[branchService.getBranches] Requesting GET /branches...");
       const response = await apiClient.get<BackendBranchDto[]>("/branches");

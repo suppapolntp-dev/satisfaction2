@@ -8,7 +8,8 @@ import {
   BranchItem,
   HierarchyScopeLevel,
 } from "@/Types/dataAccess";
-import { dataAccessService } from "@/Services/dataAccessService";
+import { dataAccessService, DEFAULT_HIERARCHY_TREE } from "@/Services/dataAccessService";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 export interface OrgScopeChangeInfo {
   level: HierarchyScopeLevel;
@@ -49,7 +50,14 @@ function getAllBranchesFromProvince(province: ProvinceItem): string[] {
 }
 
 export function useOrgTree(options: UseOrgTreeOptions = {}) {
-  const [internalData, setInternalData] = useState<BrandItem[]>(options.data ?? []);
+  const { isApiEnabled } = useApiMode();
+  const [internalData, setInternalData] = useState<BrandItem[]>(
+    options.data && options.data.length > 0
+      ? options.data
+      : isApiEnabled
+        ? DEFAULT_HIERARCHY_TREE
+        : []
+  );
   const [isLoading, setIsLoading] = useState<boolean>(!options.data || options.data.length === 0);
 
   // Load hierarchy tree if not provided via props
@@ -57,6 +65,12 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
     let isMounted = true;
     if (options.data && options.data.length > 0) {
       setInternalData(options.data);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isApiEnabled) {
+      setInternalData([]);
       setIsLoading(false);
       return;
     }
@@ -82,7 +96,7 @@ export function useOrgTree(options: UseOrgTreeOptions = {}) {
     return () => {
       isMounted = false;
     };
-  }, [options.data]);
+  }, [options.data, isApiEnabled]);
 
   const brandHierarchy = internalData;
 

@@ -76,6 +76,14 @@ export function buildHierarchyTree(brands: BrandModel[], branches: BranchModel[]
   });
 }
 
+import { DEFAULT_DEV_BRANDS } from "./brandService";
+import { DEFAULT_DEV_BRANCHES } from "./branchService";
+
+export const DEFAULT_HIERARCHY_TREE: BrandItem[] = buildHierarchyTree(
+  DEFAULT_DEV_BRANDS,
+  DEFAULT_DEV_BRANCHES
+);
+
 export function computePermissionsByTier(tier: string) {
   switch (tier) {
     case "Super Admin":

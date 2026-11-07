@@ -2,8 +2,10 @@
 
 import React from "react";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
+import { ApiModeProvider } from "@/Context/ApiModeContext";
 import Sidebar from "@/Components/Sidebars/Sidebar";
 import ProfileDropdown from "./ProfileDropdown";
+import ApiModeToggle from "./ApiModeToggle";
 import { useCommandPalette } from "./useCommandPalette";
 
 interface AdminLayoutShellProps {
@@ -101,8 +103,9 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
             </button>
           </div>
 
-          {/* Header Right Profile Actions */}
-          <div className="flex items-center shrink-0">
+          {/* Header Right Profile & API Actions */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <ApiModeToggle />
             <ProfileDropdown />
           </div>
         </header>
@@ -192,8 +195,10 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
 
 export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   return (
-    <SidebarProvider>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
-    </SidebarProvider>
+    <ApiModeProvider>
+      <SidebarProvider>
+        <AdminLayoutInner>{children}</AdminLayoutInner>
+      </SidebarProvider>
+    </ApiModeProvider>
   );
 }

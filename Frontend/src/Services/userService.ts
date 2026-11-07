@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, isApiModeEnabled } from "./apiClient";
 import {
   UserModel,
   UserOverviewMetrics,
@@ -201,6 +201,9 @@ export const DEFAULT_DEV_USERS: UserModel[] = [
 export const userService = {
   // TODO: Connect API [get_users]
   async getUsers(): Promise<UserModel[]> {
+    if (!isApiModeEnabled()) {
+      return [];
+    }
     try {
       const response = await apiClient.get<BackendUserDto[]>("/users");
       if (response.success && Array.isArray(response.data) && response.data.length > 0) {
@@ -260,6 +263,14 @@ export const userService = {
 
   // TODO: Connect API [get_user_metrics]
   async getUserMetrics(): Promise<UserOverviewMetrics> {
+    if (!isApiModeEnabled()) {
+      return {
+        totalUsers: 0,
+        activeUsers: 0,
+        multiScopeUsers: 0,
+        inactiveUsers: 0,
+      };
+    }
     try {
       const response = await apiClient.get<UserOverviewMetrics>("/users/metrics");
       if (response.success && response.data) {
