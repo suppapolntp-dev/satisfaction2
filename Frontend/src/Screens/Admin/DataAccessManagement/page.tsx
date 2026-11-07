@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
+import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
 import { saveActiveDataAccessProfile } from "@/Lib/dataAccessContext";
 import { searchUsers } from "@/Lib/search/searchEngine";
 import DataAccessModal from "@/Components/Modals/DataAccessModal";
@@ -56,9 +57,19 @@ export default function DataAccessManagementScreen({
   const [selectedBranch, setSelectedBranch] = useState<BranchItem | null>(null);
 
   // Tree Expansion States
+  const [treeSearchQuery, setTreeSearchQuery] = useState("");
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
   const [expandedRegions, setExpandedRegions] = useState<Record<string, boolean>>({});
   const [expandedProvinces, setExpandedProvinces] = useState<Record<string, boolean>>({});
+
+  const handleToggleNode = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setExpandedNodes((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   // Custom Scopes States (Co-Location / Dual-Brand)
   const [customScopes, setCustomScopes] = useState<CustomScopeGroup[]>([]);
@@ -244,8 +255,8 @@ export default function DataAccessManagementScreen({
     setExpandedBrands((prev) => ({ ...prev, [brand.id]: !prev[brand.id] }));
   };
 
-  const handleSelectRegion = (brand: BrandItem, region: RegionItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSelectRegion = (brand: BrandItem, region: RegionItem, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setSelectedScopeLevel("REGION");
     setSelectedBrand(brand);
     setSelectedRegion(region);
@@ -255,8 +266,8 @@ export default function DataAccessManagementScreen({
     setExpandedRegions((prev) => ({ ...prev, [region.id]: !prev[region.id] }));
   };
 
-  const handleSelectProvince = (brand: BrandItem, region: RegionItem, province: ProvinceItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSelectProvince = (brand: BrandItem, region: RegionItem, province: ProvinceItem, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setSelectedScopeLevel("PROVINCE");
     setSelectedBrand(brand);
     setSelectedRegion(region);
@@ -266,8 +277,8 @@ export default function DataAccessManagementScreen({
     setExpandedProvinces((prev) => ({ ...prev, [province.id]: !prev[province.id] }));
   };
 
-  const handleSelectBranch = (brand: BrandItem, region: RegionItem, province: ProvinceItem, branch: BranchItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSelectBranch = (brand: BrandItem, region: RegionItem, province: ProvinceItem, branch: BranchItem, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setSelectedScopeLevel("BRANCH");
     setSelectedBrand(brand);
     setSelectedRegion(region);
@@ -700,61 +711,51 @@ export default function DataAccessManagementScreen({
       {/* ─── 3. MAIN WORKSPACE: TREE HIERARCHY + RIGHT DETAIL TABLE ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* ─── LEFT: 5-TIER HIERARCHY TREE VIEW ─── */}
-        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 p-4 shadow-xs space-y-3">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-blue-900 text-base">account_tree</span>
-              โครงสร้างองค์กร (Org Hierarchy Tree)
-            </h3>
-            <span className="text-[10px] text-slate-400 font-medium">คลิกเพื่อกรองข้อมูล</span>
-          </div>
-
-          {/* Super Admin Top-Level Button */}
-          <div
-            onClick={handleSelectSuperAdminView}
-            className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between text-xs font-bold ${
-              selectedScopeLevel === "SUPER_ADMIN"
-                ? "bg-blue-900 text-white border-blue-900 shadow-xs"
-                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base">domain</span>
-              <span>🏢 ภาพรวมระดับองค์กร (Super Admin Level)</span>
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20">All</span>
-          </div>
+        {/* ─── LEFT: 5-TIER HIERARCHY TREE SIDEBAR (Reusing OrgHierarchyTreeSidebar as in Modal & Dashboard) ─── */}
+        <div className="lg:col-span-4 space-y-4">
+          <OrgHierarchyTreeSidebar
+            brandHierarchy={brandHierarchy}
+            searchQuery={treeSearchQuery}
+            onSearchChange={setTreeSearchQuery}
+            selectedScopeLevel={selectedScopeLevel || "SUPER_ADMIN"}
+            selectedBrand={selectedBrand}
+            selectedRegion={selectedRegion}
+            selectedProvince={selectedProvince}
+            selectedBranch={selectedBranch}
+            expandedNodes={expandedNodes}
+            onToggleNode={handleToggleNode}
+            onSelectSuperAdmin={handleSelectSuperAdminView}
+            onSelectBrand={handleSelectBrand}
+            onSelectRegion={handleSelectRegion}
+            onSelectProvince={handleSelectProvince}
+            onSelectBranch={handleSelectBranch}
+            collapsible={false}
+            className="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm"
+          />
 
           {/* ─── CUSTOM CO-LOCATION SCOPES (DUAL-BRAND GROUPS) ─── */}
-          <div className="pt-2 border-t border-slate-100 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                <span className="material-symbols-outlined text-base text-blue-900">hub</span>
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
                 <span>กลุ่มสโคปกำหนดเอง (Custom Scopes)</span>
               </div>
               <button
                 type="button"
                 onClick={handleOpenCreateCustomScope}
-                className="text-[11px] font-bold text-blue-900 hover:text-blue-950 hover:bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="สร้างกลุ่มสโคปสำหรับสาขา 2 แบรนด์ หรือจัดกลุ่มเฉพาะ"
+                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
               >
-                <span className="material-symbols-outlined text-[14px]">add</span>
                 <span>+ สร้าง Scope</span>
               </button>
             </div>
 
             <div className="space-y-1.5">
               {customScopes.length === 0 ? (
-                <div className="p-3 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <div className="p-3 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
                   <p className="text-[11px] text-slate-400">ยังไม่มีกลุ่มสโคปกำหนดเอง</p>
-                  <button
-                    type="button"
-                    onClick={handleOpenCreateCustomScope}
-                    className="text-[11px] text-blue-900 font-bold hover:underline mt-1 cursor-pointer"
-                  >
-                    + คลิกเพื่อสร้างกลุ่มสโคปแรก (เช่น สาขา 2 แบรนด์)
-                  </button>
                 </div>
               ) : (
                 customScopes.map((scope) => {
@@ -764,47 +765,42 @@ export default function DataAccessManagementScreen({
                     <div
                       key={scope.id}
                       onClick={() => handleSelectCustomScope(scope)}
-                      className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
                         isSelected
                           ? "bg-blue-50/90 border-blue-300 text-blue-950 shadow-2xs"
                           : "bg-slate-50/70 border-slate-200/80 text-slate-800 hover:bg-slate-100"
                       }`}
                     >
-                      {/* Scope Title & Action Buttons */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={`material-symbols-outlined text-[18px] shrink-0 ${isSelected ? "text-blue-900" : "text-slate-500"}`}>
-                            store
-                          </span>
-                          <span className="text-xs font-bold truncate">{scope.name}</span>
-                        </div>
-
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold truncate">{scope.name}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             type="button"
                             onClick={(e) => handleOpenEditCustomScope(scope, e)}
-                            title="แก้ไขสโคป"
-                            className="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[14px]">edit</span>
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
                           </button>
                           <button
                             type="button"
                             onClick={(e) => handleDeleteCustomScope(scope, e)}
-                            title="ลบสโคป"
-                            className="w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[14px]">delete</span>
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
                           </button>
                         </div>
                       </div>
-
-                      {/* Brand Badges & Branch Counts */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {scope.brands.map((bName) => (
                           <span
                             key={bName}
-                            className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white text-blue-900 border border-blue-200/80 shadow-2xs"
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white text-blue-900 border border-blue-200/80 shadow-2xs"
                           >
                             {bName}
                           </span>
@@ -818,129 +814,6 @@ export default function DataAccessManagementScreen({
                 })
               )}
             </div>
-          </div>
-
-          {/* Section Divider: Standard Brand Hierarchy */}
-          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              โครงสร้างตามแบรนด์ (Brand Hierarchies)
-            </span>
-          </div>
-
-          {/* Dynamic Brands Tree */}
-          <div className="space-y-1.5 pt-1">
-            {brandHierarchy.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">ยังไม่มีข้อมูลแบรนด์ในระบบ</p>
-            ) : (
-              brandHierarchy.map((brand) => {
-                const isBrandExpanded = expandedBrands[brand.id];
-                const isBrandSelected = selectedScopeLevel === "BRAND" && selectedBrand?.id === brand.id;
-
-                return (
-                  <div key={brand.id} className="border border-slate-100 rounded-2xl overflow-hidden">
-                    {/* Brand Level Row */}
-                    <div
-                      onClick={() => handleSelectBrand(brand)}
-                      className={`p-2.5 flex items-center justify-between cursor-pointer text-xs font-bold transition-colors ${
-                        isBrandSelected
-                          ? "bg-blue-50 text-blue-900 border-l-4 border-blue-900"
-                          : "bg-slate-50/70 text-slate-800 hover:bg-slate-100"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-sm text-blue-900">{brand.logoIcon}</span>
-                        <span>{brand.name}</span>
-                      </div>
-                      <span className="material-symbols-outlined text-sm text-slate-400">
-                        {isBrandExpanded ? "expand_less" : "expand_more"}
-                      </span>
-                    </div>
-
-                    {/* Region Level Accordion */}
-                    {isBrandExpanded && (
-                      <div className="pl-3 pr-2 py-1 space-y-1 bg-white border-t border-slate-100">
-                        {brand.regions.length === 0 ? (
-                          <p className="text-[10px] text-slate-400 py-1 pl-2">ยังไม่มีสาขา</p>
-                        ) : (
-                          brand.regions.map((region) => {
-                            const isRegionExpanded = expandedRegions[region.id];
-                            const isRegionSelected = selectedScopeLevel === "REGION" && selectedRegion?.id === region.id;
-
-                            return (
-                              <div key={region.id} className="rounded-xl overflow-hidden border border-slate-100">
-                                <div
-                                  onClick={(e) => handleSelectRegion(brand, region, e)}
-                                  className={`p-2 flex items-center justify-between text-xs font-semibold cursor-pointer ${
-                                    isRegionSelected ? "bg-slate-100 text-slate-900 font-bold" : "hover:bg-slate-50 text-slate-700"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-xs text-slate-500">map</span>
-                                    <span>{region.name}</span>
-                                  </div>
-                                  <span className="material-symbols-outlined text-xs text-slate-400">
-                                    {isRegionExpanded ? "expand_less" : "expand_more"}
-                                  </span>
-                                </div>
-
-                                {/* Province Level */}
-                                {isRegionExpanded && (
-                                  <div className="pl-3 pr-1 py-1 space-y-1 bg-slate-50/50">
-                                    {region.provinces.map((prov) => {
-                                      const isProvExpanded = expandedProvinces[prov.id];
-                                      const isProvSelected = selectedScopeLevel === "PROVINCE" && selectedProvince?.id === prov.id;
-
-                                      return (
-                                        <div key={prov.id} className="rounded-lg overflow-hidden">
-                                          <div
-                                            onClick={(e) => handleSelectProvince(brand, region, prov, e)}
-                                            className={`p-1.5 flex items-center justify-between text-[11px] font-medium cursor-pointer ${
-                                              isProvSelected ? "bg-purple-100 text-purple-900 font-bold" : "hover:bg-slate-100 text-slate-600"
-                                            }`}
-                                          >
-                                            <span>จ.{prov.name}</span>
-                                            <span className="material-symbols-outlined text-[12px] text-slate-400">
-                                              {isProvExpanded ? "expand_less" : "expand_more"}
-                                            </span>
-                                          </div>
-
-                                          {/* Branch Level */}
-                                          {isProvExpanded && (
-                                            <div className="pl-2 py-0.5 space-y-0.5">
-                                              {prov.branches.map((br) => {
-                                                const isBrSelected = selectedScopeLevel === "BRANCH" && selectedBranch?.id === br.id;
-                                                return (
-                                                  <div
-                                                    key={br.id}
-                                                    onClick={(e) => handleSelectBranch(brand, region, prov, br, e)}
-                                                    className={`p-1.5 rounded text-[10px] cursor-pointer flex items-center justify-between ${
-                                                      isBrSelected
-                                                        ? "bg-blue-900 text-white font-bold"
-                                                        : "text-slate-600 hover:bg-slate-100"
-                                                    }`}
-                                                  >
-                                                    <span className="truncate">{br.name}</span>
-                                                    <span className="font-mono opacity-80 shrink-0 ml-1">{br.kiosksCount} ตู้</span>
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
           </div>
         </div>
 

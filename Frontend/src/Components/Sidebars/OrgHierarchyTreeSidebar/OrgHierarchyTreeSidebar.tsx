@@ -52,6 +52,45 @@ export default function OrgHierarchyTreeSidebar({
 }: OrgHierarchyTreeSidebarProps) {
   const [isCollapsed, setIsCollapsed] = React.useState<boolean>(defaultCollapsed);
 
+  const displayBrands = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return brandHierarchy;
+
+    return brandHierarchy
+      .map((brand) => {
+        const brandMatch = brand.name.toLowerCase().includes(q);
+        const filteredRegions = brand.regions
+          .map((reg) => {
+            const regMatch = reg.name.toLowerCase().includes(q);
+            const filteredProvinces = reg.provinces
+              .map((prov) => {
+                const provMatch = prov.name.toLowerCase().includes(q);
+                const filteredBranches = prov.branches.filter(
+                  (br) =>
+                    br.name.toLowerCase().includes(q) || br.code.toLowerCase().includes(q)
+                );
+                if (provMatch || filteredBranches.length > 0) {
+                  return { ...prov, branches: filteredBranches };
+                }
+                return null;
+              })
+              .filter(Boolean) as ProvinceItem[];
+
+            if (regMatch || filteredProvinces.length > 0) {
+              return { ...reg, provinces: filteredProvinces };
+            }
+            return null;
+          })
+          .filter(Boolean) as RegionItem[];
+
+        if (brandMatch || filteredRegions.length > 0) {
+          return { ...brand, regions: filteredRegions };
+        }
+        return null;
+      })
+      .filter(Boolean) as BrandItem[];
+  }, [brandHierarchy, searchQuery]);
+
   if (collapsible && isCollapsed) {
     return (
       <aside
@@ -84,10 +123,10 @@ export default function OrgHierarchyTreeSidebar({
 
   return (
     <aside
-      className={`w-full lg:w-72 flex flex-col bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] overflow-hidden shrink-0 transition-all ${className}`}
+      className={`w-full lg:w-72 flex flex-col bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-all ${className}`}
     >
-      {/* ─── Header: Scope Search, Collapse Action & Root Action ─── */}
-      <div className="p-3.5 border-b border-slate-100 space-y-2.5 bg-slate-50/50">
+      {/* ─── Header: Scope Search, Collapse Action & Root Action (image_9f68c2.png) ─── */}
+      <div className="p-4 space-y-3 bg-white">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             Scope Hierarchy
@@ -97,7 +136,7 @@ export default function OrgHierarchyTreeSidebar({
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
-              className="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               title="พับเก็บแถบข้าง"
               aria-label="Collapse sidebar"
             >
@@ -108,9 +147,9 @@ export default function OrgHierarchyTreeSidebar({
           )}
         </div>
 
-        {/* Search input */}
+        {/* Pill Search input */}
         <div className="relative flex items-center">
-          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
           </svg>
@@ -119,58 +158,60 @@ export default function OrgHierarchyTreeSidebar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Filter brand / branch..."
-            className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-slate-200/80 rounded-xl outline-none focus:border-[var(--primary-container)] focus:ring-1 focus:ring-[var(--primary-container)] text-slate-800 placeholder:text-slate-400"
+            className="w-full h-8.5 pl-8.5 pr-3 text-xs bg-white border border-slate-200 rounded-full outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-800 placeholder:text-slate-400 transition-all"
           />
         </div>
 
-        {/* SuperAdmin Root Button */}
+        {/* SuperAdmin Root Button (Pill shape) */}
         <button
           type="button"
           onClick={onSelectSuperAdmin}
-          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
             selectedScopeLevel === "SUPER_ADMIN"
-              ? "bg-[var(--accent-bg)] text-[var(--primary-container)] shadow-xs"
-              : "text-slate-700 hover:bg-slate-100/80"
+              ? "bg-blue-50 text-blue-600 border border-blue-200/80 shadow-2xs"
+              : "text-slate-700 hover:bg-slate-50 border border-transparent"
           }`}
         >
-          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-4 h-4 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           </svg>
           <span className="truncate flex-1 text-left">All Organizations</span>
         </button>
       </div>
 
+      <div className="border-t border-slate-100" />
+
       {/* ─── Tree Navigation Body ─── */}
-      <nav className="flex-1 overflow-y-auto p-2 space-y-1 text-xs select-none max-h-[560px] [scrollbar-width:thin]">
-        {brandHierarchy.length === 0 ? (
+      <nav className="flex-1 overflow-y-auto p-2.5 space-y-1 text-xs select-none max-h-[560px] [scrollbar-width:thin]">
+        {displayBrands.length === 0 ? (
           <div className="py-8 text-center text-slate-400">
             <p className="text-xs">ไม่มีข้อมูลโครงสร้างองค์กร</p>
             <p className="text-[11px] text-slate-400 mt-1">รอการเชื่อมต่อ API</p>
           </div>
         ) : (
-          brandHierarchy.map((brand) => {
+          displayBrands.map((brand) => {
           const isBrandExpanded = !!expandedNodes[brand.id];
           const isBrandSelected =
             selectedScopeLevel === "BRAND" && selectedBrand?.id === brand.id;
 
           return (
             <div key={brand.id} className="space-y-0.5">
-              {/* Tier 2: Brand Item */}
+              {/* Tier 2: Brand Item (Exact Match image_9f68c2.png) */}
               <div
                 onClick={() => onSelectBrand(brand)}
-                className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-xl cursor-pointer transition-colors ${
+                className={`group flex items-center gap-2 px-2.5 py-1.5 rounded-xl cursor-pointer transition-colors ${
                   isBrandSelected
-                    ? "bg-[var(--accent-bg)] text-[var(--primary-container)] font-semibold"
-                    : "text-slate-800 hover:bg-slate-100"
+                    ? "bg-blue-50 text-blue-700 font-semibold"
+                    : "text-slate-800 hover:bg-slate-50"
                 }`}
               >
                 <button
                   type="button"
                   onClick={(e) => onToggleNode(brand.id, e)}
-                  className="w-4 h-4 rounded hover:bg-black/5 flex items-center justify-center shrink-0 text-slate-400"
+                  className="w-4 h-4 rounded hover:bg-slate-200/60 flex items-center justify-center shrink-0 text-slate-400"
                 >
                   <svg
-                    className={`w-3 h-3 transition-transform ${isBrandExpanded ? "rotate-90" : ""}`}
+                    className={`w-3.5 h-3.5 transition-transform ${isBrandExpanded ? "rotate-90" : ""}`}
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -180,11 +221,12 @@ export default function OrgHierarchyTreeSidebar({
                   </svg>
                 </button>
 
-                <div className="w-5 h-5 rounded-lg bg-[var(--accent-bg)] text-[var(--primary-container)] border border-[var(--accent-light)] flex items-center justify-center font-bold text-[10px] shrink-0">
-                  {brand.code?.[0] || "B"}
+                {/* Circular Initial Avatar */}
+                <div className="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shrink-0 shadow-2xs">
+                  {brand.name?.[0]?.toUpperCase() || brand.code?.[0]?.toUpperCase() || "B"}
                 </div>
 
-                <span className="truncate flex-1 font-medium">{brand.name}</span>
+                <span className="truncate flex-1 font-medium text-slate-800">{brand.name}</span>
               </div>
 
               {/* Regions */}
