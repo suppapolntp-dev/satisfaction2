@@ -26,12 +26,23 @@ export default function CreateUserModal({
     userConfig,
     formData,
     isEditMode,
+    isPasswordVisible,
+    copiedField,
     orgTree,
+    handleGenerateCorporateId,
+    handleGeneratePassword,
+    togglePasswordVisibility,
+    handleCopyField,
     toggleBranch,
     selectAllBranches,
     clearAllBranches,
     isSubmitting,
     errorMessage,
+    activeTab,
+    setActiveTab,
+    scopedSql,
+    copiedSql,
+    handleCopySql,
     handleChange,
     handleSubmit,
   } = useCreateUserModal({
@@ -163,270 +174,468 @@ export default function CreateUserModal({
           {/* ─── RIGHT PANEL: USER FORM & ASSIGNED SCOPE DETAILS ─── */}
           <main className="p-5 sm:p-6 overflow-y-auto bg-white space-y-5 custom-scrollbar">
             
-            {/* 1. ข้อมูลส่วนตัวผู้ใช้งาน */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span>ข้อมูลบัญชีผู้ใช้งาน (User Account Details)</span>
-              </h3>
+            {/* ─── TAB PILLS: ACCOUNT PROFILE vs DATA ACCESS SCOPE ─── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("account_profile")}
+                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                    activeTab === "account_profile"
+                      ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>Account Profile (ข้อมูลบัญชี)</span>
+                </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* First Name */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    ชื่อ (First Name) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => handleChange("firstName", e.target.value)}
-                    placeholder="e.g. สมชาย"
-                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
-                    required
-                  />
-                </div>
-
-                {/* Last Name */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    นามสกุล (Last Name) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => handleChange("lastName", e.target.value)}
-                    placeholder="e.g. เกียรติสกุล"
-                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
-                    required
-                  />
-                </div>
-
-                {/* Email Address */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                    <span>
-                      อีเมล (Corporate Email) <span className="text-red-500">*</span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("data_access_scope")}
+                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                    activeTab === "data_access_scope"
+                      ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span>DataAccess Scope (ขอบเขตข้อมูล)</span>
+                  {targetBranches.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 leading-none">
+                      {targetBranches.length}
                     </span>
-                    {isEditMode && (
-                      <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                        <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        (ล็อกไม่อนุญาตให้แก้ไข)
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    placeholder="somchai@company.com"
-                    required={!isEditMode}
-                    readOnly={isEditMode}
-                    disabled={isEditMode}
-                    title={isEditMode ? "อีเมลบัญชีผู้ใช้ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
-                    className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
-                      isEditMode
-                        ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
-                        : "bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
-                    }`}
-                  />
-                </div>
+                  )}
+                </button>
+              </div>
 
-                {/* Phone Number */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    เบอร์โทรศัพท์ (Phone)
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleChange("phone", e.target.value)}
-                    placeholder="+66 81 234 5678"
-                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
-                  />
-                </div>
-
-                {/* User Code */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                    <span>รหัสพนักงาน (User ID)</span>
-                    {isEditMode && (
-                      <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                        <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        (ล็อกไม่อนุญาตให้แก้ไข)
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.userCode}
-                    onChange={(e) => handleChange("userCode", e.target.value)}
-                    placeholder="EMP-101"
-                    readOnly={isEditMode}
-                    disabled={isEditMode}
-                    title={isEditMode ? "รหัสพนักงาน / User ID ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
-                    className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
-                      isEditMode
-                        ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
-                        : "bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
-                    }`}
-                  />
-                </div>
-
-                {/* System Role */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    บทบาทระบบ (System Role) <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => handleChange("role", e.target.value)}
-                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
-                  >
-                    {userConfig.roles.map((role) => (
-                      <option key={role.id} value={role.name}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Scope Breadcrumb Hint */}
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 truncate max-w-[280px]">
+                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
+                <span className="truncate font-medium">{formData.dataAccessScope || "All Organizations"}</span>
               </div>
             </div>
 
-            {/* 2. ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope) & ระดับขอบเขตสิทธิ์องค์กร (Tier Level) */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                <span>ขอบเขตสิทธิ์องค์กรและการเข้าถึงข้อมูล (Data Access & Scope Permissions)</span>
-              </h3>
+            {/* ─── TAB 1: ACCOUNT PROFILE ─── */}
+            {activeTab === "account_profile" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                {/* 1. ข้อมูลส่วนตัวผู้ใช้งาน */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <span>ข้อมูลบัญชีผู้ใช้งาน (User Account Details)</span>
+                  </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* ช่อง DataAccess Scope */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope)
-                  </label>
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3 text-blue-600 pointer-events-none">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* First Name */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        ชื่อ (First Name) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => handleChange("firstName", e.target.value)}
+                        placeholder="e.g. สมชาย"
+                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
+                        required
+                      />
                     </div>
-                    <input
-                      type="text"
-                      readOnly
-                      value={formData.dataAccessScope || "All Organizations (สำนักงานใหญ่)"}
-                      title={formData.dataAccessScope}
-                      placeholder="เลือกจาก Tree ด้านซ้าย"
-                      className="h-9 w-full pl-9 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold truncate cursor-default"
-                    />
+
+                    {/* Last Name */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        นามสกุล (Last Name) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => handleChange("lastName", e.target.value)}
+                        placeholder="e.g. เกียรติสกุล"
+                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
+                        required
+                      />
+                    </div>
+
+                    {/* Email Address */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                        <span>
+                          อีเมล (Corporate Email) <span className="text-red-500">*</span>
+                        </span>
+                        {isEditMode && (
+                          <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                            <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            (ล็อกไม่อนุญาตให้แก้ไข)
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleChange("email", e.target.value)}
+                        placeholder="somchai@company.com"
+                        required={!isEditMode}
+                        readOnly={isEditMode}
+                        disabled={isEditMode}
+                        title={isEditMode ? "อีเมลบัญชีผู้ใช้ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
+                        className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
+                          isEditMode
+                            ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                            : "bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+                        }`}
+                      />
+                    </div>
+
+                    {/* Phone Number */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        เบอร์โทรศัพท์ (Phone)
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleChange("phone", e.target.value)}
+                        placeholder="+66 81 234 5678"
+                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
+                      />
+                    </div>
+
+                    {/* Corporate ID */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[11px] font-bold text-slate-700">
+                          รหัสองค์กร (Corporate ID) <span className="text-red-500">*</span>
+                        </label>
+                        {!isEditMode ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleGenerateCorporateId}
+                              className="text-[10px] font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                              title="สุ่มสร้าง Corporate ID ตาม Tier"
+                            >
+                              <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                              </svg>
+                              <span>สร้างรหัส</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyField("corporateId")}
+                              className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 cursor-pointer"
+                              title="คัดลอก Corporate ID"
+                            >
+                              {copiedField === "corporateId" ? (
+                                <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
+                              ) : (
+                                <span>คัดลอก</span>
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                            <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            (ล็อกไม่อนุญาตให้แก้ไข)
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.userCode || formData.corporateId}
+                        onChange={(e) => {
+                          handleChange("userCode", e.target.value);
+                          handleChange("corporateId", e.target.value);
+                        }}
+                        placeholder="e.g. SA-101 / BM-201"
+                        readOnly={isEditMode}
+                        disabled={isEditMode}
+                        title={isEditMode ? "รหัสพนักงาน / User ID ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
+                        className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
+                          isEditMode
+                            ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                            : "bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-bold"
+                        }`}
+                        required
+                      />
+                    </div>
+
+                    {/* Corporate Password - Only for Add User / Create Mode */}
+                    {!isEditMode && (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[11px] font-bold text-slate-700">
+                            รหัสผ่านองค์กร (Corporate Password) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleGeneratePassword}
+                              className="text-[10px] font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                              title="สุ่มสร้างรหัสผ่านปลอดภัย"
+                            >
+                              <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                              </svg>
+                              <span>สุ่มรหัสผ่าน</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyField("password")}
+                              className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 cursor-pointer"
+                              title="คัดลอกรหัสผ่าน"
+                            >
+                              {copiedField === "password" ? (
+                                <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
+                              ) : (
+                                <span>คัดลอก</span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="relative flex items-center">
+                          <input
+                            type={isPasswordVisible ? "text" : "password"}
+                            value={formData.password}
+                            onChange={(e) => handleChange("password", e.target.value)}
+                            placeholder="e.g. CRG@8732!"
+                            className="h-9 w-full pl-3 pr-10 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono font-bold"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={togglePasswordVisibility}
+                            className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                            aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                          >
+                            {isPasswordVisible ? (
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* System Role */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        บทบาทระบบ (System Role) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.role}
+                        onChange={(e) => handleChange("role", e.target.value)}
+                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
+                      >
+                        {userConfig.roles.map((role) => (
+                          <option key={role.id} value={role.name}>
+                            {role.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    ระดับ: {orgTree.activeScopeInfo.tier} ({orgTree.activeScopeInfo.title})
-                  </span>
                 </div>
 
-                {/* ระดับขอบเขตสิทธิ์องค์กร (Data Access Tier Level) */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    ระดับขอบเขตสิทธิ์องค์กร (Tier Level) <span className="text-red-500">*</span>
+                {/* Account Status Toggle */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700">
+                    สถานะบัญชี (Account Status)
+                  </span>
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={formData.status === "Active"}
+                      onChange={(e) => handleChange("status", e.target.checked ? "Active" : "Inactive")}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer accent-blue-600"
+                    />
+                    <span className={`text-xs font-semibold ${formData.status === "Active" ? "text-emerald-700" : "text-slate-500"}`}>
+                      {formData.status === "Active" ? "Active (เปิดใช้งานทันที)" : "Inactive (ปิดใช้งาน)"}
+                    </span>
                   </label>
-                  <select
-                    value={formData.tierLevel}
-                    onChange={(e) => handleChange("tierLevel", e.target.value)}
-                    className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold"
-                  >
-                    {userConfig.tiers.map((tier) => (
-                      <option key={tier.id} value={tier.nameEn}>
-                        {tier.nameTh}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-[10px] text-slate-400 block truncate">
-                    ปรับอัตโนมัติตาม Node ที่เลือก หรือกำหนดเองได้
-                  </span>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* 3. สรุปขอบเขตสาขาและแบรนด์ที่ผูก (Assigned Scopes Preview) */}
-            <div className="space-y-2.5 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800">
-                  สาขาในขอบเขตการดูแล ({targetBranches.length} สาขา)
-                </span>
-                <div className="flex items-center gap-2 text-[10px] font-semibold">
-                  <button
-                    type="button"
-                    onClick={selectAllBranches}
-                    className="text-blue-600 hover:underline cursor-pointer"
-                  >
-                    เลือกทั้งหมด
-                  </button>
-                  <span className="text-slate-300">•</span>
-                  <button
-                    type="button"
-                    onClick={clearAllBranches}
-                    className="text-slate-500 hover:text-rose-600 cursor-pointer"
-                  >
-                    ลบทั้งหมด
-                  </button>
+            {/* ─── TAB 2: DATA ACCESS SCOPE ─── */}
+            {activeTab === "data_access_scope" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                {/* 1. ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope) & ระดับขอบเขตสิทธิ์องค์กร (Tier Level) */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    <span>ขอบเขตสิทธิ์องค์กรและการเข้าถึงข้อมูล (Data Access & Scope Permissions)</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* ช่อง DataAccess Scope */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        ขอบเขตสิทธิ์การเข้าถึงข้อมูล (DataAccess Scope)
+                      </label>
+                      <div className="relative flex items-center">
+                        <div className="absolute left-3 text-blue-600 pointer-events-none">
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          readOnly
+                          value={formData.dataAccessScope || "All Organizations (สำนักงานใหญ่)"}
+                          title={formData.dataAccessScope}
+                          placeholder="เลือกจาก Tree ด้านซ้าย"
+                          className="h-9 w-full pl-9 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold truncate cursor-default"
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        ระดับ: {orgTree.activeScopeInfo.tier} ({orgTree.activeScopeInfo.title})
+                      </span>
+                    </div>
+
+                    {/* ระดับขอบเขตสิทธิ์องค์กร (Data Access Tier Level) */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        ระดับขอบเขตสิทธิ์องค์กร (Tier Level) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.tierLevel}
+                        onChange={(e) => handleChange("tierLevel", e.target.value)}
+                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-semibold"
+                      >
+                        {userConfig.tiers.map((tier) => (
+                          <option key={tier.id} value={tier.nameEn}>
+                            {tier.nameTh}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        ปรับอัตโนมัติตาม Node ที่เลือก หรือกำหนดเองได้
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {targetBranches.length === 0 ? (
-                <p className="text-xs text-slate-400 py-3 bg-slate-50/50 rounded-xl text-center border border-dashed border-slate-200">
-                  ยังไม่มีสาขาที่ได้รับมอบหมายในขอบเขตนี้
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1.5 bg-slate-50/50 rounded-2xl border border-slate-100">
-                  {targetBranches.map((branchName) => (
-                    <span
-                      key={branchName}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-white border border-slate-200/90 text-slate-800 shadow-2xs"
-                    >
-                      <span>{branchName}</span>
+                {/* 2. สรุปขอบเขตสาขาและแบรนด์ที่ผูก (Assigned Scopes Preview) */}
+                <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">
+                      สาขาในขอบเขตการดูแล ({targetBranches.length} สาขา)
+                    </span>
+                    <div className="flex items-center gap-2 text-[10px] font-semibold">
                       <button
                         type="button"
-                        onClick={() => toggleBranch(branchName)}
-                        className="text-slate-400 hover:text-rose-600 cursor-pointer"
-                        aria-label={`Remove ${branchName}`}
+                        onClick={selectAllBranches}
+                        className="text-blue-600 hover:underline cursor-pointer"
                       >
-                        ✕
+                        เลือกทั้งหมด
                       </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+                      <span className="text-slate-300">•</span>
+                      <button
+                        type="button"
+                        onClick={clearAllBranches}
+                        className="text-slate-500 hover:text-rose-600 cursor-pointer"
+                      >
+                        ลบทั้งหมด
+                      </button>
+                    </div>
+                  </div>
 
-            {/* 4. Account Status Toggle */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-700">
-                สถานะบัญชี (Account Status)
-              </span>
-              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={formData.status === "Active"}
-                  onChange={(e) => handleChange("status", e.target.checked ? "Active" : "Inactive")}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer accent-blue-600"
-                />
-                <span className={`text-xs font-semibold ${formData.status === "Active" ? "text-emerald-700" : "text-slate-500"}`}>
-                  {formData.status === "Active" ? "Active (เปิดใช้งานทันที)" : "Inactive (ปิดใช้งาน)"}
-                </span>
-              </label>
-            </div>
+                  {targetBranches.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-3 bg-slate-50/50 rounded-xl text-center border border-dashed border-slate-200">
+                      ยังไม่มีสาขาที่ได้รับมอบหมายในขอบเขตนี้
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1.5 bg-slate-50/50 rounded-2xl border border-slate-100">
+                      {targetBranches.map((branchName) => (
+                        <span
+                          key={branchName}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-white border border-slate-200/90 text-slate-800 shadow-2xs"
+                        >
+                          <span>{branchName}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleBranch(branchName)}
+                            className="text-slate-400 hover:text-rose-600 cursor-pointer"
+                            aria-label={`Remove ${branchName}`}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Real-Time Scoped SQL Query Preview (Row-Level Security) Terminal */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                      <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="4 17 10 11 4 5" />
+                        <line x1="12" y1="19" x2="20" y2="19" />
+                      </svg>
+                      <span>Row-Level Security (RLS) Query Preview</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopySql}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                      title="คัดลอกคำสั่ง SQL"
+                    >
+                      {copiedSql ? (
+                        <span className="text-emerald-600 font-bold flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          คัดลอกแล้ว!
+                        </span>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </svg>
+                          <span>คัดลอก SQL</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-950 border border-slate-800 p-3.5 font-mono text-[11px] text-slate-200 overflow-x-auto shadow-inner leading-relaxed select-text">
+                    <pre className="whitespace-pre-wrap break-all text-slate-300">
+                      {scopedSql}
+                    </pre>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    คำสั่ง SQL จำลองการจำกัดขอบเขตข้อมูล (Row-Level Data Isolation) ตาม Tier และ Scopes ที่เลือกจริงใน Backend
+                  </p>
+                </div>
+              </div>
+            )}
           </main>
         </div>
 
