@@ -1,5 +1,5 @@
-import DataAccessManagementScreen from "@/Screens/Admin/DataAccessManagement/page";
+import { redirect } from "next/navigation";
 
 export default function DataAccessManagementPage() {
-  return <DataAccessManagementScreen />;
+  redirect("/usermanagement?tab=dataaccess");
 }

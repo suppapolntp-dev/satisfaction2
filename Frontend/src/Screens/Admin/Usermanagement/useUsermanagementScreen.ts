@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { UserModel, CreateUserPayload, UpdateUserPayload } from "@/Types/user";
 import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import { userService } from "@/Services/userService";
@@ -15,10 +16,17 @@ export interface UseUsermanagementScreenProps {
 }
 
 export function useUsermanagementScreen({
-  initialTab = "users",
+  initialTab,
 }: UseUsermanagementScreenProps = {}) {
   const { userConfig } = useUserSettings();
-  const [activeTab, setActiveTab] = useState<UserManagementScreenTab>(initialTab);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Active tab driven by URL query parameter (?tab=dataaccess)
+  const tabQuery = searchParams.get("tab");
+  const activeTab: UserManagementScreenTab =
+    tabQuery === "dataaccess" ? "dataaccess" : initialTab || "users";
+
   const [users, setUsers] = useState<UserModel[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
@@ -84,9 +92,17 @@ export function useUsermanagementScreen({
     [users.length]
   );
 
-  const handleTabChange = useCallback((tabId: string) => {
-    setActiveTab(tabId as UserManagementScreenTab);
-  }, []);
+  const handleTabChange = useCallback(
+    (tabId: string) => {
+      const targetTab = tabId as UserManagementScreenTab;
+      if (targetTab === "dataaccess") {
+        router.push("/usermanagement?tab=dataaccess", { scroll: false });
+      } else {
+        router.push("/usermanagement", { scroll: false });
+      }
+    },
+    [router]
+  );
 
   // Modal handlers
   const handleOpenCreateModal = useCallback(() => {
@@ -177,7 +193,6 @@ export function useUsermanagementScreen({
   return {
     userConfig,
     activeTab,
-    setActiveTab,
     userManagementTabs,
     handleTabChange,
     users,
