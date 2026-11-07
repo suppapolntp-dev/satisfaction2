@@ -25,8 +25,7 @@ import { branchService } from "@/Services/branchService";
 import { customScopeService } from "@/Services/customScopeService";
 import CustomScopeModal from "@/Components/Modals/CustomScopeModal";
 import { tierLevelService, TierLevelModel } from "@/Services/tierLevelService";
-import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
-import SelectInput from "@/Components/Inputs/SelectInput";
+import DataAccessTable from "@/Components/Tables/DataAccessTable";
 import TierLevelManagementModal from "@/Components/Modals/TierLevelManagementModal";
 import TierLevelFormModal from "@/Components/Modals/TierLevelFormModal";
 import { useModal } from "@/Context/ModalContext";
@@ -86,11 +85,6 @@ export default function DataAccessManagementScreen({
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccessRecord | null>(null);
-
-  // Table Search and Filters
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTierFilter, setSelectedTierFilter] = useState("All Tiers");
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState("All Statuses");
 
   // Dynamic Organization Hierarchy constructed from DB
   const [brandHierarchy, setBrandHierarchy] = useState<BrandItem[]>([]);
@@ -402,124 +396,6 @@ export default function DataAccessManagementScreen({
     return usersList;
   }, [usersList, selectedScopeLevel, selectedCustomScope, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
 
-  // Combined Search and Dropdown Filtered Data
-  const searchedAndFilteredUsers = useMemo(() => {
-    let result = filteredUsers;
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter((u) =>
-        (u.userName && u.userName.toLowerCase().includes(q)) ||
-        (u.userEmail && u.userEmail.toLowerCase().includes(q)) ||
-        (u.userPhone && u.userPhone.toLowerCase().includes(q)) ||
-        (u.tierLevel && u.tierLevel.toLowerCase().includes(q)) ||
-        (u.assignedBrands && u.assignedBrands.some((b) => b.toLowerCase().includes(q))) ||
-        (u.assignedBranches && u.assignedBranches.some((b) => b.toLowerCase().includes(q)))
-      );
-    }
-
-    if (selectedTierFilter !== "All Tiers") {
-      result = result.filter((u) => u.tierLevel === selectedTierFilter);
-    }
-
-    if (selectedStatusFilter !== "All Statuses") {
-      result = result.filter((u) => u.status === selectedStatusFilter);
-    }
-
-    return result;
-  }, [filteredUsers, searchQuery, selectedTierFilter, selectedStatusFilter]);
-
-  // DataTable Column Definitions
-  const dataAccessTableColumns: TableColumn<UserAccessRecord>[] = useMemo(
-    () => [
-      {
-        key: "userName",
-        label: "ผู้ใช้งาน (User)",
-        sortable: true,
-        render: (user: UserAccessRecord) => (
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 text-blue-900 font-bold text-xs flex items-center justify-center shrink-0">
-              {user.userName ? user.userName.charAt(0) : "U"}
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block">{user.userName}</span>
-              <span className="text-[10px] text-slate-400 font-mono">{user.userEmail}</span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: "tierLevel",
-        label: "ระดับสิทธิ์ (Tier Level)",
-        sortable: true,
-        render: (user: UserAccessRecord) => (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-100 whitespace-nowrap">
-            {user.tierLevel}
-          </span>
-        ),
-      },
-      {
-        key: "assignedBrands",
-        label: "ขอบเขตที่ดูแล (Scope Coverage)",
-        render: (user: UserAccessRecord) => (
-          <div className="space-y-1 max-w-[220px]">
-            <div className="flex flex-wrap gap-1">
-              {user.assignedBrands.length === 0 ? (
-                <span className="text-[10px] text-slate-400">ทุกแบรนด์</span>
-              ) : (
-                user.assignedBrands.map((b, i) => (
-                  <span key={i} className="text-[10px] font-semibold text-slate-600 bg-slate-50 px-1.5 py-0.2 rounded border border-slate-200">
-                    {b}
-                  </span>
-                ))
-              )}
-            </div>
-            {user.assignedBranches.length > 0 && (
-              <span className="text-[10px] text-slate-400 block truncate" title={user.assignedBranches.join(", ")}>
-                สาขา: {user.assignedBranches.join(", ")}
-              </span>
-            )}
-          </div>
-        ),
-      },
-      {
-        key: "userPhone",
-        label: "เบอร์โทรศัพท์",
-        render: (user: UserAccessRecord) => (
-          <span className="text-xs text-slate-600 font-mono">{user.userPhone || "-"}</span>
-        ),
-      },
-      {
-        key: "status",
-        label: "สถานะ (Status)",
-        sortable: true,
-        render: (user: UserAccessRecord) => (
-          <span className={user.status === "Active" ? "badge-active" : "badge-inactive"}>
-            {user.status === "Active" ? "Active" : "Inactive"}
-          </span>
-        ),
-      },
-    ],
-    []
-  );
-
-  const dataAccessTableActions: TableAction<UserAccessRecord>[] = useMemo(
-    () => [
-      {
-        label: "แก้ไขสิทธิ์",
-        icon: "edit",
-        onClick: (user) => handleOpenEditModal(user),
-      },
-      {
-        label: "เพิกถอนสิทธิ์",
-        icon: "delete",
-        variant: "danger",
-        onClick: (user) => handleDeleteUser(user.id),
-      },
-    ],
-    []
-  );
-
   // ─── CUSTOM SCOPE CRUD HANDLERS ───
 
   const handleOpenCreateCustomScope = () => {
@@ -695,7 +571,7 @@ export default function DataAccessManagementScreen({
     <div className="space-y-6">
       
       {/* ─── 1. PAGE HEADER SECTION ─── */}
-      {!hideHeader ? (
+      {!hideHeader && (
         <PageHeader
           title="Data Access & Hierarchy Governance"
           description="กำหนดสิทธิ์การมองเห็นข้อมูล 5 ระดับ (Super Admin → Brand → Region → Province → Branch)"
@@ -739,38 +615,6 @@ export default function DataAccessManagementScreen({
             </div>
           }
         />
-      ) : (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div>
-            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-900 text-xl">admin_panel_settings</span>
-              <span>ผังองค์กรและการกำหนดขอบเขตข้อมูล (Org Hierarchy & Scope Governance)</span>
-            </h2>
-            <p className="text-[11px] text-slate-500">
-              กำหนดสิทธิ์การมองเห็นข้อมูล 5 ระดับ (Super Admin → Brand → Region → Province → Branch)
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsTierManagementModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-              title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
-            >
-              <span className="material-symbols-outlined text-[18px] text-blue-900">military_tech</span>
-              <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleOpenAddModal}
-              className="btn-primary text-xs shadow-xs"
-            >
-              <span className="material-symbols-outlined text-[18px]">person_add</span>
-              <span>+ กำหนดสิทธิ์ใหม่ (Assign Scope)</span>
-            </button>
-          </div>
-        </div>
       )}
 
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
@@ -933,63 +777,13 @@ export default function DataAccessManagementScreen({
             </div>
           </div>
 
-          {/* ─── UNIFIED DATA TABLE (HEAD -> FILTER & SORT -> DATA -> FOOTER) ─── */}
-          <DataTable
-            title={`รายชื่อผู้มีสิทธิ์เข้าถึง (${currentScopeContext.title})`}
-            subtitle="ผู้ใช้งานที่มีรายชื่อจะสามารถเปิดดูข้อมูล Dashboard และตู้ Kiosk ในขอบเขตนี้ได้"
-            icon="verified_user"
-            badge={
-              <span className="badge-active">
-                {searchedAndFilteredUsers.length} บัญชี
-              </span>
-            }
-            searchPlaceholder="ค้นหาชื่อผู้ใช้, อีเมล, แบรนด์, หรือสาขา..."
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            headerActions={
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="btn-primary text-xs py-1.5 px-3 shadow-2xs whitespace-nowrap"
-              >
-                <span className="material-symbols-outlined text-[16px]">person_add</span>
-                + มอบหมายสิทธิ์ให้ User
-              </button>
-            }
-            filters={
-              <>
-                <div className="w-full sm:w-48">
-                  <SelectInput
-                    value={selectedTierFilter}
-                    onChange={setSelectedTierFilter}
-                    options={[
-                      { value: "All Tiers", label: "ทุกระดับสิทธิ์ (All Tiers)" },
-                      ...tierLevels.map((t) => ({
-                        value: t.nameTh,
-                        label: `${t.nameTh} (Lv.${t.levelOrder})`,
-                      })),
-                    ]}
-                  />
-                </div>
-
-                <div className="w-full sm:w-36">
-                  <SelectInput
-                    value={selectedStatusFilter}
-                    onChange={setSelectedStatusFilter}
-                    options={[
-                      { value: "All Statuses", label: "ทุกสถานะ" },
-                      { value: "Active", label: "Active (ใช้งาน)" },
-                      { value: "Inactive", label: "Inactive (ปิดใช้งาน)" },
-                    ]}
-                  />
-                </div>
-              </>
-            }
-            columns={dataAccessTableColumns}
-            data={searchedAndFilteredUsers}
-            actions={dataAccessTableActions}
-            emptyMessage={`ยังไม่มีผู้ใช้งานที่ได้รับสิทธิ์ใน Scope นี้ (${currentScopeContext.title}) — กดปุ่ม "+ มอบหมายสิทธิ์ให้ User" เพื่อให้สิทธิ์ผู้จัดการ (AM/RM) เข้าถึงข้อมูลสโคปนี้`}
-            defaultPageSize={10}
+          {/* ─── DATA ACCESS USERS TABLE (Reusing BrandTable Architecture) ─── */}
+          <DataAccessTable
+            users={filteredUsers}
+            isLoading={isLoading}
+            onAssignScope={handleOpenAddModal}
+            onEditUser={handleOpenEditModal}
+            onDeleteUser={handleDeleteUser}
           />
         </div>
 
