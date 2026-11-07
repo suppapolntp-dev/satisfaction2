@@ -343,7 +343,32 @@ export const userService = {
     try {
       const response = await apiClient.post<BackendUserDto>("/users", backendPayload);
       if (response.success && response.data) {
-        return mapBackendUserToModel(response.data);
+        const createdUser = mapBackendUserToModel(response.data);
+        if (
+          (payload.assignedBrands && payload.assignedBrands.length > 0) ||
+          (payload.assignedBranches && payload.assignedBranches.length > 0)
+        ) {
+          try {
+            await apiClient.post("/data-access/users", {
+              userId: createdUser.id,
+              userName: `${createdUser.firstName} ${createdUser.lastName}`.trim(),
+              userEmail: createdUser.email,
+              userPhone: createdUser.phone || "",
+              tierLevel: createdUser.tierLevel,
+              assignedBrands: payload.assignedBrands || [],
+              assignedRegions: payload.assignedRegions || [],
+              assignedProvinces: payload.assignedProvinces || [],
+              assignedBranches: payload.assignedBranches || [],
+              status: createdUser.status,
+            });
+            createdUser.assignedBrands = payload.assignedBrands || [];
+            createdUser.assignedBranches = payload.assignedBranches || [];
+            createdUser.brand = payload.assignedBrands?.join(", ");
+          } catch (scopeErr) {
+            console.warn("[userService.createUser] scope sync warning:", scopeErr);
+          }
+        }
+        return createdUser;
       }
     } catch (error) {
       console.warn("[userService.createUser] backend unreachable or failed, creating in-memory fallback:", error);
@@ -389,7 +414,29 @@ export const userService = {
     try {
       const response = await apiClient.put<BackendUserDto>(`/users/${id}`, backendPayload);
       if (response.success && response.data) {
-        return mapBackendUserToModel(response.data);
+        const updatedUser = mapBackendUserToModel(response.data);
+        if (payload.assignedBrands || payload.assignedBranches) {
+          try {
+            await apiClient.post("/data-access/users", {
+              userId: id,
+              userName: `${updatedUser.firstName} ${updatedUser.lastName}`.trim(),
+              userEmail: updatedUser.email,
+              userPhone: updatedUser.phone || "",
+              tierLevel: payload.tierLevel || updatedUser.tierLevel,
+              assignedBrands: payload.assignedBrands || updatedUser.assignedBrands || [],
+              assignedRegions: payload.assignedRegions || [],
+              assignedProvinces: payload.assignedProvinces || [],
+              assignedBranches: payload.assignedBranches || updatedUser.assignedBranches || [],
+              status: payload.status || updatedUser.status,
+            });
+            updatedUser.assignedBrands = payload.assignedBrands || updatedUser.assignedBrands;
+            updatedUser.assignedBranches = payload.assignedBranches || updatedUser.assignedBranches;
+            updatedUser.brand = updatedUser.assignedBrands?.join(", ");
+          } catch (scopeErr) {
+            console.warn("[userService.updateUser] scope sync warning:", scopeErr);
+          }
+        }
+        return updatedUser;
       }
     } catch (error) {
       console.warn("[userService.updateUser] backend unreachable, fallback to local update:", error);
