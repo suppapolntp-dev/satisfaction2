@@ -7,11 +7,15 @@ import UserTable from "@/Components/Tables/UserTable";
 import CreateUserModal from "@/Components/Modals/CreateUserModal";
 import EditUserModal from "@/Components/Modals/EditUserModal";
 import ConfirmDialogModal from "@/Components/Modals/ConfirmDialogModal";
+import DataAccessManagementScreen from "@/Screens/Admin/DataAccessManagement/page";
 import { useUsermanagementScreen } from "./useUsermanagementScreen";
 
 export default function UsermanagementScreen() {
   const {
     userConfig,
+    activeTab,
+    userManagementTabs,
+    handleTabChange,
     users,
     availableBrands,
     availableBranches,
@@ -36,24 +40,36 @@ export default function UsermanagementScreen() {
 
   return (
     <div className="space-y-6">
-      {/* ─── 1. MODULAR PAGE HEADER (Dynamically bound to reactive userConfig) ─── */}
+      {/* ─── 1. MODULAR PAGE HEADER (Dynamically bound to reactive userConfig & Tabs) ─── */}
       <PageHeader
         title={userConfig.pageTitle}
         description={userConfig.pageDescription}
+        tabs={userManagementTabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
       />
 
-      {/* ─── 2. USER METRIC KPI CARDS ─── */}
-      <UserMetricCards users={users} isLoading={isLoading} />
+      {/* ─── 2. TAB CONTENT: USER ACCOUNTS vs DATA ACCESS SCOPE ─── */}
+      {activeTab === "users" && (
+        <>
+          {/* USER METRIC KPI CARDS */}
+          <UserMetricCards users={users} isLoading={isLoading} />
 
-      {/* ─── 3. USER ACCOUNTS DATA TABLE ─── */}
-      <UserTable
-        users={users}
-        isLoading={isLoading}
-        onAddUser={handleOpenCreateModal}
-        onEditUser={handleOpenEditModal}
-        onToggleStatus={handleToggleStatus}
-        onDeleteUser={handleRequestDelete}
-      />
+          {/* USER ACCOUNTS DATA TABLE */}
+          <UserTable
+            users={users}
+            isLoading={isLoading}
+            onAddUser={handleOpenCreateModal}
+            onEditUser={handleOpenEditModal}
+            onToggleStatus={handleToggleStatus}
+            onDeleteUser={handleRequestDelete}
+          />
+        </>
+      )}
+
+      {activeTab === "dataaccess" && (
+        <DataAccessManagementScreen hideHeader />
+      )}
 
       {/* ─── 4. CREATE USER MODAL ─── */}
       <CreateUserModal

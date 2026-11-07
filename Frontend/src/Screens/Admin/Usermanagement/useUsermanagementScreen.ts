@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { UserModel, CreateUserPayload, UpdateUserPayload } from "@/Types/user";
+import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import { userService } from "@/Services/userService";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
 import { useUserSettings } from "@/Lib/useUserSettings";
 
-export function useUsermanagementScreen() {
+export type UserManagementScreenTab = "users" | "dataaccess";
+
+export interface UseUsermanagementScreenProps {
+  initialTab?: UserManagementScreenTab;
+}
+
+export function useUsermanagementScreen({
+  initialTab = "users",
+}: UseUsermanagementScreenProps = {}) {
   const { userConfig } = useUserSettings();
+  const [activeTab, setActiveTab] = useState<UserManagementScreenTab>(initialTab);
   const [users, setUsers] = useState<UserModel[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
@@ -56,6 +66,26 @@ export function useUsermanagementScreen() {
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  // Tab Management
+  const userManagementTabs: HeaderTabItem[] = useMemo(
+    () => [
+      {
+        id: "users",
+        label: "User Accounts (บัญชีผู้ใช้)",
+        badge: users.length > 0 ? users.length : undefined,
+      },
+      {
+        id: "dataaccess",
+        label: "Data Access Scope (ขอบเขตข้อมูล)",
+      },
+    ],
+    [users.length]
+  );
+
+  const handleTabChange = useCallback((tabId: string) => {
+    setActiveTab(tabId as UserManagementScreenTab);
   }, []);
 
   // Modal handlers
@@ -146,6 +176,10 @@ export function useUsermanagementScreen() {
 
   return {
     userConfig,
+    activeTab,
+    setActiveTab,
+    userManagementTabs,
+    handleTabChange,
     users,
     availableBrands,
     availableBranches,

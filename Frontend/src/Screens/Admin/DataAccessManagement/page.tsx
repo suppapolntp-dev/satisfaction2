@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import PageHeader from "@/Components/Headers/PageHeader";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import { saveActiveDataAccessProfile } from "@/Lib/dataAccessContext";
 import { searchUsers } from "@/Lib/search/searchEngine";
@@ -33,7 +34,13 @@ import { useModal } from "@/Context/ModalContext";
 // ─── MAIN DATA ACCESS MANAGEMENT COMPONENT
 // ==========================================================================
 
-export default function DataAccessManagementScreen() {
+export interface DataAccessManagementScreenProps {
+  hideHeader?: boolean;
+}
+
+export default function DataAccessManagementScreen({
+  hideHeader = false,
+}: DataAccessManagementScreenProps = {}) {
   const { showConfirm, showSuccess, showError } = useModal();
 
   const [usersList, setUsersList] = useState<UserAccessRecord[]>([]);
@@ -609,38 +616,83 @@ export default function DataAccessManagementScreen() {
     <div className="space-y-6">
       
       {/* ─── 1. PAGE HEADER SECTION ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-blue-900 text-3xl">admin_panel_settings</span>
-            Data Access & Hierarchy Governance
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            กำหนดสิทธิ์การมองเห็นข้อมูล 5 ระดับ (Super Admin → Brand → Region → Province → Branch)
-          </p>
-        </div>
+      {!hideHeader ? (
+        <PageHeader
+          title="Data Access & Hierarchy Governance"
+          description="กำหนดสิทธิ์การมองเห็นข้อมูล 5 ระดับ (Super Admin → Brand → Region → Province → Branch)"
+          tabs={[
+            {
+              id: "users",
+              label: "User Accounts (บัญชีผู้ใช้)",
+              badge: usersList.length > 0 ? usersList.length : undefined,
+            },
+            {
+              id: "dataaccess",
+              label: "Data Access Scope (ขอบเขตข้อมูล)",
+            },
+          ]}
+          activeTab="dataaccess"
+          onTabChange={(tabId) => {
+            if (tabId === "users") {
+              window.location.href = "/usermanagement";
+            }
+          }}
+          secondaryActions={
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsTierManagementModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
+              >
+                <span className="material-symbols-outlined text-[18px] text-blue-900">military_tech</span>
+                <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
+              </button>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setIsTierManagementModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-            title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
-          >
-            <span className="material-symbols-outlined text-[18px] text-blue-900">military_tech</span>
-            <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
-          </button>
+              <button
+                type="button"
+                onClick={handleOpenAddModal}
+                className="btn-primary text-xs shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span>+ กำหนดสิทธิ์ใหม่ (Assign Scope)</span>
+              </button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-900 text-xl">admin_panel_settings</span>
+              <span>ผังองค์กรและการกำหนดขอบเขตข้อมูล (Org Hierarchy & Scope Governance)</span>
+            </h2>
+            <p className="text-[11px] text-slate-500">
+              กำหนดสิทธิ์การมองเห็นข้อมูล 5 ระดับ (Super Admin → Brand → Region → Province → Branch)
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsTierManagementModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
+            >
+              <span className="material-symbols-outlined text-[18px] text-blue-900">military_tech</span>
+              <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleOpenAddModal}
-            className="btn-primary text-xs shadow-xs"
-          >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
-            <span>+ กำหนดสิทธิ์ใหม่ (Assign Scope)</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleOpenAddModal}
+              className="btn-primary text-xs shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              <span>+ กำหนดสิทธิ์ใหม่ (Assign Scope)</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
       <StatsGrid data={dataAccessStats} />
