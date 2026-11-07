@@ -24,6 +24,13 @@ export interface CreateUserFormData {
 
 export type UserModalTab = "account_profile" | "data_access_scope";
 
+export interface DefaultScopeConfig {
+  scopePath?: string;
+  tierLevel?: UserTierLevel;
+  assignedBrands?: string[];
+  assignedBranches?: string[];
+}
+
 export function generateCorporateIdByTier(tier: UserTierLevel): string {
   const prefixMap: Record<UserTierLevel, string> = {
     "Super Admin": "SA",
@@ -48,6 +55,7 @@ export function generateSecurePassword(): string {
 export interface UseCreateUserModalOptions {
   isOpen: boolean;
   user?: UserModel | null;
+  defaultScope?: DefaultScopeConfig;
   availableBrands?: string[];
   availableBranches?: string[];
   onSave?: (userData: CreateUserPayload | UpdateUserPayload) => Promise<void> | void;
@@ -57,6 +65,7 @@ export interface UseCreateUserModalOptions {
 export function useCreateUserModal({
   isOpen,
   user,
+  defaultScope,
   onSave,
   onClose,
 }: UseCreateUserModalOptions) {
@@ -266,7 +275,8 @@ ORDER BY v.created_at DESC;`;
       } else {
         // Create Mode: generate corporate ID & secure password
         isInitialMountRef.current = false;
-        const generatedId = generateCorporateIdByTier("Super Admin");
+        const initialTier = defaultScope?.tierLevel || "Super Admin";
+        const generatedId = generateCorporateIdByTier(initialTier);
         const initialPassword = generateSecurePassword();
 
         setFormData({
@@ -278,10 +288,10 @@ ORDER BY v.created_at DESC;`;
           phone: "",
           password: initialPassword,
           role: "Manager",
-          tierLevel: "Super Admin",
-          dataAccessScope: orgTree.scopePath || "All Organizations (สำนักงานใหญ่)",
-          assignedBrands: orgTree.targetBrands || [],
-          assignedBranches: orgTree.targetBranches || [],
+          tierLevel: initialTier,
+          dataAccessScope: defaultScope?.scopePath || orgTree.scopePath || "All Organizations (สำนักงานใหญ่)",
+          assignedBrands: defaultScope?.assignedBrands || orgTree.targetBrands || [],
+          assignedBranches: defaultScope?.assignedBranches || orgTree.targetBranches || [],
           status: "Active",
         });
         setIsPasswordVisible(true);

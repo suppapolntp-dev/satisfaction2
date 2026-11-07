@@ -225,6 +225,74 @@ export default function DataAccessManagementScreen({
     ];
   }, [usersList]);
 
+  // ─── SCOPE CONTEXT (กระเป๋า / ชั้นหนังสือของสโคปที่เลือก) ───
+  const currentScopeContext = useMemo(() => {
+    if (selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope) {
+      return {
+        title: `กลุ่มกำหนดเอง: ${selectedCustomScope.name}`,
+        subtitle: "Custom Co-Location Scope",
+        tier: "Custom Scope",
+        tierKey: "Custom Scope" as const,
+        description: selectedCustomScope.description || "กลุ่มสโคปกำหนดเองสำหรับผู้จัดการที่ดูแลร้านหลายแบรนด์ หรือจัดกลุ่มสาขาเฉพาะ",
+        brands: selectedCustomScope.brands,
+        branches: selectedCustomScope.branches,
+      };
+    }
+    if (selectedScopeLevel === "BRANCH" && selectedBranch) {
+      return {
+        title: `${selectedBranch.name} (${selectedBranch.code || "-"})`,
+        subtitle: `${selectedBrand?.name || ""} > ${selectedRegion?.name || ""} > จ.${selectedProvince?.name || ""}`,
+        tier: "Branch Staff (Tier 5)",
+        tierKey: "Branch Staff" as const,
+        description: `ขอบเขตสาขาเฉพาะจุด: ผู้ใช้งานที่ได้รับสิทธิ์ในสโคปนี้จะดูตู้ Kiosks และแดชบอร์ดเฉพาะสาขา ${selectedBranch.name} เท่านั้น`,
+        brands: selectedBrand ? [selectedBrand.name] : [],
+        branches: [selectedBranch.name],
+      };
+    }
+    if (selectedScopeLevel === "PROVINCE" && selectedProvince) {
+      return {
+        title: `จ.${selectedProvince.name} (${selectedBrand?.name || ""})`,
+        subtitle: `${selectedBrand?.name || ""} > ${selectedRegion?.name || ""}`,
+        tier: "Area Manager (AM - Tier 4)",
+        tierKey: "Area Manager (AM)" as const,
+        description: `ขอบเขตระดับจังหวัด/เขต (Area Manager): ผู้จัดการในสโคปนี้สามารถดูแดชบอร์ดสรุปของทุกสาขาในจังหวัด ${selectedProvince.name} ได้`,
+        brands: selectedBrand ? [selectedBrand.name] : [],
+        branches: selectedProvince.branches.map((b) => b.name),
+      };
+    }
+    if (selectedScopeLevel === "REGION" && selectedRegion) {
+      return {
+        title: `${selectedRegion.name} (${selectedBrand?.name || ""})`,
+        subtitle: `${selectedBrand?.name || ""}`,
+        tier: "Regional Manager (RM - Tier 3)",
+        tierKey: "Regional Manager (RM)" as const,
+        description: `ขอบเขตระดับภูมิภาค (Regional Manager): ผู้จัดการในสโคปนี้สามารถดูแดชบอร์ดสรุปของทุกสาขาใน ${selectedRegion.name} ได้`,
+        brands: selectedBrand ? [selectedBrand.name] : [],
+        branches: selectedRegion.provinces.flatMap((p) => p.branches.map((b) => b.name)),
+      };
+    }
+    if (selectedScopeLevel === "BRAND" && selectedBrand) {
+      return {
+        title: `แบรนด์ ${selectedBrand.name}`,
+        subtitle: "Brand-Level Scope",
+        tier: "Brand Owner (Tier 2)",
+        tierKey: "Brand Owner" as const,
+        description: `ขอบเขตระดับแบรนด์: ผู้บริหารแบรนด์ ${selectedBrand.name} สามารถดูแดชบอร์ดและสถิติภาพรวมของทุกสาขาทั่วประเทศภายใต้แบรนด์นี้ได้`,
+        brands: [selectedBrand.name],
+        branches: [],
+      };
+    }
+    return {
+      title: "🏢 ภาพรวมระดับองค์กร (Super Admin Level)",
+      subtitle: "Global Enterprise Scope",
+      tier: "Super Admin (Tier 1)",
+      tierKey: "Super Admin" as const,
+      description: "ขอบเขตสูงสุดระดับสำนักงานใหญ่: ผู้ดูแลระบบสามารถดูและบริหารจัดการข้อมูลแดชบอร์ดของทุกแบรนด์และทุกสาขาในระบบได้",
+      brands: availableBrandsList,
+      branches: [],
+    };
+  }, [selectedScopeLevel, selectedCustomScope, selectedBranch, selectedProvince, selectedRegion, selectedBrand, availableBrandsList]);
+
   // ─── CLICK HANDLERS FOR LEFT TREE SELECTION ───
 
   const handleSelectSuperAdminView = () => {
@@ -819,52 +887,56 @@ export default function DataAccessManagementScreen({
 
         {/* ─── RIGHT: ASSIGNED USERS DETAIL TABLE (UNIFIED 4-SECTION TABLE) ─── */}
         <div className="flex-1 w-full min-w-0 space-y-4">
-          {/* Custom Scope Details Banner (if in Custom Scope mode) */}
-          {selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope && (
-            <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-200/80 flex flex-col gap-2 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[18px] text-blue-900">hub</span>
-                  {selectedCustomScope.name}
+          {/* ─── SCOPE CONTAINER BANNER (กระเป๋า / ชั้นหนังสือสิทธิ์นี้) ─── */}
+          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Current Scope (กระเป๋า / ชั้นสิทธิ์ที่เลือก)
                 </span>
-                <span className="text-[10px] font-mono font-bold text-blue-800 bg-white px-2 py-0.5 rounded-full border border-blue-100 shadow-2xs">
-                  {selectedCustomScope.id}
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">
+                  {currentScopeContext.tier}
                 </span>
               </div>
-              {selectedCustomScope.description && (
-                <p className="text-xs text-slate-600">{selectedCustomScope.description}</p>
-              )}
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-blue-100/80 text-xs">
-                <span className="font-bold text-slate-700 text-[11px]">แบรนด์ที่ดูแลร่วม (Co-Location):</span>
-                {selectedCustomScope.brands.map((b) => (
-                  <span key={b} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-900 text-white shadow-2xs">
-                    {b}
-                  </span>
-                ))}
-                <span className="font-bold text-slate-700 text-[11px] ml-2">สาขาที่ครอบคลุม:</span>
-                {selectedCustomScope.branches.length === 0 ? (
-                  <span className="text-[11px] text-slate-400">ทุกสาขาของแบรนด์ที่เลือก</span>
-                ) : (
-                  selectedCustomScope.branches.map((br) => (
-                    <span key={br} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white text-slate-700 border border-slate-200 shadow-2xs">
-                      {br}
-                    </span>
-                  ))
-                )}
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
+                {currentScopeContext.title}
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
+                {currentScopeContext.description}
+              </p>
             </div>
-          )}
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleOpenCreateCustomScope}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                title="สร้างกลุ่มสโคปแบบ Custom (เช่น AM ดู 2 สาขา หรือ Dual-Brand Cluster)"
+              >
+                + สร้าง Custom Scope
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenAddModal}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                title="กำหนดให้ผู้ใช้รายใหม่สามารถเข้าถึงกระเป๋า/ชั้นหนังสือนี้ได้"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <line x1="19" y1="8" x2="19" y2="14" />
+                  <line x1="22" y1="11" x2="16" y2="11" />
+                </svg>
+                <span>+ มอบหมายสิทธิ์ให้ User</span>
+              </button>
+            </div>
+          </div>
 
           {/* ─── UNIFIED DATA TABLE (HEAD -> FILTER & SORT -> DATA -> FOOTER) ─── */}
           <DataTable
-            title="รายชื่อผู้ได้รับสิทธิ์ (Authorized Users in Selected Scope)"
-            subtitle={`ขอบเขตปัจจุบัน: ${
-              selectedScopeLevel === "SUPER_ADMIN"
-                ? "องค์กร (Super Admin Level)"
-                : selectedScopeLevel === "CUSTOM_SCOPE"
-                ? `กลุ่มกำหนดเอง: ${selectedCustomScope?.name || ""}`
-                : selectedBrand?.name || "ทั้งหมด"
-            }${selectedRegion ? ` → ${selectedRegion.name}` : ""}${selectedProvince ? ` → จ.${selectedProvince.name}` : ""}${selectedBranch ? ` → ${selectedBranch.name}` : ""}`}
+            title={`รายชื่อผู้มีสิทธิ์เข้าถึง (${currentScopeContext.title})`}
+            subtitle="ผู้ใช้งานที่มีรายชื่อจะสามารถเปิดดูข้อมูล Dashboard และตู้ Kiosk ในขอบเขตนี้ได้"
             icon="verified_user"
             badge={
               <span className="badge-active">
@@ -881,7 +953,7 @@ export default function DataAccessManagementScreen({
                 className="btn-primary text-xs py-1.5 px-3 shadow-2xs whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-[16px]">person_add</span>
-                + กำหนดสิทธิ์ใหม่
+                + มอบหมายสิทธิ์ให้ User
               </button>
             }
             filters={
@@ -916,7 +988,7 @@ export default function DataAccessManagementScreen({
             columns={dataAccessTableColumns}
             data={searchedAndFilteredUsers}
             actions={dataAccessTableActions}
-            emptyMessage="ไม่พบข้อมูลผู้ได้รับสิทธิ์ในขอบเขตหรือเงื่อนไขที่ค้นหา"
+            emptyMessage={`ยังไม่มีผู้ใช้งานที่ได้รับสิทธิ์ใน Scope นี้ (${currentScopeContext.title}) — กดปุ่ม "+ มอบหมายสิทธิ์ให้ User" เพื่อให้สิทธิ์ผู้จัดการ (AM/RM) เข้าถึงข้อมูลสโคปนี้`}
             defaultPageSize={10}
           />
         </div>
@@ -928,6 +1000,14 @@ export default function DataAccessManagementScreen({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         editingUser={editingUser}
+        defaultScope={{
+          scopePath: currentScopeContext.subtitle
+            ? `${currentScopeContext.subtitle} > ${currentScopeContext.title}`
+            : currentScopeContext.title,
+          tierLevel: currentScopeContext.tierKey,
+          assignedBrands: currentScopeContext.brands,
+          assignedBranches: currentScopeContext.branches,
+        }}
         availableBrands={availableBrandsList}
         availableBranches={availableBranchesList}
         onSave={handleSaveUserForm}

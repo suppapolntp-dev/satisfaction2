@@ -3,11 +3,12 @@
 import React, { useEffect } from "react";
 import { UserModel, CreateUserPayload, UpdateUserPayload } from "@/Types/user";
 import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
-import { useCreateUserModal } from "./useCreateUserModal";
+import { useCreateUserModal, DefaultScopeConfig } from "./useCreateUserModal";
 
 export interface CreateUserModalProps {
   isOpen: boolean;
   user?: UserModel | null;
+  defaultScope?: DefaultScopeConfig;
   availableBrands?: string[];
   availableBranches?: string[];
   onClose: () => void;
@@ -17,6 +18,7 @@ export interface CreateUserModalProps {
 export default function CreateUserModal({
   isOpen,
   user,
+  defaultScope,
   availableBrands = [],
   availableBranches = [],
   onClose,
@@ -48,6 +50,7 @@ export default function CreateUserModal({
   } = useCreateUserModal({
     isOpen,
     user,
+    defaultScope,
     availableBrands,
     availableBranches,
     onSave,

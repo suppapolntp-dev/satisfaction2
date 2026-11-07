@@ -4,11 +4,13 @@ import React, { useMemo } from "react";
 import { UserAccessRecord } from "@/Types/dataAccess";
 import { UserModel, UserTierLevel, UserStatus } from "@/Types/user";
 import CreateUserModal from "@/Components/Modals/CreateUserModal";
+import { DefaultScopeConfig } from "@/Components/Modals/CreateUserModal/useCreateUserModal";
 
 export interface DataAccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingUser: UserAccessRecord | null;
+  defaultScope?: DefaultScopeConfig;
   availableBrands?: string[];
   availableBranches?: string[];
   availableRegions?: string[];
@@ -37,6 +39,7 @@ export default function DataAccessModal({
   isOpen,
   onClose,
   editingUser,
+  defaultScope,
   availableBrands = [],
   availableBranches = [],
   onSave,
@@ -75,6 +78,7 @@ export default function DataAccessModal({
     <CreateUserModal
       isOpen={isOpen}
       user={mappedUser}
+      defaultScope={defaultScope}
       availableBrands={availableBrands}
       availableBranches={availableBranches}
       onClose={onClose}
