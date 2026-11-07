@@ -123,10 +123,10 @@ export default function OrgHierarchyTreeSidebar({
 
   return (
     <aside
-      className={`w-full lg:w-72 flex flex-col bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-all ${className}`}
+      className={`w-full lg:w-60 xl:w-[250px] flex flex-col bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-all ${className}`}
     >
-      {/* ─── Header: Scope Search, Collapse Action & Root Action (image_9f68c2.png) ─── */}
-      <div className="p-4 space-y-3 bg-white">
+      {/* ─── Header: Scope Search, Collapse Action & Root Action (image_782ae7.png) ─── */}
+      <div className="p-3.5 space-y-2.5 bg-white">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             Scope Hierarchy
@@ -136,7 +136,7 @@ export default function OrgHierarchyTreeSidebar({
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
-              className="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-5 h-5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               title="พับเก็บแถบข้าง"
               aria-label="Collapse sidebar"
             >
@@ -149,7 +149,7 @@ export default function OrgHierarchyTreeSidebar({
 
         {/* Pill Search input */}
         <div className="relative flex items-center">
-          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
           </svg>
@@ -158,7 +158,7 @@ export default function OrgHierarchyTreeSidebar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Filter brand / branch..."
-            className="w-full h-8.5 pl-8.5 pr-3 text-xs bg-white border border-slate-200 rounded-full outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-800 placeholder:text-slate-400 transition-all"
+            className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-slate-200 rounded-full outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-800 placeholder:text-slate-400 transition-all"
           />
         </div>
 
@@ -166,23 +166,23 @@ export default function OrgHierarchyTreeSidebar({
         <button
           type="button"
           onClick={onSelectSuperAdmin}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
             selectedScopeLevel === "SUPER_ADMIN"
               ? "bg-blue-50 text-blue-600 border border-blue-200/80 shadow-2xs"
               : "text-slate-700 hover:bg-slate-50 border border-transparent"
           }`}
         >
-          <svg className="w-4 h-4 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-3.5 h-3.5 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           </svg>
-          <span className="truncate flex-1 text-left">All Organizations</span>
+          <span className="truncate flex-1 text-left text-[11px] sm:text-xs">All Organizations</span>
         </button>
       </div>
 
       <div className="border-t border-slate-100" />
 
       {/* ─── Tree Navigation Body ─── */}
-      <nav className="flex-1 overflow-y-auto p-2.5 space-y-1 text-xs select-none max-h-[560px] [scrollbar-width:thin]">
+      <nav className="flex-1 overflow-y-auto p-2 space-y-0.5 text-xs select-none max-h-[580px] [scrollbar-width:thin]">
         {displayBrands.length === 0 ? (
           <div className="py-8 text-center text-slate-400">
             <p className="text-xs">ไม่มีข้อมูลโครงสร้างองค์กร</p>
