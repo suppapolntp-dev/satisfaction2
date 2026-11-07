@@ -3,6 +3,7 @@
 import React from "react";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
 import { ApiModeProvider } from "@/Context/ApiModeContext";
+import { ModalProvider } from "@/Context/ModalContext";
 import Sidebar from "@/Components/Sidebars/Sidebar";
 import ProfileDropdown from "./ProfileDropdown";
 import ApiModeToggle from "./ApiModeToggle";
@@ -197,7 +198,9 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   return (
     <ApiModeProvider>
       <SidebarProvider>
-        <AdminLayoutInner>{children}</AdminLayoutInner>
+        <ModalProvider>
+          <AdminLayoutInner>{children}</AdminLayoutInner>
+        </ModalProvider>
       </SidebarProvider>
     </ApiModeProvider>
   );

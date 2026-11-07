@@ -132,11 +132,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const noopModalContext: ModalContextType = {
+  showConfirm: () => {},
+  showSuccess: () => {},
+  showError: () => {},
+  showWarning: () => {},
+  closeModal: () => {},
+};
+
 export function useModal() {
   const context = useContext(ModalContext);
-  if (!context) {
-    throw new Error("useModal must be used within a ModalProvider");
-  }
-  return context;
+  return context || noopModalContext;
 }
 

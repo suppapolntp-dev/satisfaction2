@@ -7,6 +7,7 @@ import { BrandModel } from "@/Types/brand";
 import { BranchModel } from "@/Types/branch";
 import { brandService } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 export type BrandManagementTab = "brands" | "branches";
 
@@ -17,6 +18,7 @@ export interface BrandManagementScreenState {
 export function useBrandManagementScreen({
   initialTab = "brands",
 }: BrandManagementScreenState = {}) {
+  const { isApiEnabled } = useApiMode();
   const [activeTab, setActiveTab] = useState<BrandManagementTab>(initialTab);
   const [brands, setBrands] = useState<BrandModel[] | null>(null);
   const [branches, setBranches] = useState<BranchModel[] | null>(null);
@@ -69,7 +71,7 @@ export function useBrandManagementScreen({
       isMounted = false;
       console.log("[useBrandManagementScreen] Unmounting cleanup");
     };
-  }, []);
+  }, [isApiEnabled]);
 
   // Compute Brand Metric Cards
   const brandMetrics: MetricCardItem[] = useMemo(() => {

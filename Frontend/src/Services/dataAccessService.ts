@@ -135,6 +135,13 @@ import { userService } from "./userService";
 export const dataAccessService = {
   async getDataAccessUsers(): Promise<UserAccessRecord[]> {
     try {
+      const response = await apiClient.get<UserAccessRecord[]>("/data-access/users");
+      if (response.success && Array.isArray(response.data) && response.data.length > 0) {
+        return response.data;
+      }
+    } catch {}
+
+    try {
       const users = await userService.getUsers();
       if (users && users.length > 0) {
         return users.map((u) => ({

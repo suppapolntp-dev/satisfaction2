@@ -10,8 +10,10 @@ import { branchService } from "@/Services/branchService";
 import { brandService } from "@/Services/brandService";
 import { searchBranches } from "@/Lib/search/searchEngine";
 import { useModal } from "@/Context/ModalContext";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 export default function BranchManagementScreen() {
+  const { isApiEnabled } = useApiMode();
   const { showConfirm, showSuccess, showError } = useModal();
 
   const [branchesList, setBranchesList] = useState<BranchModel[]>([]);
@@ -44,7 +46,7 @@ export default function BranchManagementScreen() {
       }
     }
     fetchInitialData();
-  }, []);
+  }, [isApiEnabled]);
 
   // KPI Stats
   const statsOverviewData: StatItem[] = useMemo(() => {
