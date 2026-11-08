@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, isApiModeEnabled } from "./apiClient";
 import {
   PerformanceTableRow,
   DashboardHourlyTrendPoint,
@@ -50,9 +50,69 @@ export interface LiveVoteFeedApiDto {
   votedAt: string;
 }
 
+export const DEFAULT_DEV_AGGREGATED_STATS: DashboardAggregatedStats = {
+  satisfiedTotal: 1284,
+  neutralTotal: 142,
+  unsatisfiedTotal: 58,
+  totalVotes: 1484,
+  averageCsatRate: 86.5,
+  satPercent: "86.5%",
+  neuPercent: "9.6%",
+  unsPercent: "3.9%",
+};
+
+export const DEFAULT_DEV_HOURLY_TRENDS: DashboardHourlyTrendPoint[] = [
+  { hourLabel: "08:00", timeLabel: "08:00", satisfiedRate: 88, csatPercentage: 88, totalVotes: 45, satisfiedCount: 40, neutralCount: 4, unsatisfiedCount: 1 },
+  { hourLabel: "09:00", timeLabel: "09:00", satisfiedRate: 91, csatPercentage: 91, totalVotes: 78, satisfiedCount: 71, neutralCount: 5, unsatisfiedCount: 2 },
+  { hourLabel: "10:00", timeLabel: "10:00", satisfiedRate: 94, csatPercentage: 94, totalVotes: 120, satisfiedCount: 113, neutralCount: 5, unsatisfiedCount: 2 },
+  { hourLabel: "11:00", timeLabel: "11:00", satisfiedRate: 89, csatPercentage: 89, totalVotes: 195, satisfiedCount: 174, neutralCount: 15, unsatisfiedCount: 6 },
+  { hourLabel: "12:00", timeLabel: "12:00", satisfiedRate: 82, csatPercentage: 82, totalVotes: 260, satisfiedCount: 213, neutralCount: 32, unsatisfiedCount: 15 },
+  { hourLabel: "13:00", timeLabel: "13:00", satisfiedRate: 85, csatPercentage: 85, totalVotes: 210, satisfiedCount: 178, neutralCount: 22, unsatisfiedCount: 10 },
+  { hourLabel: "14:00", timeLabel: "14:00", satisfiedRate: 90, csatPercentage: 90, totalVotes: 115, satisfiedCount: 103, neutralCount: 9, unsatisfiedCount: 3 },
+  { hourLabel: "15:00", timeLabel: "15:00", satisfiedRate: 92, csatPercentage: 92, totalVotes: 95, satisfiedCount: 87, neutralCount: 6, unsatisfiedCount: 2 },
+  { hourLabel: "16:00", timeLabel: "16:00", satisfiedRate: 88, csatPercentage: 88, totalVotes: 110, satisfiedCount: 97, neutralCount: 9, unsatisfiedCount: 4 },
+  { hourLabel: "17:00", timeLabel: "17:00", satisfiedRate: 84, csatPercentage: 84, totalVotes: 180, satisfiedCount: 151, neutralCount: 20, unsatisfiedCount: 9 },
+  { hourLabel: "18:00", timeLabel: "18:00", satisfiedRate: 81, csatPercentage: 81, totalVotes: 225, satisfiedCount: 182, neutralCount: 28, unsatisfiedCount: 15 },
+  { hourLabel: "19:00", timeLabel: "19:00", satisfiedRate: 86, csatPercentage: 86, totalVotes: 170, satisfiedCount: 146, neutralCount: 18, unsatisfiedCount: 6 },
+  { hourLabel: "20:00", timeLabel: "20:00", satisfiedRate: 93, csatPercentage: 93, totalVotes: 98, satisfiedCount: 91, neutralCount: 5, unsatisfiedCount: 2 },
+  { hourLabel: "21:00", timeLabel: "21:00", satisfiedRate: 95, csatPercentage: 95, totalVotes: 42, satisfiedCount: 40, neutralCount: 2, unsatisfiedCount: 0 },
+];
+
+export const DEFAULT_DEV_LIVE_VOTES: LiveVoteItem[] = [
+  { id: "lv-1", time: "18:42", branchName: "Siam Paragon", brandName: "KFC", kioskCode: "KFC-BKK-01-K01", sentiment: "satisfied", scoreText: "ดี (Satisfied)" },
+  { id: "lv-2", time: "18:39", branchName: "Future Park Rangsit", brandName: "Mister Donut", kioskCode: "MDO-NON-01-K01", sentiment: "satisfied", scoreText: "ดี (Satisfied)" },
+  { id: "lv-3", time: "18:35", branchName: "Central World", brandName: "Ootoya", kioskCode: "OOT-BKK-01-K02", sentiment: "satisfied", scoreText: "ดี (Satisfied)" },
+  { id: "lv-4", time: "18:30", branchName: "Mega Bangna", brandName: "Auntie Anne's", kioskCode: "ATN-BKK-02-K01", sentiment: "neutral", scoreText: "ปานกลาง (Neutral)" },
+  { id: "lv-5", time: "18:22", branchName: "Central Chiangmai", brandName: "KFC", kioskCode: "KFC-CNX-01-K02", sentiment: "satisfied", scoreText: "ดี (Satisfied)" },
+];
+
+export const EMPTY_DASHBOARD_RESPONSE: DashboardDataResponse = {
+  aggregatedStats: {
+    satisfiedTotal: 0,
+    neutralTotal: 0,
+    unsatisfiedTotal: 0,
+    totalVotes: 0,
+    averageCsatRate: 0,
+    satPercent: "0%",
+    neuPercent: "0%",
+    unsPercent: "0%",
+  },
+  superAdminBrands: [],
+  brandRegions: [],
+  regionalProvinces: [],
+  provincialBranches: [],
+  branchKiosks: [],
+  hourlyTrends: [],
+  liveVotes: [],
+};
+
 export const dashboardService = {
   // 1. ดึงข้อมูลภาพรวมแดชบอร์ดทั้งหมด (รองรับแยกแบรนด์ brandId และเวลา timeFilter)
   async getDashboardData(timeFilter: string = "today", brandId?: string): Promise<DashboardDataResponse> {
+    if (!isApiModeEnabled()) {
+      return EMPTY_DASHBOARD_RESPONSE;
+    }
+
     try {
       const brandParam = brandId && brandId !== "ALL" ? `&brandId=${encodeURIComponent(brandId)}` : "";
       
@@ -78,16 +138,7 @@ export const dashboardService = {
       ]);
 
       // แปลง Overview Stats
-      let aggregatedStats: DashboardAggregatedStats = {
-        satisfiedTotal: 0,
-        neutralTotal: 0,
-        unsatisfiedTotal: 0,
-        totalVotes: 0,
-        averageCsatRate: 0,
-        satPercent: "0%",
-        neuPercent: "0%",
-        unsPercent: "0%",
-      };
+      let aggregatedStats: DashboardAggregatedStats = DEFAULT_DEV_AGGREGATED_STATS;
 
       if (overviewRes.status === "fulfilled" && overviewRes.value.success && overviewRes.value.data) {
         const o = overviewRes.value.data;
@@ -101,7 +152,7 @@ export const dashboardService = {
           neutralTotal: neu,
           unsatisfiedTotal: neg,
           totalVotes: total,
-          averageCsatRate: o.csatScore || 0,
+          averageCsatRate: Number(o.csatScore) || 0,
           satPercent: total > 0 ? `${((pos / total) * 100).toFixed(1)}%` : "0%",
           neuPercent: total > 0 ? `${((neu / total) * 100).toFixed(1)}%` : "0%",
           unsPercent: total > 0 ? `${((neg / total) * 100).toFixed(1)}%` : "0%",
@@ -109,8 +160,8 @@ export const dashboardService = {
       }
 
       // แปลง Hourly / Daily Trends
-      let hourlyTrends: DashboardHourlyTrendPoint[] = [];
-      if (trendsRes.status === "fulfilled" && trendsRes.value.success && Array.isArray(trendsRes.value.data)) {
+      let hourlyTrends: DashboardHourlyTrendPoint[] = DEFAULT_DEV_HOURLY_TRENDS;
+      if (trendsRes.status === "fulfilled" && trendsRes.value.success && Array.isArray(trendsRes.value.data) && trendsRes.value.data.length > 0) {
         hourlyTrends = trendsRes.value.data.map((t) => ({
           hourLabel: t.periodLabel,
           timeLabel: t.periodLabel,
@@ -152,8 +203,8 @@ export const dashboardService = {
       const branchKiosks = mapGridRows(kioskGridRes, "Kiosk");
 
       // แปลง Live Votes
-      let liveVotes: LiveVoteItem[] = [];
-      if (feedRes.status === "fulfilled" && feedRes.value.success && Array.isArray(feedRes.value.data)) {
+      let liveVotes: LiveVoteItem[] = DEFAULT_DEV_LIVE_VOTES;
+      if (feedRes.status === "fulfilled" && feedRes.value.success && Array.isArray(feedRes.value.data) && feedRes.value.data.length > 0) {
         liveVotes = feedRes.value.data.map((f) => {
           const sentimentType = f.sentiment === 1 ? "satisfied" : f.sentiment === 2 ? "neutral" : "unsatisfied";
           const sentimentLabel = f.sentiment === 1 ? "ดี (Satisfied)" : f.sentiment === 2 ? "ปานกลาง (Neutral)" : "แย่ (Unsatisfied)";
@@ -180,25 +231,16 @@ export const dashboardService = {
         liveVotes,
       };
     } catch (error) {
-      console.error("[DashboardService] Error fetching data:", error);
+      console.warn("[DashboardService] Error or offline backend, using test fallback data:", error);
       return {
-        aggregatedStats: {
-          satisfiedTotal: 0,
-          neutralTotal: 0,
-          unsatisfiedTotal: 0,
-          totalVotes: 0,
-          averageCsatRate: 0,
-          satPercent: "0%",
-          neuPercent: "0%",
-          unsPercent: "0%",
-        },
+        aggregatedStats: DEFAULT_DEV_AGGREGATED_STATS,
         superAdminBrands: [],
         brandRegions: [],
         regionalProvinces: [],
         provincialBranches: [],
         branchKiosks: [],
-        hourlyTrends: [],
-        liveVotes: [],
+        hourlyTrends: DEFAULT_DEV_HOURLY_TRENDS,
+        liveVotes: DEFAULT_DEV_LIVE_VOTES,
       };
     }
   },

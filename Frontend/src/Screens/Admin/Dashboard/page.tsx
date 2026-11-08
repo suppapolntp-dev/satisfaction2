@@ -26,9 +26,11 @@ export default function DashboardScreen() {
     isSuperAdmin,
     timelineData,
     isLoadingTimeline,
+    metricsData,
+    sentimentVotes,
   } = useDashboardScreen();
 
-  const { metrics } = useMetricCards();
+  const { metrics } = useMetricCards({ metricsData });
 
   const {
     searchQuery,
@@ -116,6 +118,7 @@ export default function DashboardScreen() {
           {/* Right: Satisfaction Buttons transformed into Dashboard Analytics Cards */}
           <div className="flex-1 w-full min-w-0">
             <SatisfactionAnalyticsCard
+              initialVotes={sentimentVotes}
               scopeTitle={activeScopeInfo.title}
               scopeTier={activeScopeInfo.tier}
             />

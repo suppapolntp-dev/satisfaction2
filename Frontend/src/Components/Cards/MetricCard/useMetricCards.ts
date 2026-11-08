@@ -29,6 +29,14 @@ export function buildDashboardMetrics(data?: DashboardMetricsData): MetricCardIt
 
   return [
     {
+      id: "csat-score",
+      label: "CSAT Satisfaction",
+      value: csat ? (typeof csat === "number" ? `${csat}%` : csat) : "0%",
+      change: data?.csatChange ? data.csatChange : "-",
+      trend: "up",
+      iconType: "satisfaction",
+    },
+    {
       id: "total-votes",
       label: "Total Votes Today",
       value: totalVotes ? totalVotes.toLocaleString() : "0",
