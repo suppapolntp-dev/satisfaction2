@@ -59,3 +59,4 @@ For ANY and ALL frontend, UI/UX, styling, layout, typography, components, or scr
 - [csat-auth-mfa-manager](file:///d:/DevProject/Project/Satifaction2/.agents/skills/csat-auth-mfa-manager/SKILL.md) — JWT tokens, 2FA SMS OTP, and dynamic security configuration.
 - [csat-db-seeder-migration](file:///d:/DevProject/Project/Satifaction2/.agents/skills/csat-db-seeder-migration/SKILL.md) — PostgreSQL Docker lifecycle, EF Core migrations, and DbInitializer test data.
 - [csat-fullstack-dev-workflow](file:///d:/DevProject/Project/Satifaction2/.agents/skills/csat-fullstack-dev-workflow/SKILL.md) — Local environment boot sequence, health checks, and troubleshooting runbooks.
+- [unslop](file:///d:/DevProject/Project/Satifaction2/.agents/skills/unslop/SKILL.md) — Multi-pass surgical audit pipeline to eliminate generic AI-generated aesthetic (slop) and elevate UI craft, color, typography, spacing, and character.

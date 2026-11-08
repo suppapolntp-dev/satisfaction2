@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
-import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
 import { saveActiveDataAccessProfile } from "@/Lib/dataAccessContext";
 import { searchUsers } from "@/Lib/search/searchEngine";
@@ -174,50 +173,6 @@ export default function DataAccessManagementScreen({
     }
     fetchInitialData();
   }, []);
-
-  // KPI Stats
-  const dataAccessStats: StatItem[] = useMemo(() => {
-    const total = usersList.length;
-    const multiBrandCount = usersList.filter((u) => u.assignedBrands && u.assignedBrands.length > 1).length;
-    const multiBranchCount = usersList.filter((u) => u.assignedBranches && u.assignedBranches.length > 1).length;
-
-    const hasData = total > 0;
-
-    return [
-      {
-        label: "Total Assigned Users",
-        value: hasData ? `${total} บัญชี` : "-",
-        change: "",
-        isUp: true,
-        icon: "lock_person",
-        color: "text-blue-600",
-      },
-      {
-        label: "Multi-Brand Accounts",
-        value: hasData ? `${multiBrandCount} บัญชี` : "-",
-        change: "",
-        isUp: true,
-        icon: "corporate_fare",
-        color: "text-emerald-600",
-      },
-      {
-        label: "Multi-Branch Scopes",
-        value: hasData ? `${multiBranchCount} บัญชี` : "-",
-        change: "",
-        isUp: true,
-        icon: "storefront",
-        color: "text-purple-600",
-      },
-      {
-        label: "Governance Status",
-        value: hasData ? "Active" : "-",
-        change: "",
-        isUp: true,
-        icon: "verified_user",
-        color: "text-amber-600",
-      },
-    ];
-  }, [usersList]);
 
   // ─── SCOPE CONTEXT (กระเป๋า / ชั้นหนังสือของสโคปที่เลือก) ───
   const currentScopeContext = useMemo(() => {
@@ -617,10 +572,7 @@ export default function DataAccessManagementScreen({
         />
       )}
 
-      {/* ─── 2. STATS OVERVIEW SECTION ─── */}
-      <StatsGrid data={dataAccessStats} />
-
-      {/* ─── 3. MAIN WORKSPACE: SLIM TREE HIERARCHY + RIGHT DETAIL TABLE (image_782ae7.png) ─── */}
+      {/* ─── MAIN WORKSPACE: SLIM TREE HIERARCHY + RIGHT DETAIL TABLE (image_782ae7.png) ─── */}
       <div className="flex flex-col lg:flex-row gap-5 items-start">
         
         {/* ─── LEFT: SLIM 5-TIER SCOPE HIERARCHY SIDEBAR (~250px) ─── */}
@@ -729,59 +681,15 @@ export default function DataAccessManagementScreen({
           </div>
         </div>
 
-        {/* ─── RIGHT: ASSIGNED USERS DETAIL TABLE (UNIFIED 4-SECTION TABLE) ─── */}
+        {/* ─── RIGHT: ASSIGNED USERS DETAIL TABLE (Direct Table with Add Scope + Add User) ─── */}
         <div className="flex-1 w-full min-w-0 space-y-4">
-          {/* ─── SCOPE CONTAINER BANNER (กระเป๋า / ชั้นหนังสือสิทธิ์นี้) ─── */}
-          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Current Scope (กระเป๋า / ชั้นสิทธิ์ที่เลือก)
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">
-                  {currentScopeContext.tier}
-                </span>
-              </div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
-                {currentScopeContext.title}
-              </h2>
-              <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
-                {currentScopeContext.description}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleOpenCreateCustomScope}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
-                title="สร้างกลุ่มสโคปแบบ Custom (เช่น AM ดู 2 สาขา หรือ Dual-Brand Cluster)"
-              >
-                + สร้าง Custom Scope
-              </button>
-
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                title="กำหนดให้ผู้ใช้รายใหม่สามารถเข้าถึงกระเป๋า/ชั้นหนังสือนี้ได้"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <line x1="19" y1="8" x2="19" y2="14" />
-                  <line x1="22" y1="11" x2="16" y2="11" />
-                </svg>
-                <span>+ มอบหมายสิทธิ์ให้ User</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ─── DATA ACCESS USERS TABLE (Reusing BrandTable Architecture) ─── */}
           <DataAccessTable
             users={filteredUsers}
             isLoading={isLoading}
-            onAssignScope={handleOpenAddModal}
+            scopeTitle={currentScopeContext.title}
+            scopeTier={currentScopeContext.tier}
+            onAddScope={handleOpenCreateCustomScope}
+            onAddUser={handleOpenAddModal}
             onEditUser={handleOpenEditModal}
             onDeleteUser={handleDeleteUser}
           />

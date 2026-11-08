@@ -66,6 +66,8 @@ export function useCreateUserModal({
   isOpen,
   user,
   defaultScope,
+  availableBrands = [],
+  availableBranches = [],
   onSave,
   onClose,
 }: UseCreateUserModalOptions) {
@@ -101,7 +103,7 @@ export function useCreateUserModal({
   // ─── 5-Tier Org Hierarchy Tree Hook (Identical to Dashboard Analyses) ───
   const orgTree = useOrgTree({
     onScopeChange: (scopeInfo) => {
-      if (isEditMode && isInitialMountRef.current) {
+      if (isInitialMountRef.current) {
         return;
       }
       const tierMap: Record<HierarchyScopeLevel, UserTierLevel> = {
@@ -273,11 +275,31 @@ ORDER BY v.created_at DESC;`;
 
         return () => clearTimeout(timer);
       } else {
-        // Create Mode: generate corporate ID & secure password
-        isInitialMountRef.current = false;
-        const initialTier = defaultScope?.tierLevel || "Super Admin";
+        // Create Mode:
+        // When opened from usermanagement tab (defaultScope undefined), default to a branch user (Branch Staff, ST-xxx, Agent)
+        // When opened from dataaccess tab (defaultScope defined), pre-fill with selected sidebar scope (AM, RM, Brand, Admin, or Custom)
+        isInitialMountRef.current = true;
+        const initialTier = defaultScope?.tierLevel || "Branch Staff";
         const generatedId = generateCorporateIdByTier(initialTier);
         const initialPassword = generateSecurePassword();
+
+        const defaultBranch = availableBranches.length > 0 ? availableBranches[0] : "";
+        const defaultBrand = availableBrands.length > 0 ? availableBrands[0] : "";
+
+        const initialScopePath = defaultScope?.scopePath ||
+          (defaultBranch
+            ? `${defaultBrand ? defaultBrand + " > " : ""}${defaultBranch}`
+            : (orgTree.scopePath || "สาขาประจำ"));
+
+        const initialBranches = defaultScope?.assignedBranches ||
+          (defaultBranch ? [defaultBranch] : (orgTree.targetBranches || []));
+
+        const initialBrands = defaultScope?.assignedBrands ||
+          (defaultBrand ? [defaultBrand] : (orgTree.targetBrands || []));
+
+        const initialRole = defaultScope
+          ? (defaultScope.tierLevel === "Super Admin" ? "Administrator" : "Manager")
+          : "Agent";
 
         setFormData({
           userCode: generatedId,
@@ -287,14 +309,20 @@ ORDER BY v.created_at DESC;`;
           email: "",
           phone: "",
           password: initialPassword,
-          role: "Manager",
+          role: initialRole,
           tierLevel: initialTier,
-          dataAccessScope: defaultScope?.scopePath || orgTree.scopePath || "All Organizations (สำนักงานใหญ่)",
-          assignedBrands: defaultScope?.assignedBrands || orgTree.targetBrands || [],
-          assignedBranches: defaultScope?.assignedBranches || orgTree.targetBranches || [],
+          dataAccessScope: initialScopePath,
+          assignedBrands: initialBrands,
+          assignedBranches: initialBranches,
           status: "Active",
         });
         setIsPasswordVisible(true);
+
+        const timer = setTimeout(() => {
+          isInitialMountRef.current = false;
+        }, 100);
+
+        return () => clearTimeout(timer);
       }
       setErrorMessage(null);
       setIsSubmitting(false);

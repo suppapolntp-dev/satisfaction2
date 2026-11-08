@@ -10,6 +10,10 @@ import {
 export interface DataAccessTableProps {
   users: UserAccessRecord[];
   isLoading?: boolean;
+  scopeTitle?: string;
+  scopeTier?: string;
+  onAddScope?: () => void;
+  onAddUser?: () => void;
   onAssignScope?: () => void;
   onEditUser?: (user: UserAccessRecord) => void;
   onDeleteUser?: (id: string) => void;
@@ -83,12 +87,18 @@ function getTierBadgeClass(tier: string): string {
 export default function DataAccessTable({
   users = [],
   isLoading = false,
+  scopeTitle,
+  scopeTier,
+  onAddScope,
+  onAddUser,
   onAssignScope,
   onEditUser,
   onDeleteUser,
   className = "",
 }: DataAccessTableProps) {
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
+
+  const handleAddUserAction = onAddUser || onAssignScope;
 
   const {
     searchKeyword,
@@ -106,8 +116,8 @@ export default function DataAccessTable({
 
   return (
     <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {/* ─── 1. TOOLBAR: SEARCH & ASSIGN SCOPE BUTTON (Exact Brand & Branch standard) ─── */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      {/* ─── 1. TOOLBAR: SEARCH & 2 BUTTONS: ADD SCOPE, ADD USER (Brand & Branch Standard) ─── */}
+      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div className="flex flex-1 items-center gap-2.5">
           {/* Search Input */}
           <div className="relative flex-1 max-w-sm">
@@ -122,7 +132,7 @@ export default function DataAccessTable({
               value={searchKeyword}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search user, email, scope..."
-              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]/20 focus:border-[var(--primary-container)] text-slate-800 placeholder-slate-400 transition-all"
+              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder-slate-400 transition-all"
             />
             {searchKeyword && (
               <button
@@ -140,8 +150,8 @@ export default function DataAccessTable({
           </div>
         </div>
 
-        {/* Counter Info & Assign Scope Button */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-slate-500">
+        {/* Counter Info & 2 Buttons: Add Scope, Add User */}
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-2.5 text-xs text-slate-500">
           <span>
             Showing <strong className="font-semibold text-slate-700">{paginatedUsers.length}</strong> of{" "}
             <strong className="font-semibold text-slate-700">{totalItems}</strong> users
@@ -150,22 +160,41 @@ export default function DataAccessTable({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-[var(--primary-container)] hover:text-[var(--primary-hover)] font-medium transition-colors cursor-pointer"
+              className="text-blue-600 hover:text-blue-700 font-medium transition-colors cursor-pointer"
             >
               Reset search
             </button>
           )}
-          {onAssignScope && (
+
+          {/* Button 1: Add Scope (Custom Scope) */}
+          {onAddScope && (
             <button
               type="button"
-              onClick={onAssignScope}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] rounded-xl shadow-xs transition-colors cursor-pointer"
+              onClick={onAddScope}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer"
+              title="สร้าง Custom Scope สำหรับรวมสาขาหรือข้ามแบรนด์"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add Scope</span>
+            </button>
+          )}
+
+          {/* Button 2: Add User (Pre-scoped User) */}
+          {handleAddUserAction && (
+            <button
+              type="button"
+              onClick={handleAddUserAction}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+              title={scopeTitle ? `เพิ่ม/มอบหมาย User ใน ${scopeTitle}` : "เพิ่ม/มอบหมาย User"}
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              <span>+ กำหนดสิทธิ์ใหม่</span>
+              <span>Add User</span>
             </button>
           )}
         </div>
@@ -240,27 +269,29 @@ export default function DataAccessTable({
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-slate-700">ไม่พบข้อมูลผู้ได้รับสิทธิ์ในสโคปนี้</p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    {scopeTitle ? `ยังไม่มีผู้ได้รับสิทธิ์ในสโคป "${scopeTitle}"` : "ไม่พบข้อมูลผู้ได้รับสิทธิ์"}
+                  </p>
                   <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                     {searchKeyword
                       ? `ไม่มีผลลัพธ์ตรงกับ "${searchKeyword}"`
-                      : 'ยังไม่มีผู้ใช้งานที่ได้รับมอบหมายในสโคปนี้ คลิก "+ กำหนดสิทธิ์ใหม่" เพื่อมอบหมายสิทธิ์ให้ผู้จัดการ (AM/RM)'}
+                      : 'คลิก "Add User" เพื่อมอบหมายสิทธิ์ให้ผู้จัดการ (AM/RM) หรือผู้ใช้ในขอบเขตนี้'}
                   </p>
                   {searchKeyword ? (
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="mt-3 text-xs font-semibold text-[var(--primary-container)] hover:underline"
+                      className="mt-3 text-xs font-semibold text-blue-600 hover:underline"
                     >
                       ล้างการค้นหา
                     </button>
-                  ) : onAssignScope ? (
+                  ) : handleAddUserAction ? (
                     <button
                       type="button"
-                      onClick={onAssignScope}
-                      className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                      onClick={handleAddUserAction}
+                      className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                     >
-                      <span>+ กำหนดสิทธิ์ให้ User</span>
+                      <span>+ Add User to Scope</span>
                     </button>
                   ) : null}
                 </td>
