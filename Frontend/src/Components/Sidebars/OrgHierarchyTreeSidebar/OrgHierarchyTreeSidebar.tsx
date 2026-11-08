@@ -25,6 +25,9 @@ export interface OrgHierarchyTreeSidebarProps {
   onSelectRegion: (brand: BrandItem, region: RegionItem, e?: React.MouseEvent) => void;
   onSelectProvince: (brand: BrandItem, region: RegionItem, province: ProvinceItem, e?: React.MouseEvent) => void;
   onSelectBranch: (brand: BrandItem, region: RegionItem, province: ProvinceItem, branch: BranchItem, e?: React.MouseEvent) => void;
+  scopePath?: string;
+  onSelectAll?: () => void;
+  showBreadcrumbs?: boolean;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   className?: string;
@@ -46,6 +49,9 @@ export default function OrgHierarchyTreeSidebar({
   onSelectRegion,
   onSelectProvince,
   onSelectBranch,
+  scopePath,
+  onSelectAll,
+  showBreadcrumbs = false,
   collapsible = true,
   defaultCollapsed = false,
   className = "",
@@ -123,9 +129,11 @@ export default function OrgHierarchyTreeSidebar({
 
   return (
     <aside
-      className={`w-full lg:w-60 xl:w-[250px] flex flex-col bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-all ${className}`}
+      className={`flex flex-col bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-all ${
+        className.includes("w-") ? "" : "w-full lg:w-60 xl:w-[250px]"
+      } ${className}`}
     >
-      {/* ─── Header: Scope Search, Collapse Action & Root Action (image_782ae7.png) ─── */}
+      {/* ─── Header: Scope Search, Collapse Action & Root Action (image_782ae7.png & Figma 13-91) ─── */}
       <div className="p-3.5 space-y-2.5 bg-white">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -162,21 +170,54 @@ export default function OrgHierarchyTreeSidebar({
           />
         </div>
 
-        {/* SuperAdmin Root Button (Pill shape) */}
-        <button
-          type="button"
-          onClick={onSelectSuperAdmin}
-          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-            selectedScopeLevel === "SUPER_ADMIN"
-              ? "bg-blue-50 text-blue-600 border border-blue-200/80 shadow-2xs"
-              : "text-slate-700 hover:bg-slate-50 border border-transparent"
-          }`}
-        >
-          <svg className="w-3.5 h-3.5 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          </svg>
-          <span className="truncate flex-1 text-left text-[11px] sm:text-xs">All Organizations</span>
-        </button>
+        {/* Breadcrumb Path & Select All Action Row (Figma scope-hierarchy-sidebar 1 Parity) */}
+        {(showBreadcrumbs || scopePath || onSelectAll) ? (
+          <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-2 pb-0.5">
+            <div className="text-[10px] leading-tight text-slate-500 truncate flex-1 min-w-0" title={scopePath}>
+              {scopePath ? (
+                <>
+                  <div className="text-slate-400 truncate">
+                    {scopePath.includes(" > ")
+                      ? scopePath.split(" > ").slice(0, -1).join(" / ") + " /"
+                      : "Organization /"}
+                  </div>
+                  <div className="font-semibold text-slate-700 truncate mt-0.5">
+                    {scopePath.includes(" > ")
+                      ? scopePath.split(" > ").slice(-1)[0]
+                      : scopePath}
+                  </div>
+                </>
+              ) : (
+                <span className="font-semibold text-slate-700">All Organizations</span>
+              )}
+            </div>
+            {onSelectAll && (
+              <button
+                type="button"
+                onClick={onSelectAll}
+                className="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer pt-0.5"
+              >
+                Select All
+              </button>
+            )}
+          </div>
+        ) : (
+          /* SuperAdmin Root Button (Pill shape) */
+          <button
+            type="button"
+            onClick={onSelectSuperAdmin}
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              selectedScopeLevel === "SUPER_ADMIN"
+                ? "bg-blue-50 text-blue-600 border border-blue-200/80 shadow-2xs"
+                : "text-slate-700 hover:bg-slate-50 border border-transparent"
+            }`}
+          >
+            <svg className="w-3.5 h-3.5 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            </svg>
+            <span className="truncate flex-1 text-left text-[11px] sm:text-xs">All Organizations</span>
+          </button>
+        )}
       </div>
 
       <div className="border-t border-slate-100" />

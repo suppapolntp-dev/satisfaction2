@@ -86,7 +86,7 @@ export default function CreateUserModal({
 
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 w-full max-w-5xl rounded-3xl bg-white border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] md:h-[544px] animate-in zoom-in-95 duration-200"
+        className="relative z-10 w-full max-w-6xl rounded-3xl bg-white border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] md:h-[680px] animate-in zoom-in-95 duration-200"
       >
         {/* ─── 1. MODAL HEADER BAR (Figma 13-91 Parity) ─── */}
         <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
@@ -176,10 +176,10 @@ export default function CreateUserModal({
           </div>
         )}
 
-        {/* ─── 3. SPLIT WORKSPACE BODY (220px Sidebar | Fluid Form) ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] flex-1 overflow-hidden min-h-0">
+        {/* ─── 3. SPLIT WORKSPACE BODY (298px Sidebar | Fluid Form - Figma Parity) ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-[298px_1fr] flex-1 overflow-hidden min-h-0">
           
-          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR ─── */}
+          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR (Figma W:298px) ─── */}
           <aside className="border-r border-slate-100 bg-slate-50/50 flex flex-col overflow-hidden h-full">
             <OrgHierarchyTreeSidebar
               brandHierarchy={orgTree.brandHierarchy}
@@ -197,6 +197,9 @@ export default function CreateUserModal({
               onSelectRegion={orgTree.selectRegion}
               onSelectProvince={orgTree.selectProvince}
               onSelectBranch={orgTree.selectBranch}
+              scopePath={formData.dataAccessScope}
+              onSelectAll={selectAllBranches}
+              showBreadcrumbs={true}
               collapsible={false}
               className="w-full h-full border-0 rounded-none shadow-none bg-transparent"
             />
