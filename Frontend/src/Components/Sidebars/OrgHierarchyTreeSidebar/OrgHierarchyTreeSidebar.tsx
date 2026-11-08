@@ -27,10 +27,14 @@ export interface OrgHierarchyTreeSidebarProps {
   onSelectBranch: (brand: BrandItem, region: RegionItem, province: ProvinceItem, branch: BranchItem, e?: React.MouseEvent) => void;
   scopePath?: string;
   onSelectAll?: () => void;
+  onClearAll?: () => void;
   showBreadcrumbs?: boolean;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   className?: string;
+  selectedBranches?: string[];
+  onToggleBranch?: (branchName: string, branch?: BranchItem) => void;
+  enableBranchCheckboxes?: boolean;
 }
 
 export default function OrgHierarchyTreeSidebar({
@@ -51,10 +55,14 @@ export default function OrgHierarchyTreeSidebar({
   onSelectBranch,
   scopePath,
   onSelectAll,
+  onClearAll,
   showBreadcrumbs = false,
   collapsible = true,
   defaultCollapsed = false,
   className = "",
+  selectedBranches,
+  onToggleBranch,
+  enableBranchCheckboxes,
 }: OrgHierarchyTreeSidebarProps) {
   const [isCollapsed, setIsCollapsed] = React.useState<boolean>(defaultCollapsed);
 
@@ -210,25 +218,54 @@ export default function OrgHierarchyTreeSidebar({
                       ? activeDisplayPath.split(" > ").slice(0, -1).join(" / ") + " /"
                       : activeDisplayPath + " /"}
                   </div>
-                  <div className="font-semibold text-slate-700 truncate mt-0.5">
-                    {activeDisplayPath.includes(" > ")
-                      ? activeDisplayPath.split(" > ").slice(-1)[0]
-                      : activeDisplayPath}
+                  <div className="font-semibold text-slate-700 truncate mt-0.5 flex items-center gap-1">
+                    <span>
+                      {activeDisplayPath.includes(" > ")
+                        ? activeDisplayPath.split(" > ").slice(-1)[0]
+                        : activeDisplayPath}
+                    </span>
+                    {selectedBranches && selectedBranches.length > 0 && (
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/60">
+                        {selectedBranches.length} สาขา
+                      </span>
+                    )}
                   </div>
                 </>
               ) : (
-                <span className="font-semibold text-slate-700">All Organizations</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-700">All Organizations</span>
+                  {selectedBranches && selectedBranches.length > 0 && (
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/60">
+                      {selectedBranches.length} สาขา
+                    </span>
+                  )}
+                </div>
               )}
             </div>
-            {onSelectAll && (
-              <button
-                type="button"
-                onClick={onSelectAll}
-                className="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer pt-0.5"
-              >
-                Select All
-              </button>
-            )}
+
+            <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+              {onSelectAll && (
+                <button
+                  type="button"
+                  onClick={onSelectAll}
+                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                >
+                  Select All
+                </button>
+              )}
+              {onClearAll && selectedBranches && selectedBranches.length > 0 && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <button
+                    type="button"
+                    onClick={onClearAll}
+                    className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
+                  >
+                    ล้างค่า
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         ) : (
           /* SuperAdmin Root Button (Pill shape) */
@@ -344,6 +381,11 @@ export default function OrgHierarchyTreeSidebar({
                                 selectedScopeLevel === "PROVINCE" &&
                                 selectedProvince?.id === prov.id;
 
+                              const provBranches = prov.branches || [];
+                              const provCheckedCount = selectedBranches
+                                ? provBranches.filter((b) => selectedBranches.includes(b.name)).length
+                                : 0;
+
                               return (
                                 <div key={prov.id} className="space-y-0.5">
                                   <div
@@ -370,15 +412,64 @@ export default function OrgHierarchyTreeSidebar({
                                       </svg>
                                     </button>
                                     <span className="truncate flex-1">{prov.name}</span>
+
+                                    {/* Province branches selected count pill */}
+                                    {provBranches.length > 0 && selectedBranches !== undefined && (
+                                      <span
+                                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
+                                          provCheckedCount > 0
+                                            ? "bg-blue-100 text-blue-700"
+                                            : "bg-slate-100 text-slate-400"
+                                        }`}
+                                        title={`${provCheckedCount} จาก ${provBranches.length} สาขาที่เลือก`}
+                                      >
+                                        {provCheckedCount}/{provBranches.length}
+                                      </span>
+                                    )}
                                   </div>
 
                                   {/* Branches */}
                                   {isProvExpanded && (
                                     <div className="pl-4 ml-2 border-l border-slate-200 space-y-0.5">
                                       {prov.branches.map((branch) => {
-                                        const isBranchSelected =
-                                          selectedScopeLevel === "BRANCH" &&
-                                          selectedBranch?.id === branch.id;
+                                        const isCheckboxMode =
+                                          enableBranchCheckboxes ||
+                                          onToggleBranch !== undefined ||
+                                          selectedBranches !== undefined;
+
+                                        const isBranchChecked =
+                                          selectedBranches !== undefined
+                                            ? selectedBranches.includes(branch.name)
+                                            : selectedScopeLevel === "BRANCH" &&
+                                              selectedBranch?.id === branch.id;
+
+                                        if (isCheckboxMode) {
+                                          return (
+                                            <label
+                                              key={branch.id}
+                                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors select-none text-xs ${
+                                                isBranchChecked
+                                                  ? "bg-blue-50 text-blue-900 font-semibold border border-blue-200/50"
+                                                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
+                                              }`}
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                checked={Boolean(isBranchChecked)}
+                                                onChange={(e) => {
+                                                  e.stopPropagation();
+                                                  if (onToggleBranch) {
+                                                    onToggleBranch(branch.name, branch);
+                                                  } else {
+                                                    onSelectBranch(brand, region, prov, branch, e as any);
+                                                  }
+                                                }}
+                                                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer shrink-0"
+                                              />
+                                              <span className="truncate flex-1">{branch.name}</span>
+                                            </label>
+                                          );
+                                        }
 
                                         return (
                                           <div
@@ -387,7 +478,7 @@ export default function OrgHierarchyTreeSidebar({
                                               onSelectBranch(brand, region, prov, branch, e)
                                             }
                                             className={`flex items-center px-2 py-1 rounded-lg cursor-pointer transition-colors ${
-                                              isBranchSelected
+                                              isBranchChecked
                                                 ? "bg-[var(--primary-container)] text-white font-medium shadow-xs"
                                                 : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                                             }`}

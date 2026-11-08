@@ -109,12 +109,16 @@
     <!-- Indent Guide Line 3: Bangkok Branches -->
     <line x1="72" y1="92" x2="72" y2="152" stroke="#E2E8F0" stroke-width="1"/>
 
-    <!-- BRANCHES IN BANGKOK -->
-    <g id="Node-Branch-1" transform="translate(86, 98)">
-      <text x="0" y="0" font-size="12" font-weight="400" fill="#475569">Arigato Coffee สาขา ซี...</text>
+    <!-- BRANCHES IN BANGKOK (CHECKBOX MULTI-SELECT) -->
+    <g id="Node-Branch-1" transform="translate(86, 92)">
+      <rect width="13" height="13" rx="3.5" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.2"/>
+      <path d="M3.5 6.5l2 2 4-4" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <text x="20" y="10.5" font-size="12" font-weight="500" fill="#1E293B">Arigato Coffee สาขา ซี...</text>
     </g>
-    <g id="Node-Branch-2" transform="translate(86, 130)">
-      <text x="0" y="0" font-size="12" font-weight="400" fill="#475569">Arigato สาขา สามย่าน มิ...</text>
+    <g id="Node-Branch-2" transform="translate(86, 122)">
+      <rect width="13" height="13" rx="3.5" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.2"/>
+      <path d="M3.5 6.5l2 2 4-4" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <text x="20" y="10.5" font-size="12" font-weight="500" fill="#1E293B">Arigato สาขา สามย่าน มิ...</text>
     </g>
 
     <!-- ======================================== -->

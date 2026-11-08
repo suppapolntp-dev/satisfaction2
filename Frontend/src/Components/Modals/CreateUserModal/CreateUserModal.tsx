@@ -199,6 +199,9 @@ export default function CreateUserModal({
               onSelectBranch={orgTree.selectBranch}
               scopePath={formData.dataAccessScope}
               onSelectAll={selectAllBranches}
+              onClearAll={clearAllBranches}
+              selectedBranches={formData.assignedBranches}
+              onToggleBranch={toggleBranch}
               showBreadcrumbs={true}
               collapsible={false}
               className="w-full h-full border-0 rounded-none shadow-none bg-transparent"

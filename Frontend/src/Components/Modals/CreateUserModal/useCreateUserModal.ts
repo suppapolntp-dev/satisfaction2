@@ -346,6 +346,12 @@ ORDER BY v.created_at DESC;`;
       return {
         ...prev,
         assignedBranches: updatedBranches,
+        dataAccessScope:
+          updatedBranches.length === 0
+            ? "All Organizations (สำนักงานใหญ่)"
+            : updatedBranches.length === 1
+            ? updatedBranches[0]
+            : `${updatedBranches.length} สาขา (${updatedBranches.slice(0, 2).join(", ")}${updatedBranches.length > 2 ? "..." : ""})`,
       };
     });
   }, []);
@@ -356,14 +362,16 @@ ORDER BY v.created_at DESC;`;
       ...prev,
       assignedBranches: orgTree.targetBranches,
       assignedBrands: orgTree.targetBrands,
+      dataAccessScope: orgTree.scopePath || prev.dataAccessScope,
     }));
-  }, [orgTree.targetBranches, orgTree.targetBrands]);
+  }, [orgTree.targetBranches, orgTree.targetBrands, orgTree.scopePath]);
 
   // Clear all branches
   const clearAllBranches = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
       assignedBranches: [],
+      dataAccessScope: "All Organizations (สำนักงานใหญ่)",
     }));
   }, []);
 
