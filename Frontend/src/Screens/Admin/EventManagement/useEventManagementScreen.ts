@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import { EventItem } from "@/Types/event";
 import { eventService } from "@/Services/eventService";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 export type EventManagementTab = "calendar" | "events";
 
@@ -14,6 +15,7 @@ export interface UseEventManagementScreenProps {
 export function useEventManagementScreen({
   initialTab = "calendar",
 }: UseEventManagementScreenProps = {}) {
+  const { isApiEnabled } = useApiMode();
   const [activeTab, setActiveTab] = useState<EventManagementTab>(initialTab);
   const [events, setEvents] = useState<EventItem[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -60,7 +62,7 @@ export function useEventManagementScreen({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isApiEnabled]);
 
   const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId as EventManagementTab);

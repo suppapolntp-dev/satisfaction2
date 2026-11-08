@@ -6,12 +6,14 @@ import SearchInput from "@/Components/Inputs/SearchInput";
 import { searchAuditLogs } from "@/Lib/search/searchEngine";
 import { ActivityAuditLog, ApiServiceHealth } from "@/Types/audit";
 import { auditService } from "@/Services/auditService";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 // =========================================================================
 // ─── MAIN AUDIT SCREEN COMPONENT
 // =========================================================================
 
 export default function AuditScreen() {
+  const { isApiEnabled } = useApiMode();
   const [activeTab, setActiveTab] = useState<"activity_logs" | "api_health">("activity_logs");
   const [searchAuditQuery, setSearchAuditQuery] = useState("");
   const [selectedLogId, setSelectedLogId] = useState<string>("");
@@ -38,7 +40,7 @@ export default function AuditScreen() {
       }
     }
     fetchAuditData();
-  }, []);
+  }, [isApiEnabled]);
 
   // KPI Stats
   const auditStatsOverviewData: StatItem[] = useMemo(() => {

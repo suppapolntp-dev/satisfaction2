@@ -6,8 +6,10 @@ import SearchInput from "@/Components/Inputs/SearchInput";
 import NotificationInboxList from "@/Components/Lists/NotificationInboxList";
 import { SystemNotificationItem } from "@/Types/notification";
 import { notificationService } from "@/Services/notificationService";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 export default function NotificationTriageScreen() {
+  const { isApiEnabled } = useApiMode();
   const [notificationsList, setNotificationsList] = useState<SystemNotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchNotificationQuery, setSearchNotificationQuery] = useState("");
@@ -29,7 +31,7 @@ export default function NotificationTriageScreen() {
       }
     }
     fetchNotificationsData();
-  }, []);
+  }, [isApiEnabled]);
 
   // ข้อมูลสถิติ KPI การแจ้งเตือน
   const notificationStatsData: StatItem[] = useMemo(() => {
