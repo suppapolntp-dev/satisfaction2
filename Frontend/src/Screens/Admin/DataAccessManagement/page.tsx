@@ -28,6 +28,7 @@ import DataAccessTable from "@/Components/Tables/DataAccessTable";
 import TierLevelManagementModal from "@/Components/Modals/TierLevelManagementModal";
 import TierLevelFormModal from "@/Components/Modals/TierLevelFormModal";
 import { useModal } from "@/Context/ModalContext";
+import { useApiMode } from "@/Context/ApiModeContext";
 
 // ==========================================================================
 // ─── MAIN DATA ACCESS MANAGEMENT COMPONENT
@@ -40,6 +41,7 @@ export interface DataAccessManagementScreenProps {
 export default function DataAccessManagementScreen({
   hideHeader = false,
 }: DataAccessManagementScreenProps = {}) {
+  const { isApiEnabled } = useApiMode();
   const { showConfirm, showSuccess, showError } = useModal();
 
   const [usersList, setUsersList] = useState<UserAccessRecord[]>([]);
@@ -93,6 +95,17 @@ export default function DataAccessManagementScreen({
     async function fetchInitialData() {
       try {
         setIsLoading(true);
+
+        if (!isApiEnabled) {
+          setUsersList([]);
+          setTierLevels([]);
+          setAvailableBrandsList([]);
+          setAvailableBranchesList([]);
+          setCustomScopes([]);
+          setBrandHierarchy([]);
+          return;
+        }
+
         const [accessUsers, brands, branches, tiers] = await Promise.all([
           dataAccessService.getDataAccessUsers(),
           brandService.getBrands(),
@@ -172,7 +185,7 @@ export default function DataAccessManagementScreen({
       }
     }
     fetchInitialData();
-  }, []);
+  }, [isApiEnabled]);
 
   // ─── SCOPE CONTEXT (กระเป๋า / ชั้นหนังสือของสโคปที่เลือก) ───
   const currentScopeContext = useMemo(() => {

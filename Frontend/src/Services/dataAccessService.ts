@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, isApiModeEnabled } from "./apiClient";
 import { 
   UserAccessRecord, 
   BrandItem, 
@@ -134,9 +134,12 @@ import { userService } from "./userService";
 
 export const dataAccessService = {
   async getDataAccessUsers(): Promise<UserAccessRecord[]> {
+    if (!isApiModeEnabled()) {
+      return [];
+    }
     try {
       const response = await apiClient.get<UserAccessRecord[]>("/data-access/users");
-      if (response.success && Array.isArray(response.data) && response.data.length > 0) {
+      if (response.success && Array.isArray(response.data)) {
         return response.data;
       }
     } catch {}
@@ -195,6 +198,9 @@ export const dataAccessService = {
   },
 
   async getHierarchyTree(): Promise<BrandItem[]> {
+    if (!isApiModeEnabled()) {
+      return [];
+    }
     try {
       const response = await apiClient.get<BrandItem[]>("/organization/hierarchy");
       if (response.success && Array.isArray(response.data) && response.data.length > 0) {
