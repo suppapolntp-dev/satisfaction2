@@ -97,6 +97,35 @@ export default function OrgHierarchyTreeSidebar({
       .filter(Boolean) as BrandItem[];
   }, [brandHierarchy, searchQuery]);
 
+  // Compute active breadcrumb path dynamically from current selection state
+  const activeDisplayPath = React.useMemo(() => {
+    if (selectedScopeLevel === "BRANCH" && selectedBranch) {
+      const bName = selectedBrand?.name || "";
+      const rName = selectedRegion?.name || "";
+      const pName = selectedProvince?.name || "";
+      const brName = selectedBranch.name;
+      return [bName, rName, pName, brName].filter(Boolean).join(" > ");
+    }
+    if (selectedScopeLevel === "PROVINCE" && selectedProvince) {
+      const bName = selectedBrand?.name || "";
+      const rName = selectedRegion?.name || "";
+      const pName = selectedProvince.name;
+      return [bName, rName, pName].filter(Boolean).join(" > ");
+    }
+    if (selectedScopeLevel === "REGION" && selectedRegion) {
+      const bName = selectedBrand?.name || "";
+      const rName = selectedRegion.name;
+      return [bName, rName].filter(Boolean).join(" > ");
+    }
+    if (selectedScopeLevel === "BRAND" && selectedBrand) {
+      return selectedBrand.name;
+    }
+    if (selectedScopeLevel === "SUPER_ADMIN") {
+      return "All Organizations (สำนักงานใหญ่)";
+    }
+    return scopePath || "All Organizations (สำนักงานใหญ่)";
+  }, [selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch, scopePath]);
+
   if (collapsible && isCollapsed) {
     return (
       <aside
@@ -173,18 +202,18 @@ export default function OrgHierarchyTreeSidebar({
         {/* Breadcrumb Path & Select All Action Row (Figma scope-hierarchy-sidebar 1 Parity) */}
         {(showBreadcrumbs || scopePath || onSelectAll) ? (
           <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-2 pb-0.5">
-            <div className="text-[10px] leading-tight text-slate-500 truncate flex-1 min-w-0" title={scopePath}>
-              {scopePath ? (
+            <div className="text-[10px] leading-tight text-slate-500 truncate flex-1 min-w-0" title={activeDisplayPath}>
+              {activeDisplayPath && activeDisplayPath !== "All Organizations (สำนักงานใหญ่)" ? (
                 <>
                   <div className="text-slate-400 truncate">
-                    {scopePath.includes(" > ")
-                      ? scopePath.split(" > ").slice(0, -1).join(" / ") + " /"
-                      : "Organization /"}
+                    {activeDisplayPath.includes(" > ")
+                      ? activeDisplayPath.split(" > ").slice(0, -1).join(" / ") + " /"
+                      : activeDisplayPath + " /"}
                   </div>
                   <div className="font-semibold text-slate-700 truncate mt-0.5">
-                    {scopePath.includes(" > ")
-                      ? scopePath.split(" > ").slice(-1)[0]
-                      : scopePath}
+                    {activeDisplayPath.includes(" > ")
+                      ? activeDisplayPath.split(" > ").slice(-1)[0]
+                      : activeDisplayPath}
                   </div>
                 </>
               ) : (

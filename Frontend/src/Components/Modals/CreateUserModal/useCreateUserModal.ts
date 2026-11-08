@@ -327,7 +327,7 @@ ORDER BY v.created_at DESC;`;
       setErrorMessage(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, user, orgTree.scopePath, orgTree.targetBrands, orgTree.targetBranches]);
+  }, [isOpen, user, defaultScope]);
 
   const handleChange = useCallback((field: keyof CreateUserFormData, value: unknown) => {
     setFormData((prev) => ({

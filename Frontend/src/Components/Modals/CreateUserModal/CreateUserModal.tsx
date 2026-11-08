@@ -252,33 +252,7 @@ export default function CreateUserModal({
                       <label className="block text-xs font-bold text-slate-700">
                         รหัสองค์กร (Corporate ID) <span className="text-red-500">*</span>
                       </label>
-                      {!isEditMode ? (
-                        <div className="flex items-center gap-2 text-[10px]">
-                          <button
-                            type="button"
-                            onClick={handleGenerateCorporateId}
-                            className="text-blue-600 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
-                            title="สุ่มสร้าง Corporate ID ตาม Tier"
-                          >
-                            <svg className="w-2.5 h-2.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                            </svg>
-                            <span>สร้างรหัส</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyField("corporateId")}
-                            className="text-slate-500 font-semibold hover:underline cursor-pointer"
-                            title="คัดลอก Corporate ID"
-                          >
-                            {copiedField === "corporateId" ? (
-                              <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
-                            ) : (
-                              <span>คัดลอก</span>
-                            )}
-                          </button>
-                        </div>
-                      ) : (
+                      {isEditMode && (
                         <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
                           <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -314,33 +288,7 @@ export default function CreateUserModal({
                       <label className="block text-xs font-bold text-slate-700">
                         รหัสผ่านองค์กร (Corporate Password) {!isEditMode && <span className="text-red-500">*</span>}
                       </label>
-                      {!isEditMode ? (
-                        <div className="flex items-center gap-2 text-[10px]">
-                          <button
-                            type="button"
-                            onClick={handleGeneratePassword}
-                            className="text-blue-600 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
-                            title="สุ่มสร้างรหัสผ่านปลอดภัย"
-                          >
-                            <svg className="w-2.5 h-2.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                            </svg>
-                            <span>สุ่มรหัสผ่าน</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyField("password")}
-                            className="text-slate-500 font-semibold hover:underline cursor-pointer"
-                            title="คัดลอกรหัสผ่าน"
-                          >
-                            {copiedField === "password" ? (
-                              <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
-                            ) : (
-                              <span>คัดลอก</span>
-                            )}
-                          </button>
-                        </div>
-                      ) : (
+                      {isEditMode && (
                         <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
                           (คงรหัสผ่านเดิม)
                         </span>
