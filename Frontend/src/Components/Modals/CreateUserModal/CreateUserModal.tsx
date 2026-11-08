@@ -73,6 +73,7 @@ export default function CreateUserModal({
 
   const targetBranches = formData.assignedBranches || [];
   const fullName = `${formData.firstName || ""} ${formData.lastName || ""}`.trim();
+  const currentRole = userConfig.roles.find((r) => r.name === formData.role) || userConfig.roles[0];
 
   return (
     <div
@@ -85,13 +86,13 @@ export default function CreateUserModal({
 
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 w-full max-w-5xl xl:max-w-6xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+        className="relative z-10 w-full max-w-5xl rounded-3xl bg-white border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] md:h-[544px] animate-in zoom-in-95 duration-200"
       >
-        {/* ─── 1. MODAL HEADER BAR ─── */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
-          <div className="flex items-center gap-3.5 min-w-0">
+        {/* ─── 1. MODAL HEADER BAR (Figma 13-91 Parity) ─── */}
+        <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
             {/* User Action Icon Squircle */}
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
@@ -103,42 +104,69 @@ export default function CreateUserModal({
             <div className="min-w-0">
               <h2
                 id="create-user-modal-title"
-                className="text-base sm:text-lg font-bold text-slate-950 tracking-tight leading-snug truncate"
+                className="text-base font-bold text-slate-900 tracking-tight leading-snug truncate"
               >
                 {isEditMode
                   ? (fullName ? `แก้ไขข้อมูล: ${fullName}` : "แก้ไขข้อมูลผู้ใช้งาน (Edit User Profile)")
                   : (fullName || "เพิ่มผู้ใช้งานใหม่ (Create New User)")}
               </h2>
-
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
-                  {formData.tierLevel}
-                </span>
-
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[320px]"
-                  title={formData.dataAccessScope}
-                >
-                  <svg className="w-3 h-3 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                  <span className="truncate">{formData.dataAccessScope || "All Organizations"}</span>
-                </span>
-              </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
-            aria-label="Close modal"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          {/* Right Header Navigation: Tab Pills + Close Button */}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Segmented Tab Pills Capsule */}
+            <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab("account_profile")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                  activeTab === "account_profile"
+                    ? "bg-white text-blue-600 shadow-2xs border border-slate-200/80"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Account Profile</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("data_access_scope")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                  activeTab === "data_access_scope"
+                    ? "bg-white text-blue-600 shadow-2xs border border-slate-200/80"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span>DataAccess</span>
+                {targetBranches.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 leading-none">
+                    {targetBranches.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Circular Close Action */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
+              aria-label="Close modal"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* ─── 2. ERROR BANNER ─── */}
@@ -148,8 +176,8 @@ export default function CreateUserModal({
           </div>
         )}
 
-        {/* ─── 3. SPLIT WORKSPACE BODY (Left: Scope Tree | Right: Details Form) ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr] flex-1 overflow-hidden min-h-0">
+        {/* ─── 3. SPLIT WORKSPACE BODY (220px Sidebar | Fluid Form) ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] flex-1 overflow-hidden min-h-0">
           
           {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR ─── */}
           <aside className="border-r border-slate-100 bg-slate-50/50 flex flex-col overflow-hidden h-full">
@@ -175,281 +203,266 @@ export default function CreateUserModal({
           </aside>
 
           {/* ─── RIGHT PANEL: USER FORM & ASSIGNED SCOPE DETAILS ─── */}
-          <main className="p-5 sm:p-6 overflow-y-auto bg-white space-y-5 custom-scrollbar">
+          <main className="p-5 sm:p-6 overflow-y-auto bg-white space-y-4 custom-scrollbar">
             
-            {/* ─── TAB PILLS: ACCOUNT PROFILE vs DATA ACCESS SCOPE ─── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-              <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("account_profile")}
-                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
-                    activeTab === "account_profile"
-                      ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
-                  }`}
-                >
-                  <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>Account Profile (ข้อมูลบัญชี)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("data_access_scope")}
-                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
-                    activeTab === "data_access_scope"
-                      ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
-                  }`}
-                >
-                  <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                  <span>DataAccess Scope (ขอบเขตข้อมูล)</span>
-                  {targetBranches.length > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 leading-none">
-                      {targetBranches.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              {/* Scope Breadcrumb Hint */}
-              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 truncate max-w-[280px]">
-                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
-                <span className="truncate font-medium">{formData.dataAccessScope || "All Organizations"}</span>
-              </div>
-            </div>
-
-            {/* ─── TAB 1: ACCOUNT PROFILE ─── */}
+            {/* ─── TAB 1: ACCOUNT PROFILE (Figma 13-91 Order: ID/Pass -> Name -> Email/Phone -> Role) ─── */}
             {activeTab === "account_profile" && (
-              <div className="space-y-5 animate-in fade-in duration-150">
-                {/* 1. ข้อมูลส่วนตัวผู้ใช้งาน */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="space-y-4 animate-in fade-in duration-150">
+                {/* 1.1 Section Header & Account Status Toggle */}
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
                     <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
-                    <span>ข้อมูลบัญชีผู้ใช้งาน (User Account Details)</span>
-                  </h3>
+                    <span>ข้อมูลบัญชีผู้ใช้งาน (USER ACCOUNT DETAILS)</span>
+                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    {/* First Name */}
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-700">
-                        ชื่อ (First Name) <span className="text-red-500">*</span>
-                      </label>
+                  {/* Status Toggle on Right Header */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-600">สถานะบัญชี</span>
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
                       <input
-                        type="text"
-                        value={formData.firstName}
-                        onChange={(e) => handleChange("firstName", e.target.value)}
-                        placeholder="e.g. สมชาย"
-                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
-                        required
+                        type="checkbox"
+                        checked={formData.status === "Active"}
+                        onChange={(e) => handleChange("status", e.target.checked ? "Active" : "Inactive")}
+                        className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer accent-blue-600"
                       />
-                    </div>
-
-                    {/* Last Name */}
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-700">
-                        นามสกุล (Last Name) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.lastName}
-                        onChange={(e) => handleChange("lastName", e.target.value)}
-                        placeholder="e.g. เกียรติสกุล"
-                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
-                        required
-                      />
-                    </div>
-
-                    {/* Email Address */}
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                        <span>
-                          อีเมล (Corporate Email) <span className="text-red-500">*</span>
-                        </span>
-                        {isEditMode && (
-                          <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                            <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                            (ล็อกไม่อนุญาตให้แก้ไข)
-                          </span>
-                        )}
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleChange("email", e.target.value)}
-                        placeholder="somchai@company.com"
-                        required={!isEditMode}
-                        readOnly={isEditMode}
-                        disabled={isEditMode}
-                        title={isEditMode ? "อีเมลบัญชีผู้ใช้ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
-                        className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
-                          isEditMode
-                            ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
-                            : "bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                          formData.status === "Active"
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-200 text-slate-600"
                         }`}
-                      />
-                    </div>
+                      >
+                        {formData.status === "Active" ? "✓ Active" : "Inactive"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
 
-                    {/* Phone Number */}
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-700">
-                        เบอร์โทรศัพท์ (Phone)
+                {/* 1.2 Form Fields Grid (2 Columns) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                  {/* ROW 1.1: Corporate ID */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700">
+                        รหัสองค์กร (Corporate ID) <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => handleChange("phone", e.target.value)}
-                        placeholder="+66 81 234 5678"
-                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono"
-                      />
-                    </div>
-
-                    {/* Corporate ID */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-[11px] font-bold text-slate-700">
-                          รหัสองค์กร (Corporate ID) <span className="text-red-500">*</span>
-                        </label>
-                        {!isEditMode ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={handleGenerateCorporateId}
-                              className="text-[10px] font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
-                              title="สุ่มสร้าง Corporate ID ตาม Tier"
-                            >
-                              <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                              </svg>
-                              <span>สร้างรหัส</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyField("corporateId")}
-                              className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 cursor-pointer"
-                              title="คัดลอก Corporate ID"
-                            >
-                              {copiedField === "corporateId" ? (
-                                <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
-                              ) : (
-                                <span>คัดลอก</span>
-                              )}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                            <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                            (ล็อกไม่อนุญาตให้แก้ไข)
-                          </span>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        value={formData.userCode || formData.corporateId}
-                        onChange={(e) => {
-                          handleChange("userCode", e.target.value);
-                          handleChange("corporateId", e.target.value);
-                        }}
-                        placeholder="e.g. SA-101 / BM-201"
-                        readOnly={isEditMode}
-                        disabled={isEditMode}
-                        title={isEditMode ? "รหัสพนักงาน / User ID ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
-                        className={`h-9 w-full px-3 text-xs rounded-xl font-mono ${
-                          isEditMode
-                            ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
-                            : "bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-bold"
-                        }`}
-                        required
-                      />
-                    </div>
-
-                    {/* Corporate Password - Only for Add User / Create Mode */}
-                    {!isEditMode && (
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-[11px] font-bold text-slate-700">
-                            รหัสผ่านองค์กร (Corporate Password) <span className="text-red-500">*</span>
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={handleGeneratePassword}
-                              className="text-[10px] font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
-                              title="สุ่มสร้างรหัสผ่านปลอดภัย"
-                            >
-                              <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                              </svg>
-                              <span>สุ่มรหัสผ่าน</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyField("password")}
-                              className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 cursor-pointer"
-                              title="คัดลอกรหัสผ่าน"
-                            >
-                              {copiedField === "password" ? (
-                                <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
-                              ) : (
-                                <span>คัดลอก</span>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                        <div className="relative flex items-center">
-                          <input
-                            type={isPasswordVisible ? "text" : "password"}
-                            value={formData.password}
-                            onChange={(e) => handleChange("password", e.target.value)}
-                            placeholder="e.g. CRG@8732!"
-                            className="h-9 w-full pl-3 pr-10 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono font-bold"
-                            required
-                          />
+                      {!isEditMode ? (
+                        <div className="flex items-center gap-2 text-[10px]">
                           <button
                             type="button"
-                            onClick={togglePasswordVisibility}
-                            className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                            aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                            onClick={handleGenerateCorporateId}
+                            className="text-blue-600 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                            title="สุ่มสร้าง Corporate ID ตาม Tier"
                           >
-                            {isPasswordVisible ? (
-                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                <line x1="1" y1="1" x2="23" y2="23" />
-                              </svg>
+                            <svg className="w-2.5 h-2.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                            <span>สร้างรหัส</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyField("corporateId")}
+                            className="text-slate-500 font-semibold hover:underline cursor-pointer"
+                            title="คัดลอก Corporate ID"
+                          >
+                            {copiedField === "corporateId" ? (
+                              <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
                             ) : (
-                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
+                              <span>คัดลอก</span>
                             )}
                           </button>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                          <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          (ล็อกไม่อนุญาตให้แก้ไข)
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.userCode || formData.corporateId}
+                      onChange={(e) => {
+                        handleChange("userCode", e.target.value);
+                        handleChange("corporateId", e.target.value);
+                      }}
+                      placeholder="e.g. SA-169"
+                      readOnly={isEditMode}
+                      disabled={isEditMode}
+                      title={isEditMode ? "รหัสองค์กร / User ID ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
+                      className={`h-8.5 w-full px-3 text-xs rounded-xl font-mono ${
+                        isEditMode
+                          ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                          : "bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-bold"
+                      }`}
+                      required
+                    />
+                  </div>
 
-                    {/* System Role */}
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-700">
-                        บทบาทระบบ (System Role) <span className="text-red-500">*</span>
+                  {/* ROW 1.2: Corporate Password */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700">
+                        รหัสผ่านองค์กร (Corporate Password) {!isEditMode && <span className="text-red-500">*</span>}
                       </label>
+                      {!isEditMode ? (
+                        <div className="flex items-center gap-2 text-[10px]">
+                          <button
+                            type="button"
+                            onClick={handleGeneratePassword}
+                            className="text-blue-600 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                            title="สุ่มสร้างรหัสผ่านปลอดภัย"
+                          >
+                            <svg className="w-2.5 h-2.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                            <span>สุ่มรหัสผ่าน</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyField("password")}
+                            className="text-slate-500 font-semibold hover:underline cursor-pointer"
+                            title="คัดลอกรหัสผ่าน"
+                          >
+                            {copiedField === "password" ? (
+                              <span className="text-emerald-600 font-bold">คัดลอกแล้ว!</span>
+                            ) : (
+                              <span>คัดลอก</span>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                          (คงรหัสผ่านเดิม)
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type={isPasswordVisible ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => handleChange("password", e.target.value)}
+                        placeholder={isEditMode ? "••••••••" : "e.g. CRG@1623#"}
+                        disabled={isEditMode}
+                        className={`h-8.5 w-full pl-3 pr-8 text-xs rounded-xl font-mono font-bold ${
+                          isEditMode
+                            ? "bg-slate-100/90 border border-slate-200 text-slate-400 cursor-not-allowed select-none"
+                            : "bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+                        }`}
+                        required={!isEditMode}
+                      />
+                      {!isEditMode && (
+                        <button
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          className="absolute right-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                          aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                        >
+                          {isPasswordVisible ? (
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                              <line x1="1" y1="23" x2="23" y2="1" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ROW 2.1: First Name */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      ชื่อ (First Name) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.firstName}
+                      onChange={(e) => handleChange("firstName", e.target.value)}
+                      placeholder="e.g. สมชาย"
+                      className="h-8.5 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium placeholder:text-slate-400"
+                      required
+                    />
+                  </div>
+
+                  {/* ROW 2.2: Last Name */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      นามสกุล (Last Name) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => handleChange("lastName", e.target.value)}
+                      placeholder="e.g. เกียรติสกุล"
+                      className="h-8.5 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium placeholder:text-slate-400"
+                      required
+                    />
+                  </div>
+
+                  {/* ROW 3.1: Corporate Email */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>
+                        อีเมล (Corporate Email) <span className="text-red-500">*</span>
+                      </span>
+                      {isEditMode && (
+                        <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                          (ล็อกไม่อนุญาตให้แก้ไข)
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      placeholder="somchai@company.com"
+                      required={!isEditMode}
+                      readOnly={isEditMode}
+                      disabled={isEditMode}
+                      title={isEditMode ? "อีเมลบัญชีผู้ใช้ถูกล็อก ไม่สามารถแก้ไขได้" : undefined}
+                      className={`h-8.5 w-full px-3 text-xs rounded-xl font-mono ${
+                        isEditMode
+                          ? "bg-slate-100/90 border border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                          : "bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder:text-slate-400"
+                      }`}
+                    />
+                  </div>
+
+                  {/* ROW 3.2: Phone Number */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      เบอร์โทรศัพท์ (Phone)
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleChange("phone", e.target.value)}
+                      placeholder="+66 81 234 5678"
+                      className="h-8.5 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-mono placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* ROW 4: System Role (Full Width col-span-2) */}
+                  <div className="col-span-1 sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      บทบาทระบบ (System Role) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
                       <select
                         value={formData.role}
                         onChange={(e) => handleChange("role", e.target.value)}
-                        className="h-9 w-full px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium"
+                        className="h-8.5 w-full pl-3 pr-8 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium appearance-none cursor-pointer"
                       >
                         {userConfig.roles.map((role) => (
                           <option key={role.id} value={role.name}>
@@ -457,26 +470,32 @@ export default function CreateUserModal({
                           </option>
                         ))}
                       </select>
+                      <svg className="w-4 h-4 text-slate-500 absolute right-3 top-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </div>
                   </div>
-                </div>
 
-                {/* Account Status Toggle */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700">
-                    สถานะบัญชี (Account Status)
-                  </span>
-                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={formData.status === "Active"}
-                      onChange={(e) => handleChange("status", e.target.checked ? "Active" : "Inactive")}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer accent-blue-600"
-                    />
-                    <span className={`text-xs font-semibold ${formData.status === "Active" ? "text-emerald-700" : "text-slate-500"}`}>
-                      {formData.status === "Active" ? "Active (เปิดใช้งานทันที)" : "Inactive (ปิดใช้งาน)"}
-                    </span>
-                  </label>
+                  {/* ROW 5: Role Description & Permissions Card */}
+                  {currentRole && (
+                    <div className="col-span-1 sm:col-span-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="16" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-bold text-slate-800 flex items-center gap-2">
+                          <span>{currentRole.label}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                          {currentRole.description}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -643,7 +662,7 @@ export default function CreateUserModal({
         </div>
 
         {/* ─── 4. MODAL FOOTER ─── */}
-        <div className="px-6 py-3.5 border-t border-slate-100 bg-slate-50/70 flex justify-end gap-3 shrink-0">
+        <div className="px-6 py-3.5 border-t border-slate-100 bg-white flex justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
