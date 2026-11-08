@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scope Hierarchy Tree Sidebar - Figma Component</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Prompt', 'Inter', system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-6">
+
+  <!-- Sidebar Component Container -->
+  <aside class="w-[350px] bg-white border border-slate-200/90 rounded-2xl shadow-xl overflow-hidden flex flex-col p-3.5 space-y-3">
+    
+    <!-- 1. Header: Scope Search & Collapse Action -->
+    <div class="flex items-center justify-between">
+      <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        Scope Hierarchy
+      </span>
+      <button type="button" class="w-5 h-5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- 2. Pill Search Input -->
+    <div class="relative flex items-center">
+      <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Filter brand / branch..."
+        class="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-slate-200 rounded-full outline-none focus:border-blue-500 text-slate-800 placeholder:text-slate-400"
+      />
+    </div>
+
+    <!-- 3. All Organizations Active Button -->
+    <button type="button" class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
+      <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      </svg>
+      <span class="truncate flex-1 text-left">All Organizations</span>
+    </button>
+
+    <div class="border-t border-slate-100 -mx-3.5" />
+
+    <!-- 4. Tree Navigation Body -->
+    <nav class="flex-1 space-y-1 text-xs select-none">
+      
+      <!-- Brand 1: Arigato (Expanded) -->
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 px-1 py-1 rounded-xl text-slate-800 font-semibold cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-slate-500 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+          <div class="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shadow-2xs">A</div>
+          <span>Arigato</span>
+        </div>
+
+        <!-- Arigato Children (Indented) -->
+        <div class="pl-4 ml-2.5 border-l border-slate-200 space-y-1.5 pt-0.5">
+          <!-- Region 1: ภาคกลาง (Expanded) -->
+          <div class="space-y-1">
+            <div class="flex items-center gap-1.5 text-slate-700 font-semibold cursor-pointer">
+              <svg class="w-3 h-3 text-slate-500 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+              <span>ภาคกลาง</span>
+            </div>
+
+            <!-- ภาคกลาง Children (Indented) -->
+            <div class="pl-3.5 ml-2 border-l border-slate-200 space-y-1.5 pt-0.5">
+              <!-- Province 1: กรุงเทพมหานคร (Expanded) -->
+              <div class="space-y-1">
+                <div class="flex items-center gap-1.5 text-slate-800 font-semibold cursor-pointer">
+                  <div class="w-4 h-4 rounded border border-slate-900 flex items-center justify-center">
+                    <svg class="w-2.5 h-2.5 text-slate-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9" /></svg>
+                  </div>
+                  <span>กรุงเทพมหานคร</span>
+                </div>
+
+                <!-- Branches -->
+                <div class="pl-4 ml-2 border-l border-slate-200 space-y-1 pt-0.5 text-slate-600 font-normal">
+                  <div class="truncate py-0.5 hover:text-slate-900 cursor-pointer">Arigato Coffee สาขา ซี...</div>
+                  <div class="truncate py-0.5 hover:text-slate-900 cursor-pointer">Arigato สาขา สามย่าน มิ...</div>
+                </div>
+              </div>
+
+              <!-- Province 2: นนทบุรี (Collapsed) -->
+              <div class="flex items-center gap-1.5 text-slate-700 font-medium cursor-pointer">
+                <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                <span>นนทบุรี</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Region 2: ภาคเหนือ (Collapsed) -->
+          <div class="flex items-center gap-1.5 text-slate-700 font-medium cursor-pointer">
+            <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+            <span>ภาคเหนือ</span>
+          </div>
+
+          <!-- Region 3: ภาคตะวันออก (Collapsed) -->
+          <div class="flex items-center gap-1.5 text-slate-700 font-medium cursor-pointer">
+            <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+            <span>ภาคตะวันออก</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Brand 2: Auntie Anne's -->
+      <div class="flex items-center gap-2 px-1 py-1 rounded-xl text-slate-800 font-semibold cursor-pointer hover:bg-slate-50">
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+        <div class="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shadow-2xs">A</div>
+        <span>Auntie Anne's</span>
+      </div>
+
+      <!-- Brand 3: KFC -->
+      <div class="flex items-center gap-2 px-1 py-1 rounded-xl text-slate-800 font-semibold cursor-pointer hover:bg-slate-50">
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+        <div class="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shadow-2xs">K</div>
+        <span>KFC</span>
+      </div>
+
+      <!-- Brand 4: Mister Donut -->
+      <div class="flex items-center gap-2 px-1 py-1 rounded-xl text-slate-800 font-semibold cursor-pointer hover:bg-slate-50">
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+        <div class="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shadow-2xs">M</div>
+        <span>Mister Donut</span>
+      </div>
+
+      <!-- Brand 5: Ootoya -->
+      <div class="flex items-center gap-2 px-1 py-1 rounded-xl text-slate-800 font-semibold cursor-pointer hover:bg-slate-50">
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+        <div class="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shadow-2xs">O</div>
+        <span>Ootoya</span>
+      </div>
+
+      <!-- Brand 6: Pepper Lunch -->
+      <div class="flex items-center gap-2 px-1 py-1 rounded-xl text-slate-800 font-semibold cursor-pointer hover:bg-slate-50">
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+        <div class="w-5 h-5 rounded-full bg-white text-blue-600 border border-blue-300 flex items-center justify-center font-bold text-[10px] shadow-2xs">P</div>
+        <span>Pepper Lunch</span>
+      </div>
+
+    </nav>
+  </aside>
+
+</body>
+</html>

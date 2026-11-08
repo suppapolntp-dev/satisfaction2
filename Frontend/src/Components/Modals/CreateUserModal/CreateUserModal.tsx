@@ -176,10 +176,10 @@ export default function CreateUserModal({
           </div>
         )}
 
-        {/* ─── 3. SPLIT WORKSPACE BODY (298px Sidebar | Fluid Form - Figma Parity) ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-[298px_1fr] flex-1 overflow-hidden min-h-0">
+        {/* ─── 3. SPLIT WORKSPACE BODY (350px Sidebar | Fluid Form - Figma Parity) ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] flex-1 overflow-hidden min-h-0">
           
-          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR (Figma W:298px) ─── */}
+          {/* ─── LEFT PANEL: 5-TIER ORG HIERARCHY TREE SIDEBAR (Figma W:350px) ─── */}
           <aside className="border-r border-slate-100 bg-slate-50/50 flex flex-col overflow-hidden h-full">
             <OrgHierarchyTreeSidebar
               brandHierarchy={orgTree.brandHierarchy}
