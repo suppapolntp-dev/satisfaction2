@@ -49,6 +49,7 @@ export default function DataAccessManagementScreen({
   const [availableBrandsList, setAvailableBrandsList] = useState<string[]>([]);
   const [availableBranchesList, setAvailableBranchesList] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // ─── SELECTION STATE FOR HIERARCHY DRILL-DOWN ───
   const [selectedScopeLevel, setSelectedScopeLevel] = useState<HierarchyScopeLevel | null>("SUPER_ADMIN");
@@ -592,7 +593,13 @@ export default function DataAccessManagementScreen({
       <div className="flex flex-col lg:flex-row gap-5 items-start">
         
         {/* ─── LEFT: 5-TIER SCOPE HIERARCHY SIDEBAR (298px Master Parity) ─── */}
-        <div className="w-full lg:w-[298px] xl:w-[298px] shrink-0 space-y-3">
+        <div
+          className={`shrink-0 transition-all duration-200 ${
+            isSidebarCollapsed
+              ? "w-12"
+              : "w-full lg:w-[298px] xl:w-[298px] space-y-3"
+          }`}
+        >
           <OrgHierarchyTreeSidebar
             brandHierarchy={brandHierarchy}
             searchQuery={treeSearchQuery}
@@ -609,92 +616,96 @@ export default function DataAccessManagementScreen({
             onSelectRegion={handleSelectRegion}
             onSelectProvince={handleSelectProvince}
             onSelectBranch={handleSelectBranch}
-            collapsible={false}
+            collapsible={true}
+            isCollapsed={isSidebarCollapsed}
+            onCollapseChange={setIsSidebarCollapsed}
             className="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm"
           />
 
           {/* ─── CUSTOM CO-LOCATION SCOPES (COMPACT ACCORDION) ─── */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-sm space-y-2">
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                <span>Custom Scopes</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleOpenCreateCustomScope}
-                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <span>+ สร้าง</span>
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              {customScopes.length === 0 ? (
-                <div className="p-2.5 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
-                  <p className="text-[10px] text-slate-400">ยังไม่มีกลุ่มสโคปกำหนดเอง</p>
+          {!isSidebarCollapsed && (
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-sm space-y-2">
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                  <span>Custom Scopes</span>
                 </div>
-              ) : (
-                customScopes.map((scope) => {
-                  const isSelected = selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope?.id === scope.id;
+                <button
+                  type="button"
+                  onClick={handleOpenCreateCustomScope}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <span>+ สร้าง</span>
+                </button>
+              </div>
 
-                  return (
-                    <div
-                      key={scope.id}
-                      onClick={() => handleSelectCustomScope(scope)}
-                      className={`p-2 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
-                        isSelected
-                          ? "bg-blue-50/90 border-blue-300 text-blue-950 shadow-2xs"
-                          : "bg-slate-50/70 border-slate-200/80 text-slate-800 hover:bg-slate-100"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span className="text-xs font-bold truncate">{scope.name}</span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => handleOpenEditCustomScope(scope, e)}
-                            className="p-0.5 text-slate-400 hover:text-slate-700 cursor-pointer"
-                          >
-                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M12 20h9" />
-                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteCustomScope(scope, e)}
-                            className="p-0.5 text-slate-400 hover:text-rose-600 cursor-pointer"
-                          >
-                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
+              <div className="space-y-1">
+                {customScopes.length === 0 ? (
+                  <div className="p-2.5 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+                    <p className="text-[10px] text-slate-400">ยังไม่มีกลุ่มสโคปกำหนดเอง</p>
+                  </div>
+                ) : (
+                  customScopes.map((scope) => {
+                    const isSelected = selectedScopeLevel === "CUSTOM_SCOPE" && selectedCustomScope?.id === scope.id;
+
+                    return (
+                      <div
+                        key={scope.id}
+                        onClick={() => handleSelectCustomScope(scope)}
+                        className={`p-2 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
+                          isSelected
+                            ? "bg-blue-50/90 border-blue-300 text-blue-950 shadow-2xs"
+                            : "bg-slate-50/70 border-slate-200/80 text-slate-800 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-xs font-bold truncate">{scope.name}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => handleOpenEditCustomScope(scope, e)}
+                              className="p-0.5 text-slate-400 hover:text-slate-700 cursor-pointer"
+                            >
+                              <svg className="w-3 cubic 24 24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteCustomScope(scope, e)}
+                              className="p-0.5 text-slate-400 hover:text-rose-600 cursor-pointer"
+                            >
+                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1">
+                          {scope.brands.map((bName) => (
+                            <span
+                              key={bName}
+                              className="text-[9px] font-semibold px-1 py-0.2 rounded bg-white text-blue-900 border border-blue-200/80 shadow-2xs"
+                            >
+                              {bName}
+                            </span>
+                          ))}
+                          <span className="text-[9px] text-slate-400">
+                            {scope.branches.length} สาขา
+                          </span>
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-1">
-                        {scope.brands.map((bName) => (
-                          <span
-                            key={bName}
-                            className="text-[9px] font-semibold px-1 py-0.2 rounded bg-white text-blue-900 border border-blue-200/80 shadow-2xs"
-                          >
-                            {bName}
-                          </span>
-                        ))}
-                        <span className="text-[9px] text-slate-400">
-                          {scope.branches.length} สาขา
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ─── RIGHT: ASSIGNED USERS DETAIL TABLE (Direct Table with Add Scope + Add User) ─── */}

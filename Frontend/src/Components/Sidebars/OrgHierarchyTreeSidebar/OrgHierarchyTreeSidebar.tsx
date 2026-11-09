@@ -31,6 +31,8 @@ export interface OrgHierarchyTreeSidebarProps {
   showBreadcrumbs?: boolean;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  isCollapsed?: boolean;
+  onCollapseChange?: (collapsed: boolean) => void;
   className?: string;
   selectedBranches?: string[];
   onToggleBranch?: (branchName: string, branch?: BranchItem) => void;
@@ -59,12 +61,22 @@ export default function OrgHierarchyTreeSidebar({
   showBreadcrumbs = true,
   collapsible = true,
   defaultCollapsed = false,
+  isCollapsed: controlledCollapsed,
+  onCollapseChange,
   className = "",
   selectedBranches,
   onToggleBranch,
   enableBranchCheckboxes,
 }: OrgHierarchyTreeSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState<boolean>(defaultCollapsed);
+  const [internalCollapsed, setInternalCollapsed] = React.useState<boolean>(defaultCollapsed);
+  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+
+  const handleToggleCollapse = (collapsed: boolean) => {
+    if (controlledCollapsed === undefined) {
+      setInternalCollapsed(collapsed);
+    }
+    onCollapseChange?.(collapsed);
+  };
 
   const displayBrands = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -141,7 +153,7 @@ export default function OrgHierarchyTreeSidebar({
       >
         <button
           type="button"
-          onClick={() => setIsCollapsed(false)}
+          onClick={() => handleToggleCollapse(false)}
           className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
           title="ขยายแถบ Scope Hierarchy"
           aria-label="Expand sidebar"
@@ -156,7 +168,7 @@ export default function OrgHierarchyTreeSidebar({
         {/* Vertical Label */}
         <span
           className="text-[11px] font-bold text-slate-400 tracking-wider uppercase [writing-mode:vertical-lr] rotate-180 cursor-pointer hover:text-slate-700 transition-colors"
-          onClick={() => setIsCollapsed(false)}
+          onClick={() => handleToggleCollapse(false)}
         >
           Scope Hierarchy
         </span>
@@ -180,7 +192,7 @@ export default function OrgHierarchyTreeSidebar({
           {collapsible && (
             <button
               type="button"
-              onClick={() => setIsCollapsed(true)}
+              onClick={() => handleToggleCollapse(true)}
               className="w-5 h-5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               title="พับเก็บแถบข้าง"
               aria-label="Collapse sidebar"
