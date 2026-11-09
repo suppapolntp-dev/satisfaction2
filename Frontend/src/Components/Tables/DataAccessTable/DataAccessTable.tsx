@@ -39,17 +39,26 @@ function SortHeaderCell({
   const alignmentClass =
     align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start";
 
+  const paddingClass =
+    align === "right"
+      ? "py-4 pr-6 pl-4"
+      : align === "center"
+      ? "py-4 px-4 text-center"
+      : field === "userName"
+      ? "py-4 pl-6 pr-4"
+      : "py-4 px-4";
+
   return (
     <th
       scope="col"
-      className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 select-none cursor-pointer hover:text-slate-800 transition-colors ${
+      className={`${paddingClass} text-[11px] font-bold text-slate-400 tracking-wider uppercase select-none cursor-pointer hover:text-slate-700 transition-colors ${
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"
       }`}
       onClick={() => onSort(field)}
     >
       <div className={`inline-flex items-center gap-1.5 ${alignmentClass}`}>
         <span>{label}</span>
-        <span className={`transition-opacity ${isActive ? "opacity-100 text-[var(--primary-container)]" : "opacity-30"}`}>
+        <span className={`transition-opacity ${isActive ? "opacity-100 text-blue-600 font-bold" : "opacity-30"}`}>
           {isActive && direction === "desc" ? (
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="m6 9 6 6 6-6" />
@@ -68,19 +77,19 @@ function SortHeaderCell({
 function getTierBadgeClass(tier: string): string {
   switch (tier) {
     case "Super Admin":
-      return "bg-purple-50 text-purple-700 border-purple-200/80";
+      return "bg-fuchsia-50 text-fuchsia-600";
     case "Brand Owner":
-      return "bg-indigo-50 text-indigo-700 border-indigo-200/80";
+      return "bg-indigo-50 text-indigo-600";
     case "Regional Manager (RM)":
-      return "bg-blue-50 text-blue-700 border-blue-200/80";
+      return "bg-blue-50 text-blue-700";
     case "Area Manager (AM)":
-      return "bg-teal-50 text-teal-700 border-teal-200/80";
+      return "bg-teal-50 text-teal-700";
     case "Branch Staff":
-      return "bg-slate-50 text-slate-700 border-slate-200/80";
+      return "bg-slate-100 text-slate-600";
     case "Custom Scope":
-      return "bg-amber-50 text-amber-700 border-amber-200/80";
+      return "bg-amber-50 text-amber-700";
     default:
-      return "bg-blue-50 text-blue-700 border-blue-200/80";
+      return "bg-blue-50 text-blue-700";
   }
 }
 
@@ -115,63 +124,52 @@ export default function DataAccessTable({
   } = useDataAccessTable({ users, initialPageSize: 8 });
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {/* ─── 1. TOOLBAR: SEARCH & 2 BUTTONS: ADD SCOPE, ADD USER (Brand & Branch Standard) ─── */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2.5">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-sm">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search user, email, scope..."
-              className="w-full pl-9.5 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder-slate-400 transition-all"
-            />
-            {searchKeyword && (
-              <button
-                type="button"
-                onClick={() => handleSearchChange("")}
-                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-                aria-label="Clear search"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
+    <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col ${className}`}>
+      {/* ─── 1. TOP TOOLBAR (Pixel-Perfect from Figma Reference) ─── */}
+      <div className="p-5 sm:p-6 border-b border-slate-100 bg-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* Search Input with Pill Border */}
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
           </div>
-        </div>
-
-        {/* Counter Info & 2 Buttons: Add Scope, Add User */}
-        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-2.5 text-xs text-slate-500">
-          <span>
-            Showing <strong className="font-semibold text-slate-700">{paginatedUsers.length}</strong> of{" "}
-            <strong className="font-semibold text-slate-700">{totalItems}</strong> users
-          </span>
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search user, email, scope..."
+            className="w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 placeholder-slate-400 transition-all shadow-2xs font-sans"
+          />
           {searchKeyword && (
             <button
               type="button"
-              onClick={handleResetFilters}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors cursor-pointer"
+              onClick={() => handleSearchChange("")}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label="Clear search"
             >
-              Reset search
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           )}
+        </div>
+
+        {/* Right Side: Showing count + Add Scope + Add User */}
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 shrink-0">
+          <span className="text-xs sm:text-sm text-slate-500 font-medium">
+            Showing <strong className="text-slate-800 font-bold">{paginatedUsers.length}</strong> of{" "}
+            <strong className="text-slate-800 font-bold">{totalItems}</strong> users
+          </span>
 
           {/* Button 1: Add Scope (Custom Scope) */}
           {onAddScope && (
             <button
               type="button"
               onClick={onAddScope}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors cursor-pointer"
               title="สร้าง Custom Scope สำหรับรวมสาขาหรือข้ามแบรนด์"
             >
               <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -187,10 +185,10 @@ export default function DataAccessTable({
             <button
               type="button"
               onClick={handleAddUserAction}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition-colors cursor-pointer"
               title={scopeTitle ? `เพิ่ม/มอบหมาย User ใน ${scopeTitle}` : "เพิ่ม/มอบหมาย User"}
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -204,34 +202,34 @@ export default function DataAccessTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/80">
+            <tr className="border-b border-slate-200/70 text-[11px] font-bold text-slate-400 tracking-wider uppercase bg-white">
               <SortHeaderCell
-                label="Authorized User"
+                label="AUTHORIZED USER"
                 field="userName"
                 activeField={sortField}
                 direction={sortDirection}
                 onSort={handleSort}
               />
               <SortHeaderCell
-                label="Tier Level"
+                label="TIER LEVEL"
                 field="tierLevel"
                 activeField={sortField}
                 direction={sortDirection}
                 onSort={handleSort}
               />
-              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Scope Coverage (แบรนด์ / สาขาที่ดูแล)
+              <th scope="col" className="py-4 px-4 min-w-[280px]">
+                SCOPE COVERAGE (แบรนด์ / สาขาที่ดูแล)
               </th>
               <SortHeaderCell
-                label="Status"
+                label="STATUS"
                 field="status"
                 activeField={sortField}
                 direction={sortDirection}
                 onSort={handleSort}
                 align="center"
               />
-              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-                Actions
+              <th scope="col" className="py-4 pr-6 pl-4 text-right">
+                ACTIONS
               </th>
             </tr>
           </thead>
@@ -309,19 +307,19 @@ export default function DataAccessTable({
                 return (
                   <tr
                     key={user.id}
-                    className="hover:bg-slate-50/80 transition-colors duration-150"
+                    className="hover:bg-slate-50/70 transition-colors"
                   >
                     {/* User Identity */}
-                    <td className="px-5 py-3.5 whitespace-nowrap">
+                    <td className="py-4 pl-6 pr-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                        <div className="w-9 h-9 rounded-full bg-blue-50/90 border border-blue-100 text-blue-600 font-bold text-sm flex items-center justify-center shrink-0">
                           {initials}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 truncate leading-snug">
+                          <p className="font-bold text-slate-900 leading-snug truncate">
                             {user.userName || "-"}
                           </p>
-                          <p className="text-xs text-slate-500 font-mono truncate leading-tight">
+                          <p className="text-xs text-slate-400 font-sans truncate">
                             {user.userEmail || "-"}
                           </p>
                         </div>
@@ -329,9 +327,9 @@ export default function DataAccessTable({
                     </td>
 
                     {/* Tier Level */}
-                    <td className="px-5 py-3.5 whitespace-nowrap">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getTierBadgeClass(
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTierBadgeClass(
                           user.tierLevel
                         )}`}
                       >
@@ -340,16 +338,16 @@ export default function DataAccessTable({
                     </td>
 
                     {/* Scope Coverage */}
-                    <td className="px-5 py-3.5">
-                      <div className="space-y-1 max-w-xs">
-                        <div className="flex flex-wrap items-center gap-1">
+                    <td className="py-4 px-4">
+                      <div className="space-y-1.5 max-w-sm">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           {brands.length === 0 ? (
                             <span className="text-xs text-slate-400">ทุกแบรนด์ (Global)</span>
                           ) : (
                             brands.map((b) => (
                               <span
                                 key={b}
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs"
+                                className="px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100/60"
                               >
                                 {b}
                               </span>
@@ -357,37 +355,37 @@ export default function DataAccessTable({
                           )}
                         </div>
                         {branches.length > 0 && (
-                          <p
-                            className="text-[11px] text-slate-500 truncate max-w-[260px]"
+                          <div
+                            className="text-xs text-slate-400 truncate max-w-[280px]"
                             title={branches.join(", ")}
                           >
                             สาขา: {branches.slice(0, 3).join(", ")}
                             {branches.length > 3 && ` (+${branches.length - 3})`}
-                          </p>
+                          </div>
                         )}
                       </div>
                     </td>
 
                     {/* Status */}
-                    <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                    <td className="py-4 px-4 whitespace-nowrap text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                           isActive
-                            ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-[var(--accent-light)]"
-                            : "bg-slate-100 text-slate-600 ring-slate-500/20"
+                            ? "bg-blue-50/80 text-blue-600 border border-blue-200"
+                            : "bg-slate-100 text-slate-600 border border-slate-200/80"
                         }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            isActive ? "bg-[var(--primary-container)]" : "bg-slate-400"
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isActive ? "bg-blue-600" : "bg-slate-400"
                           }`}
                         />
-                        {user.status || "Active"}
+                        <span>{user.status || "Active"}</span>
                       </span>
                     </td>
 
                     {/* Actions Menu (3 dots) */}
-                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                    <td className="py-4 pr-6 pl-4 whitespace-nowrap text-right">
                       <div className="relative inline-block text-left">
                         <button
                           type="button"
@@ -396,7 +394,7 @@ export default function DataAccessTable({
                               activeMenuUserId === user.id ? null : user.id
                             )
                           }
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           aria-label="Actions menu"
                         >
                           <svg
@@ -483,47 +481,49 @@ export default function DataAccessTable({
       </div>
 
       {/* ─── 3. PAGINATION CONTROLS ─── */}
-      <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-        <div>
-          Showing page <strong className="font-semibold text-slate-700">{currentPage}</strong> of{" "}
-          <strong className="font-semibold text-slate-700">{totalPages}</strong>
-        </div>
+      {totalPages > 1 && (
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div>
+            Showing page <strong className="font-semibold text-slate-700">{currentPage}</strong> of{" "}
+            <strong className="font-semibold text-slate-700">{totalPages}</strong>
+          </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
-          >
-            Previous
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <div className="flex items-center gap-1.5">
             <button
-              key={page}
               type="button"
-              onClick={() => handlePageChange(page)}
-              className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                currentPage === page
-                  ? "bg-[var(--primary-container)] text-white shadow-xs"
-                  : "text-slate-600 hover:bg-white border border-transparent hover:border-slate-200"
-              }`}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
             >
-              {page}
+              Previous
             </button>
-          ))}
 
-          <button
-            type="button"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
-          >
-            Next
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => handlePageChange(page)}
+                className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  currentPage === page
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "text-slate-600 hover:bg-white border border-transparent hover:border-slate-200"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
