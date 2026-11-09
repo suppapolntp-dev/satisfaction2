@@ -15,3 +15,5 @@ export { default as CreateUserModal } from "./CreateUserModal";
 export * from "./CreateUserModal";
 export { default as EditUserModal } from "./EditUserModal";
 export * from "./EditUserModal";
+export { default as RoleModal } from "./RoleModal";
+export * from "./RoleModal";
