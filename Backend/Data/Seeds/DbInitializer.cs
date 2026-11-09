@@ -177,6 +177,7 @@ public static class DbInitializer
                     BrandName = "Mister Donut",
                     Category = "Bakery & Sweets",
                     BrandIconName = "donut_large",
+                    BrandLogoUrl = "/images/brands/mister-donut.svg",
                     ParentCompanyName = "Enterprise Group"
                 },
                 new Brand
@@ -185,6 +186,7 @@ public static class DbInitializer
                     BrandName = "KFC",
                     Category = "Quick Service Restaurant",
                     BrandIconName = "restaurant",
+                    BrandLogoUrl = "/images/brands/kfc.svg",
                     ParentCompanyName = "Enterprise Group"
                 },
                 new Brand
@@ -193,6 +195,7 @@ public static class DbInitializer
                     BrandName = "Ootoya",
                     Category = "Japanese Casual Dining",
                     BrandIconName = "ramen_dining",
+                    BrandLogoUrl = "/images/brands/ootoya.svg",
                     ParentCompanyName = "Enterprise Group"
                 },
                 new Brand
@@ -201,6 +204,7 @@ public static class DbInitializer
                     BrandName = "Pepper Lunch",
                     Category = "Japanese Fast Casual",
                     BrandIconName = "dinner_dining",
+                    BrandLogoUrl = "/images/brands/pepper-lunch.svg",
                     ParentCompanyName = "Enterprise Group"
                 },
                 new Brand
@@ -209,6 +213,7 @@ public static class DbInitializer
                     BrandName = "Auntie Anne's",
                     Category = "Pretzel & Bakery",
                     BrandIconName = "bakery_dining",
+                    BrandLogoUrl = "/images/brands/auntie-annes.svg",
                     ParentCompanyName = "Enterprise Group"
                 },
                 new Brand
@@ -217,6 +222,7 @@ public static class DbInitializer
                     BrandName = "Arigato",
                     Category = "Coffee & Beverage",
                     BrandIconName = "local_cafe",
+                    BrandLogoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMAyJ2wGea0fdN47kjswpn2Y7F1hmfItxNkdbPfEYC1Y2QhWztiVwMptRb&s=10",
                     ParentCompanyName = "Enterprise Group"
                 }
             );
