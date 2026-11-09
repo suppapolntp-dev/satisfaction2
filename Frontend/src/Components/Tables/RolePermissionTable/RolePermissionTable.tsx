@@ -582,7 +582,7 @@ export default function RolePermissionTable({
                                     ? `คลิกเพื่อปิดสิทธิ์ ${permissionKey} ทั้งหมดในหมวดนี้`
                                     : `คลิกเพื่อเปิดสิทธิ์ ${permissionKey} ทั้งหมดในหมวดนี้`
                                 }
-                                className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-[4px] flex items-center justify-center transition-all cursor-pointer ${
+                                className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-[4px] shrink-0 aspect-square flex items-center justify-center transition-all cursor-pointer ${
                                   isAllChecked
                                     ? "bg-[var(--primary-container)] text-white shadow-2xs hover:bg-[var(--primary-hover)]"
                                     : isIndeterminate
@@ -650,26 +650,30 @@ export default function RolePermissionTable({
                               </div>
                             </td>
 
-                            {/* Child Permissions: Rounded Blue Pill if Checked, Flat Gray Dash if Unchecked */}
+                            {/* Child Permissions: Standard Square Checkbox matching parent (1:1 aspect-square, not stretched) */}
                             {permissionFieldKeys.map((permissionKey) => {
                               const isChecked = Boolean(childRow[permissionKey]);
 
                               return (
                                 <td key={`child-col-${permissionKey}`} className="px-4 py-2 text-center align-middle">
                                   <div className="flex items-center justify-center">
-                                    {isChecked ? (
-                                      <button
-                                        type="button"
-                                        role="checkbox"
-                                        aria-checked={true}
-                                        aria-label={`Disable ${permissionKey} for ${childRow.module}`}
-                                        disabled={readOnly}
-                                        onClick={() => onPermissionChange(childKey, permissionKey)}
-                                        className="w-16 h-3.5 rounded-full bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] active:scale-95 transition-all flex items-center justify-center shadow-2xs cursor-pointer disabled:opacity-50 mx-auto"
-                                        title={`คลิกเพื่อปิดสิทธิ์ ${permissionKey}`}
-                                      >
+                                    <button
+                                      type="button"
+                                      role="checkbox"
+                                      aria-checked={isChecked}
+                                      aria-label={`${permissionKey} permission for ${childRow.module}`}
+                                      disabled={readOnly}
+                                      onClick={() => onPermissionChange(childKey, permissionKey)}
+                                      className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-[4px] shrink-0 aspect-square flex items-center justify-center transition-all cursor-pointer ${
+                                        isChecked
+                                          ? "bg-[var(--primary-container)] text-white shadow-2xs hover:bg-[var(--primary-hover)]"
+                                          : "bg-white border-2 border-slate-300 hover:border-slate-400"
+                                      } ${readOnly ? "opacity-50 cursor-not-allowed" : "active:scale-90"}`}
+                                      title={isChecked ? `คลิกเพื่อปิดสิทธิ์ ${permissionKey}` : `คลิกเพื่อเปิดสิทธิ์ ${permissionKey}`}
+                                    >
+                                      {isChecked && (
                                         <svg
-                                          className="w-2.5 h-2.5 text-white stroke-[3]"
+                                          className="w-3 h-3 text-white stroke-[2.5]"
                                           viewBox="0 0 24 24"
                                           fill="none"
                                           stroke="currentColor"
@@ -678,21 +682,8 @@ export default function RolePermissionTable({
                                         >
                                           <polyline points="20 6 9 17 4 12" />
                                         </svg>
-                                      </button>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        role="checkbox"
-                                        aria-checked={false}
-                                        aria-label={`Enable ${permissionKey} for ${childRow.module}`}
-                                        disabled={readOnly}
-                                        onClick={() => onPermissionChange(childKey, permissionKey)}
-                                        className="w-16 h-6 flex items-center justify-center group cursor-pointer disabled:opacity-50 mx-auto"
-                                        title={`คลิกเพื่อเปิดสิทธิ์ ${permissionKey}`}
-                                      >
-                                        <span className="w-16 h-0.5 bg-slate-200 group-hover:bg-[var(--primary-container)]/50 rounded-full transition-colors block" />
-                                      </button>
-                                    )}
+                                      )}
+                                    </button>
                                   </div>
                                 </td>
                               );
