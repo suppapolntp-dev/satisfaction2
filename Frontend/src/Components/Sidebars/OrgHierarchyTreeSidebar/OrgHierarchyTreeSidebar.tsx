@@ -56,7 +56,7 @@ export default function OrgHierarchyTreeSidebar({
   scopePath,
   onSelectAll,
   onClearAll,
-  showBreadcrumbs = false,
+  showBreadcrumbs = true,
   collapsible = true,
   defaultCollapsed = false,
   className = "",
@@ -167,7 +167,7 @@ export default function OrgHierarchyTreeSidebar({
   return (
     <aside
       className={`flex flex-col bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-all ${
-        className.includes("w-") ? "" : "w-full lg:w-60 xl:w-[250px]"
+        className.includes("w-") ? "" : "w-full lg:w-[298px] xl:w-[298px]"
       } ${className}`}
     >
       {/* ─── Header: Scope Search, Collapse Action & Root Action (image_782ae7.png & Figma 13-91) ─── */}
@@ -208,82 +208,66 @@ export default function OrgHierarchyTreeSidebar({
         </div>
 
         {/* Breadcrumb Path & Select All Action Row (Figma scope-hierarchy-sidebar 1 Parity) */}
-        {(showBreadcrumbs || scopePath || onSelectAll) ? (
-          <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-2 pb-0.5">
-            <div className="text-[10px] leading-tight text-slate-500 truncate flex-1 min-w-0" title={activeDisplayPath}>
-              {activeDisplayPath && activeDisplayPath !== "All Organizations (สำนักงานใหญ่)" ? (
-                <>
-                  <div className="text-slate-400 truncate">
+        <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-2 pb-0.5">
+          <div
+            onClick={onSelectSuperAdmin}
+            className="text-[10px] leading-tight text-slate-500 truncate flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+            title={activeDisplayPath}
+          >
+            {activeDisplayPath && activeDisplayPath !== "All Organizations (สำนักงานใหญ่)" && activeDisplayPath !== "All Organizations" ? (
+              <>
+                <div className="text-slate-400 truncate">
+                  {activeDisplayPath.includes(" > ")
+                    ? activeDisplayPath.split(" > ").slice(0, -1).join(" / ") + " /"
+                    : activeDisplayPath + " /"}
+                </div>
+                <div className="font-semibold text-slate-700 truncate mt-0.5 flex items-center gap-1">
+                  <span>
                     {activeDisplayPath.includes(" > ")
-                      ? activeDisplayPath.split(" > ").slice(0, -1).join(" / ") + " /"
-                      : activeDisplayPath + " /"}
-                  </div>
-                  <div className="font-semibold text-slate-700 truncate mt-0.5 flex items-center gap-1">
-                    <span>
-                      {activeDisplayPath.includes(" > ")
-                        ? activeDisplayPath.split(" > ").slice(-1)[0]
-                        : activeDisplayPath}
-                    </span>
-                    {selectedBranches && selectedBranches.length > 0 && (
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/60">
-                        {selectedBranches.length} สาขา
-                      </span>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-slate-700">All Organizations</span>
+                      ? activeDisplayPath.split(" > ").slice(-1)[0]
+                      : activeDisplayPath}
+                  </span>
                   {selectedBranches && selectedBranches.length > 0 && (
                     <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/60">
                       {selectedBranches.length} สาขา
                     </span>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-slate-700">All Organizations</span>
+                {selectedBranches && selectedBranches.length > 0 && (
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/60">
+                    {selectedBranches.length} สาขา
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
-            <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-              {onSelectAll && (
+          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+            <button
+              type="button"
+              onClick={onSelectAll || onSelectSuperAdmin}
+              className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+            >
+              Select All
+            </button>
+            {onClearAll && selectedBranches && selectedBranches.length > 0 && (
+              <>
+                <span className="text-slate-300">•</span>
                 <button
                   type="button"
-                  onClick={onSelectAll}
-                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                  onClick={onClearAll}
+                  className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
                 >
-                  Select All
+                  ล้างค่า
                 </button>
-              )}
-              {onClearAll && selectedBranches && selectedBranches.length > 0 && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <button
-                    type="button"
-                    onClick={onClearAll}
-                    className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
-                  >
-                    ล้างค่า
-                  </button>
-                </>
-              )}
-            </div>
+              </>
+            )}
           </div>
-        ) : (
-          /* SuperAdmin Root Button (Pill shape) */
-          <button
-            type="button"
-            onClick={onSelectSuperAdmin}
-            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              selectedScopeLevel === "SUPER_ADMIN"
-                ? "bg-blue-50 text-blue-600 border border-blue-200/80 shadow-2xs"
-                : "text-slate-700 hover:bg-slate-50 border border-transparent"
-            }`}
-          >
-            <svg className="w-3.5 h-3.5 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            </svg>
-            <span className="truncate flex-1 text-left text-[11px] sm:text-xs">All Organizations</span>
-          </button>
-        )}
+        </div>
       </div>
 
       <div className="border-t border-slate-100" />
@@ -477,10 +461,10 @@ export default function OrgHierarchyTreeSidebar({
                                             onClick={(e) =>
                                               onSelectBranch(brand, region, prov, branch, e)
                                             }
-                                            className={`flex items-center px-2 py-1 rounded-lg cursor-pointer transition-colors ${
+                                            className={`flex items-center px-2.5 py-1 rounded-lg cursor-pointer transition-colors text-xs ${
                                               isBranchChecked
-                                                ? "bg-[var(--primary-container)] text-white font-medium shadow-xs"
-                                                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                                ? "bg-blue-600 text-white font-medium shadow-xs"
+                                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                                             }`}
                                           >
                                             <span className="truncate">{branch.name}</span>

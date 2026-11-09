@@ -588,8 +588,8 @@ export default function DataAccessManagementScreen({
       {/* ─── MAIN WORKSPACE: SLIM TREE HIERARCHY + RIGHT DETAIL TABLE (image_782ae7.png) ─── */}
       <div className="flex flex-col lg:flex-row gap-5 items-start">
         
-        {/* ─── LEFT: SLIM 5-TIER SCOPE HIERARCHY SIDEBAR (~250px) ─── */}
-        <div className="w-full lg:w-60 xl:w-[250px] shrink-0 space-y-3">
+        {/* ─── LEFT: 5-TIER SCOPE HIERARCHY SIDEBAR (298px Master Parity) ─── */}
+        <div className="w-full lg:w-[298px] xl:w-[298px] shrink-0 space-y-3">
           <OrgHierarchyTreeSidebar
             brandHierarchy={brandHierarchy}
             searchQuery={treeSearchQuery}
