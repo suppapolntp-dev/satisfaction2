@@ -363,6 +363,7 @@ export default function UserTable({
                 activeField={sortField}
                 direction={sortDirection}
                 onSort={handleSort}
+                align="center"
               />
 
               {/* ACTIONS */}

@@ -221,15 +221,15 @@ export default function BranchTable({
                 align="right"
               />
               <SortHeaderCell
-                label="Status"
+                label="STATUS"
                 field="status"
                 activeField={sortField}
                 direction={sortDirection}
                 onSort={handleSort}
                 align="center"
               />
-              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-                Actions
+              <th scope="col" className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">
+                ACTIONS
               </th>
             </tr>
           </thead>

@@ -249,15 +249,15 @@ export default function EventTable({
                 onSort={handleSort}
               />
               <SortHeaderCell
-                label="สถานะ"
+                label="STATUS"
                 field="eventStatus"
                 activeField={sortField}
                 direction={sortDirection}
                 onSort={handleSort}
                 align="center"
               />
-              <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-600 text-right">
-                จัดการ
+              <th scope="col" className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">
+                ACTIONS
               </th>
             </tr>
           </thead>
@@ -279,9 +279,9 @@ export default function EventTable({
                   <td className="px-5 py-4"><div className="h-4 bg-slate-200 rounded w-24" /></td>
                   <td className="px-5 py-4"><div className="h-4 bg-slate-200 rounded w-28" /></td>
                   <td className="px-5 py-4"><div className="h-4 bg-slate-200 rounded w-36" /></td>
-                  <td className="px-5 py-4"><div className="h-5 bg-slate-200 rounded-full w-20" /></td>
-                  <td className="px-5 py-4 text-center"><div className="h-5 bg-slate-200 rounded-full w-16 mx-auto" /></td>
-                  <td className="px-5 py-4 text-right"><div className="h-7 bg-slate-200 rounded w-14 ml-auto" /></td>
+                  <td className="px-5 py-4"><div className="w-20 h-3 bg-slate-200 rounded" /></td>
+                  <td className="px-5 py-4 text-center"><div className="w-16 h-3 bg-slate-200 rounded mx-auto" /></td>
+                  <td className="px-5 py-4 text-right"><div className="w-8 h-8 bg-slate-200 rounded-lg ml-auto" /></td>
                 </tr>
               ))
             ) : errorMessage ? (
@@ -402,58 +402,119 @@ export default function EventTable({
                       </div>
                     </td>
 
-                    {/* Category Badge */}
+                    {/* Category (Clean dot + text, no AI-slop background badge) */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${categoryConfig.badge}`}
-                      >
-                        <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full shrink-0 ${categoryConfig.dot}`} />
-                        <span>{categoryConfig.label}</span>
+                      <span className="inline-flex items-center text-xs font-medium text-slate-700">
+                        <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${categoryConfig.dot}`} />
+                        {categoryConfig.label}
                       </span>
                     </td>
 
-                    {/* Status Badge */}
+                    {/* Status (Clean dot + text, no background badge - matches Image 1) */}
                     <td className="px-5 py-3.5 whitespace-nowrap text-center">
-                      {isCompleted ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>ทำเสร็จแล้ว</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                          <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse motion-reduce:animate-none" />
-                          <span>รอถึงวัน</span>
-                        </span>
-                      )}
+                      <span
+                        className={`inline-flex items-center text-xs font-semibold ${
+                          isCompleted ? "text-emerald-600" : "text-amber-600"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                            isCompleted ? "bg-emerald-600" : "bg-amber-500"
+                          }`}
+                        />
+                        {isCompleted ? "ทำเสร็จแล้ว" : "รอถึงวัน"}
+                      </span>
                     </td>
 
-                    {/* Action Buttons */}
+                    {/* Actions Menu (3 dots - matches Image 1) */}
                     <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                      <div className="inline-flex items-center gap-1">
-                        {onEditEvent && (
-                          <button
-                            type="button"
-                            onClick={() => onEditEvent(event)}
-                            aria-label={`แก้ไขกิจกรรม ${event.eventName}`}
-                            className={`inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors motion-reduce:transition-none cursor-pointer ${FOCUS_RING}`}
+                      <div className="relative inline-block text-left">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveMenuEventId(
+                              activeMenuEventId === event.eventId ? null : event.eventId
+                            )
+                          }
+                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          aria-label={`Actions for ${event.eventName}`}
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                           >
-                            <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                            </svg>
-                          </button>
-                        )}
-                        {onDeleteEvent && (
-                          <button
-                            type="button"
-                            onClick={() => onDeleteEvent(event)}
-                            aria-label={`ลบกิจกรรม ${event.eventName}`}
-                            className={`inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 text-slate-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors motion-reduce:transition-none cursor-pointer ${FOCUS_RING}`}
-                          >
-                            <svg aria-hidden="true" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
+                            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                            <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                            <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                          </svg>
+                        </button>
+
+                        {activeMenuEventId === event.eventId && (
+                          <>
+                            {/* Backdrop overlay */}
+                            <div
+                              className="fixed inset-0 z-20 cursor-default"
+                              onClick={() => setActiveMenuEventId(null)}
+                            />
+
+                            {/* Dropdown Options */}
+                            <div className="absolute right-0 z-30 mt-1 w-36 origin-top-right rounded-xl bg-white border border-slate-200/90 shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100 text-left">
+                              {onEditEvent && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuEventId(null);
+                                    onEditEvent(event);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[var(--accent-bg)]/60 hover:text-[var(--primary-container)] transition-colors cursor-pointer group"
+                                >
+                                  <svg
+                                    className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-[var(--primary-container)]"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                    <path d="m15 5 4 4" />
+                                  </svg>
+                                  <span>แก้ไขกิจกรรม</span>
+                                </button>
+                              )}
+
+                              {onDeleteEvent && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuEventId(null);
+                                    onDeleteEvent(event);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer group"
+                                >
+                                  <svg
+                                    className="w-3.5 h-3.5 shrink-0 text-rose-400 group-hover:text-rose-600"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  </svg>
+                                  <span>ลบกิจกรรม</span>
+                                </button>
+                              )}
+                            </div>
+                          </>
                         )}
                       </div>
                     </td>
