@@ -2,7 +2,6 @@
 
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
-import SearchInput from "@/Components/Inputs/SearchInput";
 import RolePermissionTable from "@/Components/Tables/RolePermissionTable";
 import RoleModal from "@/Components/Modals/RoleModal";
 import ConfirmDialogModal from "@/Components/Modals/ConfirmDialogModal";
@@ -80,31 +79,38 @@ export default function RoleManagementScreen() {
       />
 
       {/* ─── 2. SPLIT-PANE WORKSPACE ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Side: System Roles List Selection */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                System Roles ({filteredRolesList.length})
-              </h3>
-              <button
-                type="button"
-                onClick={handleOpenCreateRoleModal}
-                className="text-xs font-bold text-blue-900 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                + New
-              </button>
-            </div>
-            <SearchInput
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Left Side: System Roles List Selection (Slim Width Sidebar matching Mockup) */}
+        <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col">
+          {/* 1. Header: SYSTEM ROLES (count) & Collapse Chevron */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs sm:text-sm font-bold tracking-wider text-slate-700 uppercase">
+              SYSTEM ROLES ({filteredRolesList.length})
+            </h2>
+            <button
+              type="button"
+              aria-label="Collapse sidebar"
+              className="text-[var(--primary-container)] hover:opacity-80 transition-opacity p-0.5 cursor-pointer"
+            >
+              <svg className="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* 2. Search Input: Full Pill Shape */}
+          <div className="mt-3">
+            <input
+              type="search"
               value={searchRoleQuery}
-              onChange={setSearchRoleQuery}
-              placeholder="ค้นหาชื่อหรือรหัสบทบาท..."
-              className="w-full"
+              onChange={(e) => setSearchRoleQuery(e.target.value)}
+              placeholder="ค้นหาชื่อบทบาท..."
+              className="w-full rounded-full border border-slate-200 px-4 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]/20 focus:border-[var(--primary-container)] bg-white transition-all font-sans"
             />
           </div>
 
-          <div className="p-2.5 flex flex-col gap-2 max-h-[640px] overflow-y-auto">
+          {/* 3. Roles Cards List (Clean, Minimal, No Clutter) */}
+          <div className="mt-4 flex flex-col gap-2.5 max-h-[640px] overflow-y-auto">
             {filteredRolesList.map((roleItem) => {
               const isCurrentRoleActive = roleItem.roleId === selectedRoleId;
 
@@ -112,86 +118,42 @@ export default function RoleManagementScreen() {
                 <div
                   key={roleItem.roleId}
                   onClick={() => handleSelectRole(roleItem.roleId)}
-                  className={`w-full text-left p-3.5 rounded-xl transition-all duration-150 border cursor-pointer group relative ${
+                  className={`w-full text-left rounded-xl p-3.5 transition-all duration-150 cursor-pointer ${
                     isCurrentRoleActive
-                      ? "bg-blue-50/90 border-blue-600 shadow-xs ring-1 ring-blue-600"
-                      : "bg-white border-slate-200/80 hover:bg-slate-50 hover:border-slate-300"
+                      ? "border-2 border-slate-900 bg-blue-50/20 shadow-2xs"
+                      : "border border-slate-200/80 bg-white hover:bg-slate-50/70 hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="min-w-0 pr-2">
-                      <span
-                        className={`font-bold text-xs block truncate ${
-                          isCurrentRoleActive ? "text-blue-950" : "text-slate-800"
-                        }`}
-                      >
-                        {roleItem.roleName}
-                      </span>
-                      <span className="font-mono text-[10px] text-slate-400">
-                        {roleItem.roleCode || roleItem.roleId}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {roleItem.isSystemDefault && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200">
-                          Standard
-                        </span>
-                      )}
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700">
-                        {roleItem.totalUsersCount || 0} Users
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
+                      {roleItem.roleName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditRoleModal(roleItem);
+                      }}
+                      aria-label={`แก้ไขบทบาท ${roleItem.roleName}`}
+                      className="text-slate-400 hover:text-[var(--primary-container)] transition-colors p-1 cursor-pointer shrink-0"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed mb-3">
-                    {roleItem.roleDescription}
+                  <div className="border-b border-slate-100 my-2" />
+
+                  <p className="text-[11px] text-slate-400">
+                    อัปเดต: {roleItem.roleLastModified}
                   </p>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-[10px] text-slate-400">
-                    <span>อัปเดต: {roleItem.roleLastModified}</span>
-
-                    {/* Role Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEditRoleModal(roleItem);
-                        }}
-                        title="แก้ไขข้อมูลบทบาท"
-                        className="p-1 hover:bg-slate-200 rounded text-slate-600 cursor-pointer transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </button>
-
-                      {!roleItem.isSystemDefault && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRequestDeleteRole(roleItem);
-                          }}
-                          title="ลบบทบาทนี้"
-                          className="p-1 hover:bg-rose-100 hover:text-rose-600 rounded text-slate-400 cursor-pointer transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
                 </div>
               );
             })}
 
             {filteredRolesList.length === 0 && (
-              <div className="py-12 text-center text-xs text-slate-400">
+              <div className="py-10 text-center text-xs text-slate-400">
                 ไม่พบข้อมูลบทบาทที่ค้นหา
               </div>
             )}
@@ -199,7 +161,7 @@ export default function RoleManagementScreen() {
         </div>
 
         {/* Right Side: Granular Permission Matrix Container */}
-        <div className="lg:col-span-8">
+        <div className="flex-1 min-w-0 w-full">
           {activeSelectedRole ? (
             <RolePermissionTable
               permissionData={currentRolePermissions}
