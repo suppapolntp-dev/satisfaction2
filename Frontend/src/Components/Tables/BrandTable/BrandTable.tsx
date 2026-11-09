@@ -264,14 +264,14 @@ export default function BrandTable({
 
                     {/* Brand ID / Code */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                      <span className="font-mono text-xs font-medium text-slate-700">
                         {brand.brandId || brand.id}
                       </span>
                     </td>
 
                     {/* Category */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                      <span className="text-xs font-medium text-slate-700">
                         {brand.category || "General"}
                       </span>
                     </td>

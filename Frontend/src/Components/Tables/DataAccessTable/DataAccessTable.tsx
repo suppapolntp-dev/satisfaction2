@@ -347,7 +347,7 @@ export default function DataAccessTable({
 
                     {/* Tier Level */}
                     <td className="py-4 px-4 whitespace-nowrap">
-                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                      <span className="text-xs font-medium text-slate-700">
                         {user.tierLevel}
                       </span>
                     </td>

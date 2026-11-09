@@ -10,6 +10,8 @@ export interface BranchTableProps {
   onAddBranch?: () => void;
   onEditBranch?: (branch: BranchModel) => void;
   onDeleteBranch?: (branch: BranchModel) => void;
+  scopeFilter?: { level: string; label: string };
+  onClearScopeFilter?: () => void;
   className?: string;
 }
 
@@ -64,6 +66,8 @@ export default function BranchTable({
   onAddBranch,
   onEditBranch,
   onDeleteBranch,
+  scopeFilter,
+  onClearScopeFilter,
   className = "",
 }: BranchTableProps) {
   const [activeMenuBranchId, setActiveMenuBranchId] = useState<string | null>(null);
@@ -84,11 +88,11 @@ export default function BranchTable({
 
   return (
     <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {/* ─── 1. TOOLBAR: SEARCH & ADD BRANCH BUTTON ─── */}
+      {/* ─── 1. TOOLBAR: SEARCH, SCOPE BADGE & ADD BRANCH BUTTON ─── */}
       <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2.5">
+        <div className="flex flex-1 items-center gap-2.5 flex-wrap">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
             <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
@@ -116,6 +120,30 @@ export default function BranchTable({
               </button>
             )}
           </div>
+
+          {/* Active Org Tree Filter Badge */}
+          {scopeFilter && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-50 text-blue-800 border border-blue-200/80 shadow-2xs">
+              <span className="text-blue-500 font-semibold">{scopeFilter.level}:</span>
+              <span className="font-semibold text-blue-950 max-w-[200px] truncate" title={scopeFilter.label}>
+                {scopeFilter.label}
+              </span>
+              {onClearScopeFilter && (
+                <button
+                  type="button"
+                  onClick={onClearScopeFilter}
+                  className="ml-1 p-0.5 hover:bg-blue-200/70 rounded-md text-blue-600 hover:text-blue-900 transition-colors cursor-pointer"
+                  title="Clear filter (Show all branches)"
+                  aria-label="Clear filter"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Counter Info, Reset Filter & Add Branch (Aligned Right) */}
@@ -239,8 +267,19 @@ export default function BranchTable({
                     <p className="text-xs text-slate-500 mt-1">
                       {searchKeyword
                         ? "Try adjusting your search criteria."
+                        : scopeFilter
+                        ? `No branches found matching ${scopeFilter.level}: "${scopeFilter.label}".`
                         : "No branch locations registered yet."}
                     </p>
+                    {scopeFilter && onClearScopeFilter && (
+                      <button
+                        type="button"
+                        onClick={onClearScopeFilter}
+                        className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer border border-blue-200"
+                      >
+                        <span>Show all branches</span>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -278,14 +317,14 @@ export default function BranchTable({
 
                     {/* Branch Code */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                      <span className="font-mono text-xs font-medium text-slate-700">
                         {branch.code || branch.id}
                       </span>
                     </td>
 
                     {/* Brand */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                      <span className="text-xs font-medium text-slate-700">
                         {branch.brand || "-"}
                       </span>
                     </td>

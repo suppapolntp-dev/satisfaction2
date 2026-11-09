@@ -496,14 +496,14 @@ export default function UserTable({
 
                     {/* User ID */}
                     <td className="px-5 py-4">
-                      <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-md inline-block">
+                      <span className="font-mono text-xs font-medium text-slate-700">
                         {user.userCode ?? "-"}
                       </span>
                     </td>
 
                     {/* Role */}
                     <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/80">
+                      <span className="text-xs font-medium text-slate-700">
                         {user.role ?? "-"}
                       </span>
                     </td>
