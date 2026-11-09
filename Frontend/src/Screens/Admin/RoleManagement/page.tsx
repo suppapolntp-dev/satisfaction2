@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import PageHeader from "@/Components/Headers/PageHeader";
-import RoleMetricCards from "@/Components/Cards/RoleMetricCards";
 import SearchInput from "@/Components/Inputs/SearchInput";
 import RolePermissionTable from "@/Components/Tables/RolePermissionTable";
 import RoleModal from "@/Components/Modals/RoleModal";
@@ -45,41 +43,37 @@ export default function RoleManagementScreen() {
 
   return (
     <div className="space-y-6">
-      {/* ─── 1. MODULAR PAGE HEADER ─── */}
-      <PageHeader
-        title="Roles & Permissions (จัดการบทบาทและสิทธิ์)"
-        description="กำหนดสิทธิ์การเข้าถึงเมนูและการทำงานต่าง ๆ ของระบบแบบแยกรายโมดูล (Granular Access Control)"
-        primaryAction={{
-          label: "Create New Role",
-          variant: "primary",
-          icon: (
-            <svg
-              className="w-4 h-4 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <line x1="12" y1="8" x2="12" y2="14" />
-              <line x1="9" y1="11" x2="15" y2="11" />
-            </svg>
-          ),
-          onClick: handleOpenCreateRoleModal,
-        }}
-      />
+      {/* ─── 1. PAGE HEADER SECTION ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <span className="w-10 h-10 rounded-2xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </span>
+            <span>Role &amp; Permission Matrix</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-1 pl-12.5">
+            กำหนดสิทธิ์การเข้าถึงเมนูและการทำงานต่าง ๆ ของระบบแบบแยกรายโมดูล (Granular Access Control)
+          </p>
+        </div>
 
-      {/* ─── 2. ROLE METRIC KPI CARDS ─── */}
-      <RoleMetricCards
-        roles={rolesList}
-        currentRolePermissions={currentRolePermissions}
-        selectedRole={activeSelectedRole}
-        isLoading={isLoading}
-      />
+        <button
+          type="button"
+          onClick={handleOpenCreateRoleModal}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs sm:text-sm shadow-xs transition-all active:scale-95 cursor-pointer"
+        >
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <line x1="12" y1="8" x2="12" y2="14" />
+            <line x1="9" y1="11" x2="15" y2="11" />
+          </svg>
+          <span>Create New Role</span>
+        </button>
+      </div>
 
-      {/* ─── 3. SPLIT-PANE WORKSPACE ─── */}
+      {/* ─── 2. SPLIT-PANE WORKSPACE ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Side: System Roles List Selection */}
         <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/90 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] overflow-hidden flex flex-col">
