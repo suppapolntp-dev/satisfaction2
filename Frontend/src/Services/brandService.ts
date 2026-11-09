@@ -32,12 +32,12 @@ function mapBackendBrandToModel(dto: BackendBrandDto): BrandModel {
 }
 
 export const DEFAULT_DEV_BRANDS: BrandModel[] = [
-  { id: "b-1", brandId: "KFC", brandName: "KFC", parentCompanyName: "Enterprise Group", category: "Fast Food (QSR)", brandLogoUrl: "/images/brands/kfc.svg", brandIconName: "restaurant", totalBranchesCount: 12, totalKiosksCount: 24, csatAverage: "94.2%", status: "Active" },
-  { id: "b-2", brandId: "MISTER_DONUT", brandName: "Mister Donut", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandLogoUrl: "/images/brands/mister-donut.svg", brandIconName: "donut_large", totalBranchesCount: 15, totalKiosksCount: 30, csatAverage: "91.8%", status: "Active" },
-  { id: "b-3", brandId: "OOTOYA", brandName: "Ootoya", parentCompanyName: "Enterprise Group", category: "Japanese Dining", brandLogoUrl: "/images/brands/ootoya.svg", brandIconName: "ramen_dining", totalBranchesCount: 8, totalKiosksCount: 16, csatAverage: "95.5%", status: "Active" },
-  { id: "b-4", brandId: "PEPPER_LUNCH", brandName: "Pepper Lunch", parentCompanyName: "Enterprise Group", category: "Western Casual", brandLogoUrl: "/images/brands/pepper-lunch.svg", brandIconName: "dinner_dining", totalBranchesCount: 6, totalKiosksCount: 12, csatAverage: "89.4%", status: "Active" },
-  { id: "b-5", brandId: "AUNTIE_ANNES", brandName: "Auntie Anne's", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandLogoUrl: "/images/brands/auntie-annes.svg", brandIconName: "bakery_dining", totalBranchesCount: 10, totalKiosksCount: 20, csatAverage: "93.1%", status: "Active" },
-  { id: "b-6", brandId: "ARIGATO", brandName: "Arigato", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandLogoUrl: "/images/brands/arigato.svg", brandIconName: "local_cafe", totalBranchesCount: 14, totalKiosksCount: 28, csatAverage: "90.0%", status: "Active" },
+  { id: "b-1", brandId: "KFC", brandName: "KFC", parentCompanyName: "Enterprise Group", category: "Fast Food (QSR)", brandIconName: "restaurant", totalBranchesCount: 12, totalKiosksCount: 24, csatAverage: "94.2%", status: "Active" },
+  { id: "b-2", brandId: "MISTER_DONUT", brandName: "Mister Donut", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandIconName: "donut_large", totalBranchesCount: 15, totalKiosksCount: 30, csatAverage: "91.8%", status: "Active" },
+  { id: "b-3", brandId: "OOTOYA", brandName: "Ootoya", parentCompanyName: "Enterprise Group", category: "Japanese Dining", brandIconName: "ramen_dining", totalBranchesCount: 8, totalKiosksCount: 16, csatAverage: "95.5%", status: "Active" },
+  { id: "b-4", brandId: "PEPPER_LUNCH", brandName: "Pepper Lunch", parentCompanyName: "Enterprise Group", category: "Western Casual", brandIconName: "dinner_dining", totalBranchesCount: 6, totalKiosksCount: 12, csatAverage: "89.4%", status: "Active" },
+  { id: "b-5", brandId: "AUNTIE_ANNES", brandName: "Auntie Anne's", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandIconName: "bakery_dining", totalBranchesCount: 10, totalKiosksCount: 20, csatAverage: "93.1%", status: "Active" },
+  { id: "b-6", brandId: "ARIGATO", brandName: "Arigato", parentCompanyName: "Enterprise Group", category: "Beverage & Bakery", brandLogoUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMAyJ2wGea0fdN47kjswpn2Y7F1hmfItxNkdbPfEYC1Y2QhWztiVwMptRb&s=10", brandIconName: "local_cafe", totalBranchesCount: 14, totalKiosksCount: 28, csatAverage: "90.0%", status: "Active" },
 ];
 
 export const brandService = {

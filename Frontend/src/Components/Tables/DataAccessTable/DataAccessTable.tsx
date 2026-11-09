@@ -77,25 +77,6 @@ function SortHeaderCell({
   );
 }
 
-const BRAND_LOGO_MAP: Record<string, string> = {
-  kfc: "/images/brands/kfc.svg",
-  "mister donut": "/images/brands/mister-donut.svg",
-  donut: "/images/brands/mister-donut.svg",
-  arigato: "/images/brands/arigato.svg",
-  ootoya: "/images/brands/ootoya.svg",
-  "pepper lunch": "/images/brands/pepper-lunch.svg",
-  "auntie anne's": "/images/brands/auntie-annes.svg",
-  "auntie annes": "/images/brands/auntie-annes.svg",
-};
-
-function getBrandLogoUrl(brandName: string): string | null {
-  const normalized = brandName.trim().toLowerCase();
-  for (const [key, url] of Object.entries(BRAND_LOGO_MAP)) {
-    if (normalized.includes(key)) return url;
-  }
-  return null;
-}
-
 export default function DataAccessTable({
   users = [],
   brands = [],
@@ -139,10 +120,10 @@ export default function DataAccessTable({
     const normalized = brandName.trim().toLowerCase();
     for (const [name, logoUrl] of brandLogoMap.entries()) {
       if (normalized.includes(name) || name.includes(normalized)) {
-        return logoUrl;
+        return logoUrl || null;
       }
     }
-    return getBrandLogoUrl(brandName);
+    return null;
   };
 
   const handleAddUserAction = onAddUser || onAssignScope;
