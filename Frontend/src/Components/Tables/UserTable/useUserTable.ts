@@ -5,22 +5,22 @@ import { UserModel, UserTierLevel, UserStatus } from "@/Types/user";
 import { useUserSettings } from "@/Lib/useUserSettings";
 
 export type UserTableSortField =
-  | "userCode"
-  | "tierLevel"
   | "name"
-  | "email"
+  | "userCode"
   | "role"
-  | "status";
+  | "status"
+  | "email"
+  | "tierLevel";
 
 export type UserTableSortDirection = "asc" | "desc";
 
 export type UserTableColumnKey =
-  | "userCode"
-  | "tierLevel"
   | "name"
+  | "userCode"
   | "role"
   | "scope"
-  | "status";
+  | "status"
+  | "tierLevel";
 
 export interface ColumnDefinition {
   key: UserTableColumnKey;
@@ -28,12 +28,11 @@ export interface ColumnDefinition {
 }
 
 export const USER_TABLE_COLUMNS: ColumnDefinition[] = [
-  { key: "userCode", label: "User ID" },
-  { key: "tierLevel", label: "Tier Level" },
-  { key: "name", label: "Full Name & Email" },
-  { key: "role", label: "Role" },
-  { key: "scope", label: "Assigned Scope" },
-  { key: "status", label: "Status" },
+  { key: "name", label: "FULL NAME & ACCOUNT" },
+  { key: "userCode", label: "USER ID" },
+  { key: "role", label: "ROLE" },
+  { key: "scope", label: "ASSIGNED SCOPE" },
+  { key: "status", label: "STATUS" },
 ];
 
 export interface UseUserTableOptions {
@@ -58,12 +57,12 @@ export function useUserTable({
 
   // Column visibility state (Fardo style)
   const [visibleColumns, setVisibleColumns] = useState<Record<UserTableColumnKey, boolean>>({
-    userCode: true,
-    tierLevel: true,
     name: true,
+    userCode: true,
     role: true,
     scope: true,
     status: true,
+    tierLevel: false,
   });
   const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -89,12 +88,12 @@ export function useUserTable({
   // Reset column visibility to all visible
   const resetColumnVisibility = useCallback(() => {
     setVisibleColumns({
-      userCode: true,
-      tierLevel: true,
       name: true,
+      userCode: true,
       role: true,
       scope: true,
       status: true,
+      tierLevel: false,
     });
   }, []);
 
