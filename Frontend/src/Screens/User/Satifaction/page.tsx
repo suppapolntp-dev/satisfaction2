@@ -1,37 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { BtnSatisfaction } from "@/Components/Buttons/SatifactionButton";
-import { 
-  SatisfactionConfig, 
-  DEFAULT_SATISFACTION_CONFIG, 
-  getStoredSatisfactionConfig 
-} from "@/Lib/satisfactionSettings";
+import { useSatisfactionScreen } from "./useSatisfactionScreen";
 
 export default function SatisfactionScreen() {
-  const [satisfactionConfig, setSatisfactionConfig] = useState<SatisfactionConfig>(DEFAULT_SATISFACTION_CONFIG);
-
-  // ดึงค่าการตั้งค่าเพื่อแสดงหัวข้อและคำอธิบายตามที่ตั้งไว้ใน System Settings
-  useEffect(() => {
-    const loadConfig = () => {
-      setSatisfactionConfig(getStoredSatisfactionConfig());
-    };
-
-    loadConfig();
-
-    const handleSettingsUpdated = () => loadConfig();
-    window.addEventListener("csat_satisfaction_settings_updated", handleSettingsUpdated);
-
-    return () => {
-      window.removeEventListener("csat_satisfaction_settings_updated", handleSettingsUpdated);
-    };
-  }, []);
-
-  const dynamicQuestionTitle = satisfactionConfig.questionTitle || "ท่านมีความพึงพอใจกับการบริการในวันนี้อย่างไร?";
-  const dynamicQuestionFontSize = Number(satisfactionConfig.questionFontSize) || 36;
-  
-  const dynamicSubtitle = satisfactionConfig.questionSubtitle || "โปรดประเมินความพึงพอใจจากตัวเลือกด้านล่าง";
-  const dynamicSubtitleFontSize = Number(satisfactionConfig.subtitleFontSize) || 18;
+  const {
+    dynamicQuestionTitle,
+    dynamicQuestionFontSize,
+    dynamicSubtitle,
+    dynamicSubtitleFontSize,
+  } = useSatisfactionScreen();
 
   return (
     <main 
