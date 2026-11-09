@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { UserAccessRecord } from "@/Types/dataAccess";
+import { BrandModel } from "@/Types/brand";
+import { brandService } from "@/Services/brandService";
 import {
   useDataAccessTable,
   DataAccessTableSortField,
@@ -9,6 +11,7 @@ import {
 
 export interface DataAccessTableProps {
   users: UserAccessRecord[];
+  brands?: BrandModel[];
   isLoading?: boolean;
   scopeTitle?: string;
   scopeTier?: string;
@@ -95,6 +98,7 @@ function getBrandLogoUrl(brandName: string): string | null {
 
 export default function DataAccessTable({
   users = [],
+  brands = [],
   isLoading = false,
   scopeTitle,
   scopeTier,
@@ -106,6 +110,40 @@ export default function DataAccessTable({
   className = "",
 }: DataAccessTableProps) {
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
+  const [apiBrands, setApiBrands] = useState<BrandModel[]>(brands);
+
+  useEffect(() => {
+    if (brands && brands.length > 0) {
+      setApiBrands(brands);
+    } else {
+      brandService.getBrands().then((loaded) => {
+        if (loaded && loaded.length > 0) {
+          setApiBrands(loaded);
+        }
+      });
+    }
+  }, [brands]);
+
+  const brandLogoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    apiBrands.forEach((b) => {
+      if (b.brandLogoUrl) {
+        if (b.brandName) map.set(b.brandName.toLowerCase(), b.brandLogoUrl);
+        if (b.brandId) map.set(b.brandId.toLowerCase(), b.brandLogoUrl);
+      }
+    });
+    return map;
+  }, [apiBrands]);
+
+  const resolveBrandLogo = (brandName: string): string | null => {
+    const normalized = brandName.trim().toLowerCase();
+    for (const [name, logoUrl] of brandLogoMap.entries()) {
+      if (normalized.includes(name) || name.includes(normalized)) {
+        return logoUrl;
+      }
+    }
+    return getBrandLogoUrl(brandName);
+  };
 
   const handleAddUserAction = onAddUser || onAssignScope;
 
@@ -339,7 +377,7 @@ export default function DataAccessTable({
                         {/* Brand Logos Row */}
                         <div className="flex items-center gap-2">
                           {(brands.length > 0 ? brands : ["Arigato", "KFC"]).map((b) => {
-                            const logoUrl = getBrandLogoUrl(b);
+                            const logoUrl = resolveBrandLogo(b);
                             return logoUrl ? (
                               <img
                                 key={b}

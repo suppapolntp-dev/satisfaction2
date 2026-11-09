@@ -19,7 +19,7 @@ import {
   dataAccessService, 
   computePermissionsByTier, 
 } from "@/Services/dataAccessService";
-import { brandService } from "@/Services/brandService";
+import { brandService, BrandModel } from "@/Services/brandService";
 import { branchService } from "@/Services/branchService";
 import { customScopeService } from "@/Services/customScopeService";
 import CustomScopeModal from "@/Components/Modals/CustomScopeModal";
@@ -45,6 +45,7 @@ export default function DataAccessManagementScreen({
   const { showConfirm, showSuccess, showError } = useModal();
 
   const [usersList, setUsersList] = useState<UserAccessRecord[]>([]);
+  const [brandsList, setBrandsList] = useState<BrandModel[]>([]);
   const [availableBrandsList, setAvailableBrandsList] = useState<string[]>([]);
   const [availableBranchesList, setAvailableBranchesList] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,6 +99,7 @@ export default function DataAccessManagementScreen({
 
         if (!isApiEnabled) {
           setUsersList([]);
+          setBrandsList([]);
           setTierLevels([]);
           setAvailableBrandsList([]);
           setAvailableBranchesList([]);
@@ -113,6 +115,7 @@ export default function DataAccessManagementScreen({
           tierLevelService.getTierLevels(),
         ]);
         setUsersList(accessUsers || []);
+        setBrandsList(brands || []);
         setTierLevels(tiers || []);
         
         const bNames = brands ? brands.map((b) => b.brandName) : [];
@@ -698,6 +701,7 @@ export default function DataAccessManagementScreen({
         <div className="flex-1 w-full min-w-0 space-y-4">
           <DataAccessTable
             users={filteredUsers}
+            brands={brandsList}
             isLoading={isLoading}
             scopeTitle={currentScopeContext.title}
             scopeTier={currentScopeContext.tier}
