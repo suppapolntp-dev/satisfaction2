@@ -378,21 +378,29 @@ export default function DataAccessTable({
                         <div className="flex items-center gap-2">
                           {(brands.length > 0 ? brands : ["Arigato", "KFC"]).map((b) => {
                             const logoUrl = resolveBrandLogo(b);
-                            return logoUrl ? (
-                              <img
-                                key={b}
-                                src={logoUrl}
-                                alt={b}
-                                title={b}
-                                className="w-6 h-6 rounded-full object-contain border border-slate-200 bg-white shrink-0 shadow-2xs"
-                              />
-                            ) : (
-                              <div
-                                key={b}
-                                title={b}
-                                className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0"
-                              >
-                                {b.charAt(0).toUpperCase()}
+                            return (
+                              <div key={b} className="relative w-6 h-6 shrink-0">
+                                {logoUrl && (
+                                  <img
+                                    src={logoUrl}
+                                    alt={b}
+                                    title={b}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      const fallback = e.currentTarget.parentElement?.querySelector(".brand-avatar-fallback");
+                                      if (fallback) fallback.classList.remove("hidden");
+                                    }}
+                                    className="w-6 h-6 rounded-full object-contain border border-slate-200 bg-white shadow-2xs"
+                                  />
+                                )}
+                                <div
+                                  title={b}
+                                  className={`brand-avatar-fallback ${
+                                    logoUrl ? "hidden" : ""
+                                  } w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold shadow-2xs`}
+                                >
+                                  {b.charAt(0).toUpperCase()}
+                                </div>
                               </div>
                             );
                           })}
