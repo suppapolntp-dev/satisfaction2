@@ -399,17 +399,15 @@ export default function DataAccessTable({
                       </div>
                     </td>
 
-                    {/* Status */}
+                    {/* Status (Clean dot + text, no background badge) */}
                     <td className="py-4 px-4 whitespace-nowrap text-center">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                          isActive
-                            ? "bg-blue-50/80 text-blue-600 border border-blue-200"
-                            : "bg-slate-100 text-slate-600 border border-slate-200/80"
+                        className={`inline-flex items-center text-xs font-semibold ${
+                          isActive ? "text-blue-600" : "text-slate-400"
                         }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
+                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
                             isActive ? "bg-blue-600" : "bg-slate-400"
                           }`}
                         />

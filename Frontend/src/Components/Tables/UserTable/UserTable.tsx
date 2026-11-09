@@ -87,7 +87,7 @@ function SortHeaderCell({
   return (
     <th
       scope="col"
-      className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 select-none cursor-pointer hover:text-slate-800 transition-colors ${
+      className={`px-5 py-3.5 text-[11px] font-bold text-slate-400 tracking-wider uppercase select-none cursor-pointer hover:text-slate-700 transition-colors ${
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"
       }`}
       onClick={() => onSort(field)}
@@ -352,7 +352,7 @@ export default function UserTable({
               />
 
               {/* ASSIGNED SCOPE */}
-              <th scope="col" className="px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-left">
+              <th scope="col" className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-left">
                 ASSIGNED SCOPE
               </th>
 
@@ -366,7 +366,7 @@ export default function UserTable({
               />
 
               {/* ACTIONS */}
-              <th scope="col" className="px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">
+              <th scope="col" className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">
                 ACTIONS
               </th>
             </tr>
@@ -526,18 +526,16 @@ export default function UserTable({
                       </div>
                     </td>
 
-                    {/* Status Badge */}
-                    <td className="px-5 py-4">
+                    {/* Status (Clean dot + text, no background badge) */}
+                    <td className="px-5 py-4 whitespace-nowrap text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset ${
-                          isActiveStatus
-                            ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-[var(--accent-light)]"
-                            : "bg-slate-100 text-slate-600 ring-slate-500/20"
+                        className={`inline-flex items-center text-xs font-semibold ${
+                          isActiveStatus ? "text-blue-600" : "text-slate-400"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            isActiveStatus ? "bg-[var(--primary-container)]" : "bg-slate-400"
+                            isActiveStatus ? "bg-blue-600" : "bg-slate-400"
                           }`}
                         />
                         {user.status ?? "Active"}

@@ -339,18 +339,16 @@ export default function BranchTable({
                       {(branch.kioskCount || 0).toLocaleString()}
                     </td>
 
-                    {/* Status */}
+                    {/* Status (Clean dot + text, no background badge) */}
                     <td className="px-5 py-3.5 whitespace-nowrap text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset ${
-                          isActive
-                            ? "bg-[var(--accent-bg)] text-[var(--primary-container)] ring-[var(--accent-light)]"
-                            : "bg-slate-100 text-slate-600 ring-slate-500/20"
+                        className={`inline-flex items-center text-xs font-semibold ${
+                          isActive ? "text-blue-600" : "text-slate-400"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            isActive ? "bg-[var(--primary-container)]" : "bg-slate-400"
+                            isActive ? "bg-blue-600" : "bg-slate-400"
                           }`}
                         />
                         {branch.status || "Active"}
