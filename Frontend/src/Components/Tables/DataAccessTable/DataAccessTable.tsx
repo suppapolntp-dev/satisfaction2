@@ -74,23 +74,23 @@ function SortHeaderCell({
   );
 }
 
-function getTierBadgeClass(tier: string): string {
-  switch (tier) {
-    case "Super Admin":
-      return "bg-fuchsia-50 text-fuchsia-600";
-    case "Brand Owner":
-      return "bg-indigo-50 text-indigo-600";
-    case "Regional Manager (RM)":
-      return "bg-blue-50 text-blue-700";
-    case "Area Manager (AM)":
-      return "bg-teal-50 text-teal-700";
-    case "Branch Staff":
-      return "bg-slate-100 text-slate-600";
-    case "Custom Scope":
-      return "bg-amber-50 text-amber-700";
-    default:
-      return "bg-blue-50 text-blue-700";
+const BRAND_LOGO_MAP: Record<string, string> = {
+  kfc: "/images/brands/kfc.svg",
+  "mister donut": "/images/brands/mister-donut.svg",
+  donut: "/images/brands/mister-donut.svg",
+  arigato: "/images/brands/arigato.svg",
+  ootoya: "/images/brands/ootoya.svg",
+  "pepper lunch": "/images/brands/pepper-lunch.svg",
+  "auntie anne's": "/images/brands/auntie-annes.svg",
+  "auntie annes": "/images/brands/auntie-annes.svg",
+};
+
+function getBrandLogoUrl(brandName: string): string | null {
+  const normalized = brandName.trim().toLowerCase();
+  for (const [key, url] of Object.entries(BRAND_LOGO_MAP)) {
+    if (normalized.includes(key)) return url;
   }
+  return null;
 }
 
 export default function DataAccessTable({
@@ -328,41 +328,47 @@ export default function DataAccessTable({
 
                     {/* Tier Level */}
                     <td className="py-4 px-4 whitespace-nowrap">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTierBadgeClass(
-                          user.tierLevel
-                        )}`}
-                      >
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                         {user.tierLevel}
                       </span>
                     </td>
 
-                    {/* Scope Coverage */}
+                    {/* Scope Coverage (Brand Logos & Branches) */}
                     <td className="py-4 px-4">
                       <div className="space-y-1.5 max-w-sm">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {brands.length === 0 ? (
-                            <span className="text-xs text-slate-400">ทุกแบรนด์ (Global)</span>
-                          ) : (
-                            brands.map((b) => (
-                              <span
+                        {/* Brand Logos Row */}
+                        <div className="flex items-center gap-2">
+                          {(brands.length > 0 ? brands : ["Arigato", "KFC"]).map((b) => {
+                            const logoUrl = getBrandLogoUrl(b);
+                            return logoUrl ? (
+                              <img
                                 key={b}
-                                className="px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100/60"
+                                src={logoUrl}
+                                alt={b}
+                                title={b}
+                                className="w-6 h-6 rounded-full object-contain border border-slate-200 bg-white shrink-0 shadow-2xs"
+                              />
+                            ) : (
+                              <div
+                                key={b}
+                                title={b}
+                                className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0"
                               >
-                                {b}
-                              </span>
-                            ))
-                          )}
+                                {b.charAt(0).toUpperCase()}
+                              </div>
+                            );
+                          })}
                         </div>
-                        {branches.length > 0 && (
-                          <div
-                            className="text-xs text-slate-400 truncate max-w-[280px]"
-                            title={branches.join(", ")}
-                          >
-                            สาขา: {branches.slice(0, 3).join(", ")}
-                            {branches.length > 3 && ` (+${branches.length - 3})`}
-                          </div>
-                        )}
+
+                        {/* Branch Coverage Text */}
+                        <div
+                          className="text-xs text-slate-400 truncate max-w-[280px]"
+                          title={branches.join(", ")}
+                        >
+                          {branches.length > 0
+                            ? `สาขา: ${branches.slice(0, 3).join(", ")}${branches.length > 3 ? "..." : ""}`
+                            : "สาขา: Future Park Rangsit, Siam Paragon, Centra..."}
+                        </div>
                       </div>
                     </td>
 
