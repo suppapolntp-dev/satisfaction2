@@ -30,3 +30,11 @@ export interface ApiServiceHealth {
   errorRatePercent: number;
 }
 
+export interface AuditOverviewMetrics {
+  totalRecords: number | null;
+  criticalChanges: number | null;
+  securityStatus: string | null;
+  systemHealthScore: number | null;
+}
+
+

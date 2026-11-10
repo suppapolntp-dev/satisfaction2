@@ -2,6 +2,7 @@
 
 import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
+import AuditMetricCards from "@/Components/Cards/AuditMetricCards";
 import { useAuditTriageScreen, AuditTabType } from "./useAuditTriageScreen";
 
 export interface AuditScreenProps {
@@ -14,10 +15,14 @@ export default function AuditScreen({
   const {
     activeTab,
     auditTabs,
+    activityLogs,
+    apiServices,
+    isLoading,
     isRefreshing,
     handleTabChange,
     handleRefresh,
     handleExportAuditLogs,
+    handleFilterMetrics,
   } = useAuditTriageScreen({ initialTab });
 
   return (
@@ -104,7 +109,15 @@ export default function AuditScreen({
         }
       />
 
-      {/* ─── 2. WORKSPACE CONTAINER (Ready for Step 2) ─── */}
+      {/* ─── 2. AUDIT METRIC & KPI CARDS (Step 2) ─── */}
+      <AuditMetricCards
+        logs={activityLogs}
+        services={apiServices}
+        isLoading={isLoading}
+        onFilterClick={handleFilterMetrics}
+      />
+
+      {/* ─── 3. WORKSPACE CONTAINER (Ready for Step 3) ─── */}
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] p-8 text-center">
         <div className="max-w-md mx-auto space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mx-auto">
@@ -117,12 +130,13 @@ export default function AuditScreen({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="m9 12 2 2 4-4" />
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="m9 15 2 2 4-4" />
             </svg>
           </div>
           <h2 className="text-sm font-bold text-slate-800">
-            Header Title Bar ติดตั้งเรียบร้อยแล้ว (Step 1)
+            Audit Metric &amp; KPI Cards ติดตั้งเรียบร้อยแล้ว (Step 2)
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed">
             แท็บปัจจุบัน:{" "}
@@ -132,7 +146,7 @@ export default function AuditScreen({
                 : "สถานะระบบ & API Health"}
             </span>
             <br />
-            พร้อมต่อยอด Step 2: Metric Overview / KPI Cards และ Data Table ตามลำดับ
+            พร้อมต่อยอด Step 3: Activity Audit Logs &amp; Data Diff Inspector
           </p>
         </div>
       </div>
