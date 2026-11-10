@@ -3,6 +3,7 @@
 import React from "react";
 import { LoginHeroSection } from "@/Components/Auth/LoginHeroSection";
 import { LoginForm } from "@/Components/Auth/LoginForm";
+import { useLoginHero } from "@/Components/Auth/LoginHeroSection/useLoginHero";
 import { useLoginScreen } from "./useLoginScreen";
 
 export interface LoginScreenProps {
@@ -19,6 +20,7 @@ export interface LoginScreenProps {
  */
 export default function LoginScreen({ className = "" }: LoginScreenProps) {
   const { handleLoginSubmit } = useLoginScreen();
+  const { config } = useLoginHero();
 
   return (
     <main
@@ -33,16 +35,16 @@ export default function LoginScreen({ className = "" }: LoginScreenProps) {
               viewBox="0 0 24 24" 
               fill="none" 
               stroke="currentColor" 
-              strokeWidth="2"
+              strokeWidth="2" 
             >
               <circle cx="12" cy="12" r="10" />
               <path d="M8 14s1.5 2 4 2 4-2 4-2" />
             </svg>
           </div>
-          <span className="font-bold text-sm tracking-tight">Satisfaction Console</span>
+          <span className="font-bold text-sm tracking-tight">{config.brandName}</span>
         </div>
         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-          Enterprise
+          {config.badgeText}
         </span>
       </div>
 
@@ -56,7 +58,13 @@ export default function LoginScreen({ className = "" }: LoginScreenProps) {
         aria-label="User Authentication Section"
         className="flex-1 flex flex-col justify-center items-center px-4 py-8 sm:px-8 md:py-16 bg-slate-50 relative"
       >
-        <LoginForm onSubmit={handleLoginSubmit} />
+        <LoginForm
+          title={config.formTitle}
+          subtitle={config.formSubtitle}
+          submitLabel={config.submitButtonLabel}
+          securityNotice={config.securityNoticeText}
+          onSubmit={handleLoginSubmit}
+        />
       </section>
     </main>
   );

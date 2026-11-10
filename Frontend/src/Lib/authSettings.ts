@@ -26,6 +26,12 @@ export interface AuthHeroConfig {
   copyrightText: string;
   privacyNoticeLabel: string;
   securityAuditLabel: string;
+
+  // ─── 5. ข้อมูลแบบฟอร์มล็อกอิน (Login Form Texts) ───
+  formTitle: string;
+  formSubtitle: string;
+  submitButtonLabel: string;
+  securityNoticeText: string;
 }
 
 export const DEFAULT_AUTH_HERO_CONFIG: AuthHeroConfig = {
@@ -62,6 +68,12 @@ export const DEFAULT_AUTH_HERO_CONFIG: AuthHeroConfig = {
   copyrightText: "Copyright © 2026 Central Restaurants Group (CRG). All rights reserved.",
   privacyNoticeLabel: "Privacy Notice",
   securityAuditLabel: "Security Audit",
+
+  // Login Form
+  formTitle: "Welcome back",
+  formSubtitle: "กรอกรหัสประจำตัวองค์กรเพื่อเข้าสู่ระบบงาน",
+  submitButtonLabel: "Sign In to Console",
+  securityNoticeText: "ระบบสงวนสิทธิ์เฉพาะบุคลากรที่ได้รับมอบหมาย บัญชีผู้ใช้งานถูกสร้างและกำหนดสิทธิ์โดย Admin / Brand Manager ประจำสายงาน (Role-based Provisioning)",
 };
 
 // ==========================================================================
@@ -99,6 +111,10 @@ export function getStoredAuthHeroConfig(): AuthHeroConfig {
       copyrightText: parsed.copyrightText || DEFAULT_AUTH_HERO_CONFIG.copyrightText,
       privacyNoticeLabel: parsed.privacyNoticeLabel || DEFAULT_AUTH_HERO_CONFIG.privacyNoticeLabel,
       securityAuditLabel: parsed.securityAuditLabel || DEFAULT_AUTH_HERO_CONFIG.securityAuditLabel,
+      formTitle: parsed.formTitle || DEFAULT_AUTH_HERO_CONFIG.formTitle,
+      formSubtitle: parsed.formSubtitle || DEFAULT_AUTH_HERO_CONFIG.formSubtitle,
+      submitButtonLabel: parsed.submitButtonLabel || DEFAULT_AUTH_HERO_CONFIG.submitButtonLabel,
+      securityNoticeText: parsed.securityNoticeText || DEFAULT_AUTH_HERO_CONFIG.securityNoticeText,
     };
   } catch (error) {
     console.error("Error reading auth hero config from localStorage:", error);

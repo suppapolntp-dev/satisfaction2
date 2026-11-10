@@ -7,14 +7,38 @@ import { DashboardSettingsState } from "@/Components/Forms/DashboardSettingsSect
 import { ReportSettingsState } from "@/Components/Forms/ReportSettingsSection";
 import { LocalizationSettingsState } from "@/Components/Forms/LocalizationSettingsSection";
 import { 
+  AuthHeroConfig, 
+  DEFAULT_AUTH_HERO_CONFIG, 
+  getStoredAuthHeroConfig, 
+  saveStoredAuthHeroConfig 
+} from "@/Lib/authSettings";
+import { 
   SatisfactionConfig, 
   DEFAULT_SATISFACTION_CONFIG, 
   getStoredSatisfactionConfig, 
   saveStoredSatisfactionConfig 
 } from "@/Lib/satisfactionSettings";
+import { BrandSettingsState, DEFAULT_BRAND_SETTINGS } from "@/Components/Forms/BrandSettingsSection";
+import { EventSettingsState, DEFAULT_EVENT_SETTINGS } from "@/Components/Forms/EventSettingsSection";
+import { UserSettingsState, DEFAULT_USER_SETTINGS } from "@/Components/Forms/UserSettingsSection";
+import { RoleSettingsState, DEFAULT_ROLE_SETTINGS } from "@/Components/Forms/RoleSettingsSection";
+import { AuditSettingsState, DEFAULT_AUDIT_SETTINGS } from "@/Components/Forms/AuditSettingsSection";
+import { NotificationSettingsState, DEFAULT_NOTIFICATION_SETTINGS } from "@/Components/Forms/NotificationSettingsSection";
 import { useModal } from "@/Context/ModalContext";
 
-export type SettingsCategoryTab = "general" | "dashboard" | "satisfaction" | "reports" | "localization";
+export type SettingsCategoryTab = 
+  | "general" 
+  | "auth" 
+  | "dashboard" 
+  | "satisfaction" 
+  | "brand" 
+  | "events" 
+  | "users" 
+  | "roles" 
+  | "audit" 
+  | "notifications" 
+  | "reports" 
+  | "localization";
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsState = {
   systemName: "Satisfaction Management",
@@ -45,20 +69,27 @@ export const DEFAULT_LOCALIZATION_SETTINGS: LocalizationSettingsState = {
 export function useSystemSettingsScreen() {
   const { showConfirm, showSuccess, showError } = useModal();
 
-  // Active Category Tab (for sidebar indicator and scroll target)
+  // Active Category Tab (for in-page sidebar indicator and scroll target)
   const [activeCategoryTab, setActiveCategoryTab] = useState<SettingsCategoryTab>("general");
 
-  // Form states
+  // Form states for all pages
   const [generalConfig, setGeneralConfig] = useState<GeneralSettingsState>(DEFAULT_GENERAL_SETTINGS);
+  const [authConfig, setAuthConfig] = useState<AuthHeroConfig>(DEFAULT_AUTH_HERO_CONFIG);
   const [dashboardConfig, setDashboardConfig] = useState<DashboardSettingsState>(DEFAULT_DASHBOARD_SETTINGS);
   const [satisfactionConfig, setSatisfactionConfig] = useState<SatisfactionConfig>(DEFAULT_SATISFACTION_CONFIG);
+  const [brandConfig, setBrandConfig] = useState<BrandSettingsState>(DEFAULT_BRAND_SETTINGS);
+  const [eventConfig, setEventConfig] = useState<EventSettingsState>(DEFAULT_EVENT_SETTINGS);
+  const [userConfig, setUserConfig] = useState<UserSettingsState>(DEFAULT_USER_SETTINGS);
+  const [roleConfig, setRoleConfig] = useState<RoleSettingsState>(DEFAULT_ROLE_SETTINGS);
+  const [auditConfig, setAuditConfig] = useState<AuditSettingsState>(DEFAULT_AUDIT_SETTINGS);
+  const [notificationConfig, setNotificationConfig] = useState<NotificationSettingsState>(DEFAULT_NOTIFICATION_SETTINGS);
   const [reportConfig, setReportConfig] = useState<ReportSettingsState>(DEFAULT_REPORT_SETTINGS);
   const [localizationConfig, setLocalizationConfig] = useState<LocalizationSettingsState>(DEFAULT_LOCALIZATION_SETTINGS);
 
-  // Load stored satisfaction config on mount
+  // Load stored configs on client mount
   useEffect(() => {
-    const savedConfig = getStoredSatisfactionConfig();
-    setSatisfactionConfig(savedConfig);
+    setSatisfactionConfig(getStoredSatisfactionConfig());
+    setAuthConfig(getStoredAuthHeroConfig());
   }, []);
 
   // Smooth scroll to target section and update active tab
@@ -72,7 +103,21 @@ export function useSystemSettingsScreen() {
 
   // ScrollSpy via IntersectionObserver to track visible section while scrolling
   useEffect(() => {
-    const sectionIds: SettingsCategoryTab[] = ["general", "dashboard", "satisfaction", "reports", "localization"];
+    const sectionIds: SettingsCategoryTab[] = [
+      "general",
+      "auth",
+      "dashboard",
+      "satisfaction",
+      "brand",
+      "events",
+      "users",
+      "roles",
+      "audit",
+      "notifications",
+      "reports",
+      "localization"
+    ];
+
     const observerOptions = {
       root: null,
       rootMargin: "-15% 0px -65% 0px",
@@ -106,11 +151,12 @@ export function useSystemSettingsScreen() {
     { label: "System Localization", value: "UTC+7 (TH/EN)", change: "Bilingual enabled", isUp: true, icon: "language", color: "text-amber-600" },
   ], [dashboardConfig.refreshInterval, satisfactionConfig.duplicateVoteMinutes]);
 
-  // Save all settings
+  // Save all settings across all pages
   const handleSaveSettings = () => {
     try {
       saveStoredSatisfactionConfig(satisfactionConfig);
-      showSuccess("บันทึกการตั้งค่าระบบและอัปเดตหน้าจอ Kiosk Satisfaction สำเร็จเรียบร้อยแล้ว!");
+      saveStoredAuthHeroConfig(authConfig);
+      showSuccess("บันทึกการตั้งค่าระบบและข้อความทุกหน้าจอสำเร็จเรียบร้อยแล้ว!");
     } catch (err: any) {
       showError(err?.message || "ไม่สามารถบันทึกการตั้งค่าได้");
     }
@@ -120,17 +166,26 @@ export function useSystemSettingsScreen() {
   const handleResetToDefaults = () => {
     showConfirm({
       title: "ยืนยันการรีเซ็ตการตั้งค่า?",
-      description: "คุณต้องการรีเซ็ตการตั้งค่าระบบทั้งหมดกลับเป็นค่ามาตรฐานเริ่มต้นหรือไม่?",
+      description: "คุณต้องการรีเซ็ตการตั้งค่าระบบและข้อความทุกหน้าจอกลับเป็นค่ามาตรฐานเริ่มต้นหรือไม่?",
       variant: "warning",
       confirmText: "รีเซ็ตค่าเริ่มต้น",
       onConfirm: () => {
         setGeneralConfig(DEFAULT_GENERAL_SETTINGS);
+        setAuthConfig(DEFAULT_AUTH_HERO_CONFIG);
         setDashboardConfig(DEFAULT_DASHBOARD_SETTINGS);
         setSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
+        setBrandConfig(DEFAULT_BRAND_SETTINGS);
+        setEventConfig(DEFAULT_EVENT_SETTINGS);
+        setUserConfig(DEFAULT_USER_SETTINGS);
+        setRoleConfig(DEFAULT_ROLE_SETTINGS);
+        setAuditConfig(DEFAULT_AUDIT_SETTINGS);
+        setNotificationConfig(DEFAULT_NOTIFICATION_SETTINGS);
         setReportConfig(DEFAULT_REPORT_SETTINGS);
         setLocalizationConfig(DEFAULT_LOCALIZATION_SETTINGS);
+
         saveStoredSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
-        showSuccess("รีเซ็ตการตั้งค่าระบบกลับเป็นค่ามาตรฐานเรียบร้อยแล้ว");
+        saveStoredAuthHeroConfig(DEFAULT_AUTH_HERO_CONFIG);
+        showSuccess("รีเซ็ตการตั้งค่าทุกหน้าจอกลับเป็นค่ามาตรฐานเรียบร้อยแล้ว");
       },
     });
   };
@@ -141,10 +196,24 @@ export function useSystemSettingsScreen() {
     scrollToSection,
     generalConfig,
     setGeneralConfig,
+    authConfig,
+    setAuthConfig,
     dashboardConfig,
     setDashboardConfig,
     satisfactionConfig,
     setSatisfactionConfig,
+    brandConfig,
+    setBrandConfig,
+    eventConfig,
+    setEventConfig,
+    userConfig,
+    setUserConfig,
+    roleConfig,
+    setRoleConfig,
+    auditConfig,
+    setAuditConfig,
+    notificationConfig,
+    setNotificationConfig,
     reportConfig,
     setReportConfig,
     localizationConfig,

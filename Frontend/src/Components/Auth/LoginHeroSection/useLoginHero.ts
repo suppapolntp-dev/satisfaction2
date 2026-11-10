@@ -50,6 +50,7 @@ export function useLoginHero(overrides: UseLoginHeroOptions = {}) {
   // รวมค่าการตั้งค่าจากระบบเข้ากับ Props ที่ส่งเข้ามา Override (หากมี)
   const config = useMemo<AuthHeroConfig>(() => {
     return {
+      ...storedConfig,
       brandName: overrides.brandName ?? storedConfig.brandName,
       badgeText: overrides.badgeText ?? storedConfig.badgeText,
       platformSubtitle: overrides.platformSubtitle ?? storedConfig.platformSubtitle,
