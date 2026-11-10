@@ -65,7 +65,6 @@ export function useAuditMetricCards({
         id: "total_audit_logs",
         label: "Total Audit Records",
         value: totalCount !== null ? `${totalCount} รายการ` : "-",
-        tag: "Activity",
         valueHighlight: false,
         customIcon: (
           <svg
@@ -90,7 +89,6 @@ export function useAuditMetricCards({
         id: "critical_changes",
         label: "Critical & Config Changes",
         value: criticalCount !== null ? `${criticalCount} รายการ` : "-",
-        tag: "Security",
         valueHighlight: criticalCount !== null && criticalCount > 0,
         customIcon: (
           <svg
@@ -113,7 +111,6 @@ export function useAuditMetricCards({
         id: "security_status",
         label: "Security Health Status",
         value: secStatus ?? "-",
-        tag: "Status",
         valueHighlight: false,
         customIcon: (
           <svg
@@ -135,7 +132,6 @@ export function useAuditMetricCards({
         id: "system_uptime",
         label: "API & Service Health",
         value: avgUptime !== null ? `${avgUptime}%` : "-",
-        tag: "Telemetry",
         valueHighlight: true,
         customIcon: (
           <svg

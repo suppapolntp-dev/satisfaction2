@@ -29,7 +29,7 @@ export default function AuditScreen({
 
   return (
     <div className="space-y-6">
-      {/* ─── 1. MODULAR PAGE HEADER COMPONENT ─── */}
+      {/* ─── 1. MODULAR PAGE HEADER COMPONENT (Clean & Badge-Free) ─── */}
       <PageHeader
         title={
           <span className="flex items-center gap-2.5">
@@ -49,17 +49,6 @@ export default function AuditScreen({
             </span>
             <span>Audit Trail &amp; System Health</span>
           </span>
-        }
-        badges={
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-              Tier 1 Super Admin
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Telemetry
-            </span>
-          </div>
         }
         description="ตรวจสอบประวัติการเปลี่ยนแปลงระดับผู้ดูแลระบบ (Audit Trail) เปรียบเทียบข้อมูลก่อน-หลัง (Data Diff) และมอนิเตอร์สถานะความพร้อมของบริการ API แบบ Real-time"
         tabs={auditTabs}
@@ -111,7 +100,7 @@ export default function AuditScreen({
         }
       />
 
-      {/* ─── 2. AUDIT METRIC & KPI CARDS ─── */}
+      {/* ─── 2. AUDIT METRIC & KPI CARDS (Zero Background Badges) ─── */}
       <AuditMetricCards
         logs={activityLogs}
         services={apiServices}
@@ -127,7 +116,7 @@ export default function AuditScreen({
         />
       )}
 
-      {/* ─── 4. TAB 2: API & SERVICE HEALTH TELEMETRY MONITOR (Step 4) ─── */}
+      {/* ─── 4. TAB 2: API & SERVICE HEALTH TELEMETRY MONITOR ─── */}
       {activeTab === "api_health" && (
         <ServiceHealthTable
           services={apiServices}

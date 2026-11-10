@@ -54,12 +54,11 @@ export default function AuditLogTable({
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Audit Logs Queue
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                {filteredLogs.length}
+              <span className="text-xs font-mono text-slate-400">
+                ({filteredLogs.length})
               </span>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-medium text-slate-400">
               Live Feed
             </span>
           </div>
@@ -135,20 +134,8 @@ export default function AuditLogTable({
                     : "bg-white hover:bg-slate-50/80 border-transparent"
                 }`}
               >
-                <div className="flex justify-between items-start gap-2 mb-1.5">
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${
-                      log.actionType === "CONFIG_CHANGE"
-                        ? "bg-amber-50 text-amber-900 border-amber-200"
-                        : log.actionType === "CREATE_BRAND" || log.actionType === "CREATE_BRANCH"
-                        ? "bg-emerald-50 text-emerald-900 border-emerald-200"
-                        : log.actionType === "UPDATE" || log.actionType === "UPDATE_ROLE"
-                        ? "bg-blue-50 text-blue-900 border-blue-200"
-                        : log.actionType === "SECURITY"
-                        ? "bg-purple-50 text-purple-900 border-purple-200"
-                        : "bg-rose-50 text-rose-900 border-rose-200"
-                    }`}
-                  >
+                <div className="flex justify-between items-center gap-2 mb-1">
+                  <span className="font-mono text-xs font-bold text-slate-900">
                     {log.actionType}
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono shrink-0">
@@ -235,17 +222,9 @@ export default function AuditLogTable({
                 </div>
               </div>
 
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 ${
-                  activeSelectedLog.status === "SUCCESS" || activeSelectedLog.status === "Success"
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    : activeSelectedLog.status === "FAILED"
-                    ? "bg-rose-50 text-rose-800 border-rose-200"
-                    : "bg-amber-50 text-amber-800 border-amber-200"
-                }`}
-              >
+              <span className="inline-flex items-center text-xs font-semibold text-slate-700 shrink-0">
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${
+                  className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
                     activeSelectedLog.status === "SUCCESS" || activeSelectedLog.status === "Success"
                       ? "bg-emerald-500"
                       : activeSelectedLog.status === "FAILED"
@@ -285,10 +264,10 @@ export default function AuditLogTable({
                           <td className="p-3 font-mono font-bold text-slate-700">
                             {diff.field}
                           </td>
-                          <td className="p-3 text-rose-700 bg-rose-50/30 font-mono">
+                          <td className="p-3 text-rose-600 font-mono">
                             {diff.beforeValue ?? "-"}
                           </td>
-                          <td className="p-3 text-emerald-800 bg-emerald-50/30 font-mono font-bold">
+                          <td className="p-3 text-emerald-700 font-mono font-medium">
                             {diff.afterValue ?? "-"}
                           </td>
                         </tr>
