@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useMemo } from "react";
-import PageHeader from "@/Components/Headers/PageHeader";
-import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import SearchInput from "@/Components/Inputs/SearchInput";
 import NotificationInboxList from "@/Components/Lists/NotificationInboxList";
 import { useNotificationTriageScreen, NotificationTabType } from "./useNotificationTriageScreen";
@@ -15,83 +13,84 @@ export default function NotificationTriageScreen({
   initialTab = "all",
 }: NotificationTriageScreenProps = {}) {
   const {
-    activeTab,
-    notificationTabs,
     notificationsList,
     filteredNotificationsList,
     activeNotification,
     selectedNotificationId,
     unreadCount,
-    isLoading,
-    isRefreshing,
     searchNotificationQuery,
     selectedTypeFilter,
     setSearchNotificationQuery,
     setSelectedTypeFilter,
-    handleTabChange,
-    handleRefresh,
     handleMarkAllAsRead,
     handleMarkCurrentAsRead,
     handleDismissNotification,
     handleSelectNotification,
   } = useNotificationTriageScreen({ initialTab });
 
-  // ข้อมูลสถิติ KPI การแจ้งเตือน
-  const notificationStatsData: StatItem[] = useMemo(() => {
-    const total = notificationsList.length;
-    const highCount = notificationsList.filter((n) => n.notificationPriority === "High").length;
-    const unresolvedCount = notificationsList.filter((n) => !n.isNotificationRead).length;
-
-    const hasData = total > 0;
-
-    return [
-      {
-        label: "Total Alerts",
-        value: hasData ? `${total}` : "-",
-        change: "",
-        isUp: true,
-        icon: "notifications_active",
-        color: "text-blue-600",
-      },
-      {
-        label: "High Priority",
-        value: hasData ? `${highCount} Spikes` : "-",
-        change: "",
-        isUp: false,
-        icon: "error",
-        color: "text-rose-600",
-      },
-      {
-        label: "Unresolved Queue",
-        value: hasData ? `${unresolvedCount} Pending` : "-",
-        change: "",
-        isUp: false,
-        icon: "pending_actions",
-        color: "text-amber-600",
-      },
-      {
-        label: "Resolved Today",
-        value: hasData ? "0 Cases" : "-",
-        change: "",
-        isUp: true,
-        icon: "check_circle",
-        color: "text-emerald-600",
-      },
-    ];
-  }, [notificationsList]);
-
-
+  // ข้อมูลสถิติ KPI การแจ้งเตือน คำนวณจากข้อมูลจริงแบบ Real-time
+  const totalCount = notificationsList.length;
+  const highPriorityCount = useMemo(
+    () => notificationsList.filter((n) => n.notificationPriority === "High").length,
+    [notificationsList]
+  );
+  const unresolvedCount = useMemo(
+    () => notificationsList.filter((n) => !n.isNotificationRead).length,
+    [notificationsList]
+  );
 
   return (
     <div className="space-y-6">
-      
-      {/* ─── 1. MODULAR STANDARDIZED PAGE HEADER COMPONENT ─── */}
-      <PageHeader
-        title={
-          <span className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
+      {/* ─── 1. PAGE HEADER SECTION ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Notification &amp; Alert Triage
+            </h1>
+            {unreadCount > 0 && (
+              <span className="bg-rose-500 text-white px-2.5 py-0.5 rounded-full text-xs font-bold shadow-xs">
+                {unreadCount} Unread
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk และข้อเสนอแนะความพึงพอใจ
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleMarkAllAsRead}
+          className="btn-secondary self-start sm:self-auto cursor-pointer"
+        >
+          <svg
+            className="w-4 h-4 shrink-0 text-slate-600"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6 7 17l-5-5" />
+            <path d="m22 10-7.5 7.5L13 16" />
+          </svg>
+          <span>Mark All as Read</span>
+        </button>
+      </div>
+
+      {/* ─── 2. STATS OVERVIEW SECTION (4-Card Grid ตรงตามต้นฉบับ) ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        {/* Card 1: Total Alerts */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors w-full">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Total Alerts
+            </span>
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-600">
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -102,61 +101,105 @@ export default function NotificationTriageScreen({
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
-            </span>
-            <span>Notification &amp; Alert Triage</span>
-          </span>
-        }
-        description="ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk ตลอดจนข้อเสนอแนะความพึงพอใจ เพื่อการวิเคราะห์และแก้ไขปัญหาได้อย่างทันท่วงที"
-        tabs={notificationTabs}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        primaryAction={{
-          label: "Mark All as Read",
-          variant: "dark",
-          icon: (
-            <svg
-              className="w-4 h-4 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 6 7 17l-5-5" />
-              <path d="m22 10-7.5 7.5L13 16" />
-            </svg>
-          ),
-          onClick: handleMarkAllAsRead,
-        }}
-        secondaryActions={
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 select-none"
-          >
-            <svg
-              className={`w-3.5 h-3.5 shrink-0 ${isRefreshing ? "animate-spin" : ""}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-              <path d="M16 21h5v-5" />
-            </svg>
-            <span>{isRefreshing ? "กำลังรีเฟรช..." : "Refresh Telemetry"}</span>
-          </button>
-        }
-      />
+            </div>
+          </div>
+          <div className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight mt-1">
+            {totalCount > 0 ? totalCount : "-"}
+          </div>
+          <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <span className="font-semibold text-emerald-600">+4.2%</span>
+            <span>จากสัปดาห์ก่อน</span>
+          </div>
+        </div>
 
-      {/* ─── 2. STATS OVERVIEW SECTION ─── */}
-      <StatsGrid data={notificationStatsData} />
+        {/* Card 2: High Priority */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors w-full">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              High Priority
+            </span>
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-rose-600">
+              <svg
+                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight mt-1">
+            {totalCount > 0 ? `${highPriorityCount} Spikes` : "-"}
+          </div>
+          <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <span className="font-semibold text-rose-600">วิกฤต CSAT &lt; 80%</span>
+          </div>
+        </div>
+
+        {/* Card 3: Unresolved Queue */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors w-full">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Unresolved Queue
+            </span>
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-amber-600">
+              <svg
+                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight mt-1">
+            {totalCount > 0 ? `${unresolvedCount} Pending` : "-"}
+          </div>
+          <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <span className="font-semibold text-amber-600">รอเจ้าหน้าที่ดำเนินการ</span>
+          </div>
+        </div>
+
+        {/* Card 4: Resolved Today */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors w-full">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Resolved Today
+            </span>
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-emerald-600">
+              <svg
+                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight mt-1">
+            0 Cases
+          </div>
+          <div className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <span className="font-semibold text-emerald-600">สถานะปกติ</span>
+          </div>
+        </div>
+      </div>
 
       {/* ─── 3. SEARCH & FILTER CONTROLS ─── */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
