@@ -4,7 +4,7 @@ import React from "react";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
 import { ApiModeProvider } from "@/Context/ApiModeContext";
 import { ModalProvider } from "@/Context/ModalContext";
-import Sidebar from "@/Components/Sidebars/Sidebar";
+import Sidebar from "@/Components/Sidebars/sidebar";
 import ProfileDropdown from "./ProfileDropdown";
 import ApiModeToggle from "./ApiModeToggle";
 import { useCommandPalette } from "./useCommandPalette";

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { DEFAULT_NAV_GROUPS, NavGroup, NavItem } from "@/Components/Sidebars/Sidebar";
+import { DEFAULT_NAV_GROUPS, NavGroup, NavItem } from "@/Components/Sidebars/sidebar";
 
 export interface BreadcrumbInfo {
   groupName: string;
