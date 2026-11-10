@@ -8,3 +8,6 @@ export { default as UserTable } from "./UserTable";
 export * from "./UserTable";
 export { default as RolePermissionTable } from "./RolePermissionTable";
 export * from "./RolePermissionTable";
+export { default as AuditLogTable } from "./AuditLogTable";
+export * from "./AuditLogTable";
+
