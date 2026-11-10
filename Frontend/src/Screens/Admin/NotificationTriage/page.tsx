@@ -1,37 +1,34 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import SearchInput from "@/Components/Inputs/SearchInput";
 import NotificationInboxList from "@/Components/Lists/NotificationInboxList";
-import { SystemNotificationItem } from "@/Types/notification";
-import { notificationService } from "@/Services/notificationService";
-import { useApiMode } from "@/Context/ApiModeContext";
+import { useNotificationTriageScreen, NotificationTabType } from "./useNotificationTriageScreen";
 
-export default function NotificationTriageScreen() {
-  const { isApiEnabled } = useApiMode();
-  const [notificationsList, setNotificationsList] = useState<SystemNotificationItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchNotificationQuery, setSearchNotificationQuery] = useState("");
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
-  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+export interface NotificationTriageScreenProps {
+  initialTab?: NotificationTabType;
+}
 
-  // Load from notificationService on mount
-  useEffect(() => {
-    async function fetchNotificationsData() {
-      try {
-        setIsLoading(true);
-        const data = await notificationService.getNotifications();
-        setNotificationsList(data || []);
-        if (data && data.length > 0) {
-          setSelectedNotificationId(data[0].notificationId);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchNotificationsData();
-  }, [isApiEnabled]);
+export default function NotificationTriageScreen({
+  initialTab = "all",
+}: NotificationTriageScreenProps = {}) {
+  const {
+    activeTab,
+    notificationsList,
+    filteredNotificationsList,
+    activeNotification,
+    selectedNotificationId,
+    unreadCount,
+    searchNotificationQuery,
+    selectedTypeFilter,
+    setSearchNotificationQuery,
+    setSelectedTypeFilter,
+    handleMarkAllAsRead,
+    handleMarkCurrentAsRead,
+    handleDismissNotification,
+    handleSelectNotification,
+  } = useNotificationTriageScreen({ initialTab });
 
   // ข้อมูลสถิติ KPI การแจ้งเตือน
   const notificationStatsData: StatItem[] = useMemo(() => {
@@ -77,49 +74,7 @@ export default function NotificationTriageScreen() {
     ];
   }, [notificationsList]);
 
-  // กรองรายการแจ้งเตือน
-  const filteredNotificationsList = useMemo(() => {
-    return notificationsList.filter((notificationItem) => {
-      const matchesSearch = 
-        notificationItem.notificationTitle.toLowerCase().includes(searchNotificationQuery.toLowerCase()) ||
-        notificationItem.targetBranchName.toLowerCase().includes(searchNotificationQuery.toLowerCase());
 
-      const matchesType =
-        selectedTypeFilter === "All Types" ||
-        notificationItem.notificationType === selectedTypeFilter;
-
-      return matchesSearch && matchesType;
-    });
-  }, [notificationsList, searchNotificationQuery, selectedTypeFilter]);
-
-  // ค้นหาการแจ้งเตือนที่กำลังเปิดดูอยู่
-  const activeNotification = useMemo(() => {
-    return notificationsList.find(
-      (notificationItem) => notificationItem.notificationId === selectedNotificationId
-    ) || null;
-  }, [notificationsList, selectedNotificationId]);
-
-  const unreadCount = useMemo(() => {
-    return notificationsList.filter((item) => !item.isNotificationRead).length;
-  }, [notificationsList]);
-
-  // สั่งให้อ่านทั้งหมด
-  const handleMarkAllAsRead = async () => {
-    await notificationService.markAllAsRead();
-    setNotificationsList((prevList) =>
-      prevList.map((item) => ({ ...item, isNotificationRead: true }))
-    );
-  };
-
-  const handleMarkCurrentAsRead = async () => {
-    if (!selectedNotificationId) return;
-    await notificationService.markAsRead(selectedNotificationId);
-    setNotificationsList((prevList) =>
-      prevList.map((item) =>
-        item.notificationId === selectedNotificationId ? { ...item, isNotificationRead: true } : item
-      )
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -200,7 +155,7 @@ export default function NotificationTriageScreen() {
           <NotificationInboxList
             notifications={filteredNotificationsList}
             activeNotificationId={selectedNotificationId}
-            onSelectNotification={setSelectedNotificationId}
+            onSelectNotification={handleSelectNotification}
           />
         </div>
 
@@ -235,10 +190,7 @@ export default function NotificationTriageScreen() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setNotificationsList((prev) => prev.filter((item) => item.notificationId !== activeNotification.notificationId));
-                      setSelectedNotificationId(null);
-                    }}
+                    onClick={() => handleDismissNotification(activeNotification.notificationId)}
                     title="Dismiss Notification"
                     className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                   >
