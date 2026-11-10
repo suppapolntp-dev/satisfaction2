@@ -6,7 +6,7 @@ export interface GeneralSettingsState {
   systemName: string;
   companyName: string;
   contactEmail: string;
-  systemLogoUrl: string;
+  systemLogoUrl?: string;
 }
 
 interface GeneralSettingsSectionProps {
@@ -74,44 +74,6 @@ export default function GeneralSettingsSection({
             className="input-text w-full"
             placeholder="admin@csat-enterprise.com"
           />
-        </div>
-
-        <hr className="border-slate-100" />
-
-        {/* System Logo */}
-        <div className="space-y-3">
-          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-            System Logo
-          </label>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <div className="w-20 h-20 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shadow-xs shrink-0">
-              <span className="material-symbols-outlined text-4xl text-blue-900">
-                sentiment_satisfied
-              </span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => alert("เปิดหน้าต่างเลือกไฟล์รูปภาพโลโก้...")}
-                  className="btn-secondary text-xs"
-                >
-                  <span className="material-symbols-outlined text-[16px]">upload</span>
-                  Upload New
-                </button>
-                <button
-                  type="button"
-                  onClick={() => alert("ลบโลโก้ปัจจุบัน")}
-                  className="btn-ghost text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                >
-                  Remove
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Recommended format: PNG or SVG with transparent background (256x256px). Max file size: 2MB.
-              </p>
-            </div>
-          </div>
         </div>
 
       </div>
