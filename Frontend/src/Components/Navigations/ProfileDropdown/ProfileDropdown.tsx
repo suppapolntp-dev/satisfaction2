@@ -21,10 +21,8 @@ export default function ProfileDropdown({
     handleSignOut,
   } = useProfileDropdown(initialProfile);
 
-  const userInitial =
-    profile?.fullName && profile.fullName !== "-"
-      ? profile.fullName.trim().charAt(0).toUpperCase()
-      : "-";
+  const [imageError, setImageError] = React.useState(false);
+  const hasBrandLogo = Boolean(profile?.brandLogoUrl && !imageError);
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -37,22 +35,42 @@ export default function ProfileDropdown({
         aria-label={profile?.fullName ? `Account menu for ${profile.fullName}` : "Account menu"}
         className="flex items-center gap-2.5 min-h-11 min-w-11 sm:min-h-10 p-1.5 sm:pl-1.5 sm:pr-3 sm:py-1 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 transition-colors duration-200 motion-reduce:transition-none shadow-2xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] cursor-pointer"
       >
-        <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 relative shadow-2xs overflow-hidden">
-          {profile?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+        {/* Avatar Container: Brand Logo or Guest Profile */}
+        {hasBrandLogo ? (
+          <div className="w-8 h-8 rounded-full bg-white border border-slate-200/90 shadow-2xs p-1 flex items-center justify-center shrink-0 relative overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={profile.avatarUrl}
-              alt=""
-              className="w-full h-full object-cover"
+              src={profile?.brandLogoUrl}
+              alt={profile?.brandName || "Brand logo"}
+              onError={() => setImageError(true)}
+              className="w-full h-full object-contain select-none"
             />
-          ) : (
-            <span aria-hidden="true">{userInitial}</span>
-          )}
-          <span
-            aria-hidden="true"
-            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-white"
-          />
-        </div>
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
+            />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200/90 text-slate-500 flex items-center justify-center shrink-0 relative shadow-2xs overflow-hidden">
+            <svg
+              aria-hidden="true"
+              className="w-4 h-4 text-slate-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-white"
+            />
+          </div>
+        )}
 
         {isLoading && !profile ? (
           <div aria-hidden="true" className="hidden sm:flex flex-col gap-1 w-20">
@@ -118,12 +136,43 @@ export default function ProfileDropdown({
             ) : (
               <>
                 <div className="flex items-center gap-2.5">
-                  <div
-                    aria-hidden="true"
-                    className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0"
-                  >
-                    {userInitial}
-                  </div>
+                  {hasBrandLogo ? (
+                    <div className="w-9 h-9 rounded-full bg-white border border-slate-200/90 shadow-2xs p-1 flex items-center justify-center shrink-0 relative overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={profile?.brandLogoUrl}
+                        alt={profile?.brandName || "Brand logo"}
+                        className="w-full h-full object-contain select-none"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200/90 text-slate-500 flex items-center justify-center shrink-0 relative shadow-2xs"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        className="w-4.5 h-4.5 text-slate-500"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                      <span
+                        aria-hidden="true"
+                        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-white"
+                      />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-slate-900 truncate">
                       {profile?.fullName ?? "-"}
@@ -131,6 +180,11 @@ export default function ProfileDropdown({
                     <p className="text-[11px] text-slate-500 truncate">
                       {profile?.email ?? "-"}
                     </p>
+                    {profile?.brandName && (
+                      <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded mt-1">
+                        {profile.brandName}
+                      </span>
+                    )}
                   </div>
                 </div>
                 {profile?.roleName && (

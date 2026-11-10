@@ -4,6 +4,10 @@ export interface UserProfile {
   email: string;
   roleName: string;
   avatarUrl?: string;
+  brandName?: string;
+  brandLogoUrl?: string;
+  brandId?: string;
+  isGuest?: boolean;
 }
 
 export interface ProfileDropdownProps {
