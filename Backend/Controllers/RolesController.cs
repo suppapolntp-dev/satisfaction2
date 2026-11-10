@@ -52,11 +52,11 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// 2. ดึงรายละเอียด Role รายตัว พร้อมสิทธิ์ทั้ง 9 โมดูล
+    /// 2. ดึงรายละเอียด Role รายตัว พร้อมสิทธิ์รายโมดูลและฟังก์ชันย่อย (Tree Permissions)
     /// GET /api/roles/{id}
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<object>>> GetRoleById(Guid id)
+    public async Task<ActionResult<ApiResponse<RoleDetailDto>>> GetRoleById(Guid id)
     {
         var role = await _context.Roles
             .Include(r => r.RolePermissions)
@@ -68,28 +68,31 @@ public class RolesController : ControllerBase
             return NotFound(ApiResponse.Fail("ไม่พบบทบาทที่ระบุ"));
         }
 
-        var result = new
+        var result = new RoleDetailDto
         {
-            role.Id,
-            role.RoleCode,
-            role.RoleName,
-            role.RoleDescription,
-            role.RoleStatus,
-            role.IsSystemDefault,
-            Permissions = role.RolePermissions.Select(rp => new
+            Id = role.Id,
+            RoleCode = role.RoleCode,
+            RoleName = role.RoleName,
+            RoleDescription = role.RoleDescription,
+            RoleStatus = role.RoleStatus,
+            IsSystemDefault = role.IsSystemDefault,
+            Permissions = role.RolePermissions.Select(rp => new RolePermissionItemDto
             {
-                rp.ModuleId,
-                ModuleCode = rp.Module?.ModuleCode,
-                ModuleLabel = rp.Module?.ModuleLabel,
-                rp.CanView,
-                rp.CanCreate,
-                rp.CanUpdate,
-                rp.CanDelete,
-                rp.CanExport
-            }).ToList()
+                ModuleId = rp.ModuleId,
+                ModuleCode = rp.Module?.ModuleCode ?? string.Empty,
+                ModuleLabel = rp.Module?.ModuleLabel ?? string.Empty,
+                Description = rp.Module?.Description,
+                ParentId = rp.Module?.ParentId,
+                DisplayOrder = rp.Module?.DisplayOrder ?? 0,
+                CanView = rp.CanView,
+                CanCreate = rp.CanCreate,
+                CanUpdate = rp.CanUpdate,
+                CanDelete = rp.CanDelete,
+                CanExport = rp.CanExport
+            }).OrderBy(p => p.DisplayOrder).ToList()
         };
 
-        return Ok(ApiResponse<object>.Ok(result));
+        return Ok(ApiResponse<RoleDetailDto>.Ok(result));
     }
 
     /// <summary>
@@ -243,17 +246,37 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// 7. ดึงรายชื่อโมดูลทั้งหมดในระบบสำหรับหน้า Matrix
+    /// 7. ดึงรายชื่อโมดูลและฟังก์ชันย่อยทั้งหมดในระบบแบบ Tree Hierarchy
     /// GET /api/roles/modules
     /// </summary>
     [HttpGet("modules")]
-    public async Task<ActionResult<ApiResponse<List<SystemModule>>>> GetAllModules()
+    public async Task<ActionResult<ApiResponse<List<SystemModuleDto>>>> GetAllModules()
     {
-        var modules = await _context.SystemModules
+        var allModules = await _context.SystemModules
+            .AsNoTracking()
             .OrderBy(m => m.DisplayOrder)
             .ToListAsync();
 
-        return Ok(ApiResponse<List<SystemModule>>.Ok(modules));
+        var parents = allModules.Where(m => m.ParentId == null).Select(p => new SystemModuleDto
+        {
+            Id = p.Id,
+            ModuleCode = p.ModuleCode,
+            ModuleLabel = p.ModuleLabel,
+            Description = p.Description,
+            ParentId = p.ParentId,
+            DisplayOrder = p.DisplayOrder,
+            Children = allModules.Where(c => c.ParentId == p.Id).OrderBy(c => c.DisplayOrder).Select(c => new SystemModuleDto
+            {
+                Id = c.Id,
+                ModuleCode = c.ModuleCode,
+                ModuleLabel = c.ModuleLabel,
+                Description = c.Description,
+                ParentId = c.ParentId,
+                DisplayOrder = c.DisplayOrder
+            }).ToList()
+        }).ToList();
+
+        return Ok(ApiResponse<List<SystemModuleDto>>.Ok(parents));
     }
 }
 

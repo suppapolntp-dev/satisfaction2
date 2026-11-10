@@ -51,6 +51,7 @@ public class BrandsController : ControllerBase
             Id = b.Id,
             BrandCode = b.BrandCode,
             BrandName = b.BrandName,
+            ParentCompanyName = b.ParentCompanyName,
             Category = b.Category,
             BrandLogoUrl = b.BrandLogoUrl,
             BrandIconName = b.BrandIconName,

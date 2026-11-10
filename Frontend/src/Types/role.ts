@@ -1,14 +1,19 @@
 export type PermissionKey = "view" | "create" | "update" | "delete" | "export";
 
 export interface PermissionRow {
+  id?: string;
   moduleId?: string;
   moduleCode?: string;
   module: string;
+  description?: string;
+  isParent?: boolean;
+  parentId?: string;
   view: boolean;
   create: boolean;
   update: boolean;
   delete: boolean;
   export: boolean;
+  children?: PermissionRow[];
 }
 
 export interface SystemRoleItem {

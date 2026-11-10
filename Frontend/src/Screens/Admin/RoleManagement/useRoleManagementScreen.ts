@@ -5,6 +5,85 @@ import { SystemRoleItem, PermissionRow, PermissionKey } from "@/Types/role";
 import { roleService, generateDefaultMatrix } from "@/Services/roleService";
 import { useModal } from "@/Context/ModalContext";
 
+// Helper: Toggle permission on parent or child in tree hierarchy
+function toggleTreePermission(
+  rows: PermissionRow[],
+  targetIdentifier: string,
+  field: PermissionKey
+): PermissionRow[] {
+  return rows.map((parent) => {
+    const isParentTarget =
+      parent.id === targetIdentifier ||
+      parent.module === targetIdentifier ||
+      parent.moduleCode === targetIdentifier;
+
+    if (isParentTarget) {
+      const willEnable = !(parent.children && parent.children.every((c) => c[field]));
+      const updatedChildren = parent.children
+        ? parent.children.map((c) => ({ ...c, [field]: willEnable }))
+        : undefined;
+
+      return {
+        ...parent,
+        [field]: willEnable,
+        children: updatedChildren,
+      };
+    }
+
+    if (parent.children && parent.children.length > 0) {
+      const hasMatchingChild = parent.children.some(
+        (c) =>
+          c.id === targetIdentifier ||
+          c.module === targetIdentifier ||
+          c.moduleCode === targetIdentifier
+      );
+
+      if (hasMatchingChild) {
+        const updatedChildren = parent.children.map((child) => {
+          if (
+            child.id === targetIdentifier ||
+            child.module === targetIdentifier ||
+            child.moduleCode === targetIdentifier
+          ) {
+            return { ...child, [field]: !child[field] };
+          }
+          return child;
+        });
+
+        const allChecked = updatedChildren.every((c) => c[field]);
+        return {
+          ...parent,
+          [field]: allChecked,
+          children: updatedChildren,
+        };
+      }
+    }
+
+    return parent;
+  });
+}
+
+function toggleAllTreePermissions(rows: PermissionRow[], enableAll: boolean): PermissionRow[] {
+  return rows.map((parent) => ({
+    ...parent,
+    view: enableAll,
+    create: enableAll,
+    update: enableAll,
+    delete: enableAll,
+    export: enableAll,
+    children: parent.children
+      ? parent.children.map((c) => ({
+          ...c,
+          view: enableAll,
+          create: enableAll,
+          update: enableAll,
+          delete: enableAll,
+          export: enableAll,
+        }))
+      : undefined,
+  }));
+}
+
 export function useRoleManagementScreen() {
   const { showSuccess, showError } = useModal();
 
@@ -41,14 +120,12 @@ export function useRoleManagementScreen() {
           setSelectedRoleId(initialRoleId);
 
           const matrix: Record<string, PermissionRow[]> = {};
-          // Load matrix for first role immediately, others lazily or concurrently
           const firstRolePerms = await roleService.getPermissionMatrix(initialRoleId);
           if (isMounted) {
             matrix[initialRoleId] = firstRolePerms;
             setPermissionMatrix(matrix);
           }
 
-          // Populate the rest of roles in matrix in background
           for (const r of roles) {
             if (r.roleId !== initialRoleId) {
               const perms = await roleService.getPermissionMatrix(r.roleId);
@@ -100,7 +177,7 @@ export function useRoleManagementScreen() {
   }, [rolesList, searchRoleQuery]);
 
   const currentRolePermissions = useMemo(
-    () => permissionMatrix[selectedRoleId] || generateDefaultMatrix(),
+    () => permissionMatrix[selectedRoleId] || generateDefaultMatrix(selectedRoleId),
     [permissionMatrix, selectedRoleId]
   );
 
@@ -121,17 +198,17 @@ export function useRoleManagementScreen() {
     [permissionMatrix]
   );
 
-  // ฟังก์ชันสลับสิทธิ์แต่ละ Checkbox
+  // ฟังก์ชันสลับสิทธิ์แต่ละ Checkbox (Tree-aware)
   const handlePermissionFieldToggle = useCallback(
-    (moduleName: string, permissionField: PermissionKey) => {
-      setPermissionMatrix((previousMatrix) => ({
-        ...previousMatrix,
-        [selectedRoleId]: (previousMatrix[selectedRoleId] || generateDefaultMatrix()).map((permissionRow) =>
-          permissionRow.module === moduleName
-            ? { ...permissionRow, [permissionField]: !permissionRow[permissionField] }
-            : permissionRow
-        ),
-      }));
+    (targetIdentifier: string, permissionField: PermissionKey) => {
+      setPermissionMatrix((previousMatrix) => {
+        const currentList = previousMatrix[selectedRoleId] || generateDefaultMatrix(selectedRoleId);
+        const updatedList = toggleTreePermission(currentList, targetIdentifier, permissionField);
+        return {
+          ...previousMatrix,
+          [selectedRoleId]: updatedList,
+        };
+      });
     },
     [selectedRoleId]
   );
@@ -139,17 +216,13 @@ export function useRoleManagementScreen() {
   // ฟังก์ชันเลือกเปิด/ปิดสิทธิ์ทั้งหมดในบทบาทนี้ (Select / Clear All)
   const handleToggleAllPermissions = useCallback(
     (enableAll: boolean) => {
-      setPermissionMatrix((prev) => ({
-        ...prev,
-        [selectedRoleId]: (prev[selectedRoleId] || generateDefaultMatrix()).map((row) => ({
-          ...row,
-          view: enableAll,
-          create: enableAll,
-          update: enableAll,
-          delete: enableAll,
-          export: enableAll,
-        })),
-      }));
+      setPermissionMatrix((prev) => {
+        const currentList = prev[selectedRoleId] || generateDefaultMatrix(selectedRoleId);
+        return {
+          ...prev,
+          [selectedRoleId]: toggleAllTreePermissions(currentList, enableAll),
+        };
+      });
     },
     [selectedRoleId]
   );
@@ -158,9 +231,9 @@ export function useRoleManagementScreen() {
   const handleResetToDefaultPermissions = useCallback(() => {
     setPermissionMatrix((previousMatrix) => ({
       ...previousMatrix,
-      [selectedRoleId]: generateDefaultMatrix(),
+      [selectedRoleId]: generateDefaultMatrix(activeSelectedRole?.roleCode || selectedRoleId),
     }));
-  }, [selectedRoleId]);
+  }, [selectedRoleId, activeSelectedRole]);
 
   // บันทึกการเปลี่ยนแปลงสิทธิ์ลงฐานข้อมูล
   const handleSavePermissionChanges = useCallback(async () => {
@@ -218,46 +291,24 @@ export function useRoleManagementScreen() {
             roleCode: roleData.roleCode || `ROLE_${Date.now()}`,
             roleName: roleData.roleName,
             roleDescription: roleData.roleDescription || "-",
-            roleStatus: roleData.roleStatus,
+            roleStatus: roleData.roleStatus || "Active",
           });
-
-          const clonedPermissions =
-            roleData.cloneFromRole && permissionMatrix[roleData.cloneFromRole]
-              ? permissionMatrix[roleData.cloneFromRole].map((row) => ({ ...row }))
-              : generateDefaultMatrix();
-
-          await roleService.savePermissionMatrix(newRoleItem.roleId, clonedPermissions);
-
-          setRolesList((prev) => [...prev, newRoleItem]);
-          setPermissionMatrix((prev) => ({
-            ...prev,
-            [newRoleItem.roleId]: clonedPermissions,
-          }));
-          setSelectedRoleId(newRoleItem.roleId);
+          setRolesList((prev) => [newRoleItem, ...prev]);
           showSuccess(`สร้างบทบาท "${roleData.roleName}" สำเร็จเรียบร้อย`);
         }
-
         setIsRoleModalOpen(false);
         setEditingRole(null);
       } catch (err: any) {
-        showError(err?.message || "ไม่สามารถบันทึกบทบาทได้");
+        showError(err?.message || "บันทึกข้อมูลบทบาทไม่สำเร็จ");
       }
     },
-    [editingRole, permissionMatrix, showSuccess, showError]
+    [editingRole, showSuccess, showError]
   );
 
-  // ─── Modal Handlers สำหรับ Delete Role ───
-  const handleRequestDeleteRole = useCallback(
-    (role: SystemRoleItem) => {
-      if (role.isSystemDefault) {
-        showError("ไม่สามารถลบบทบาทมาตรฐานของระบบได้");
-        return;
-      }
-      setDeletingRole(role);
-      setIsDeleteConfirmOpen(true);
-    },
-    [showError]
-  );
+  const handleRequestDeleteRole = useCallback((role: SystemRoleItem) => {
+    setDeletingRole(role);
+    setIsDeleteConfirmOpen(true);
+  }, []);
 
   const handleCloseDeleteConfirm = useCallback(() => {
     setIsDeleteConfirmOpen(false);
@@ -272,9 +323,11 @@ export function useRoleManagementScreen() {
       setRolesList((prev) => prev.filter((r) => r.roleId !== deletingRole.roleId));
       if (selectedRoleId === deletingRole.roleId) {
         const remaining = rolesList.filter((r) => r.roleId !== deletingRole.roleId);
-        setSelectedRoleId(remaining[0]?.roleId || "");
+        if (remaining.length > 0) {
+          setSelectedRoleId(remaining[0].roleId);
+        }
       }
-      showSuccess(`ลบบทบาท "${deletingRole.roleName}" สำเร็จเรียบร้อย`);
+      showSuccess(`ลบบทบาท "${deletingRole.roleName}" เรียบร้อยแล้ว`);
       setIsDeleteConfirmOpen(false);
       setDeletingRole(null);
     } catch (err: any) {

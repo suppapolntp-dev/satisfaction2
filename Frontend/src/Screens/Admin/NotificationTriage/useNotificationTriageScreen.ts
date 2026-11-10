@@ -6,28 +6,33 @@ import { SystemNotificationItem } from "@/Types/notification";
 import { notificationService } from "@/Services/notificationService";
 import { useApiMode } from "@/Context/ApiModeContext";
 
-export type NotificationTabType = "all" | "unread" | "high_priority";
+export type NotificationTabType = "all" | "unread" | "priority" | "high_priority";
+export type NotificationViewMode = "table" | "split";
 
 export interface UseNotificationTriageScreenOptions {
   initialTab?: NotificationTabType;
+  initialViewMode?: NotificationViewMode;
 }
 
 export function useNotificationTriageScreen({
   initialTab = "all",
+  initialViewMode = "table",
 }: UseNotificationTriageScreenOptions = {}) {
   const { isApiEnabled } = useApiMode();
   const [activeTab, setActiveTab] = useState<NotificationTabType>(initialTab);
+  const [viewMode, setViewMode] = useState<NotificationViewMode>(initialViewMode);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [notificationsList, setNotificationsList] = useState<SystemNotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [searchNotificationQuery, setSearchNotificationQuery] = useState<string>("");
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("All Types");
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("all");
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
 
   // Load notifications from API / Service
   const loadNotificationsData = useCallback(async () => {
     try {
-      // TODO: Connect API [get_notifications]
+      // Connect API [get_notifications]
       const data = await notificationService.getNotifications();
       const safeData = Array.isArray(data) ? data : [];
       setNotificationsList(safeData);
@@ -83,7 +88,7 @@ export function useNotificationTriageScreen({
         badge: unreadCount,
       },
       {
-        id: "high_priority",
+        id: "priority",
         label: "เร่งด่วนพิเศษ (High Priority)",
         badge: highPriorityCount,
       },
@@ -98,13 +103,20 @@ export function useNotificationTriageScreen({
       if (activeTab === "unread" && notificationItem.isNotificationRead) {
         return false;
       }
-      if (activeTab === "high_priority" && notificationItem.notificationPriority !== "High") {
+      if (
+        (activeTab === "priority" || activeTab === "high_priority") &&
+        notificationItem.notificationPriority !== "High"
+      ) {
         return false;
       }
 
       // Type filter
-      if (selectedTypeFilter !== "All Types" && notificationItem.notificationType !== selectedTypeFilter) {
-        return false;
+      if (selectedTypeFilter !== "all" && selectedTypeFilter !== "All Types") {
+        if (
+          notificationItem.notificationType.toLowerCase() !== selectedTypeFilter.toLowerCase()
+        ) {
+          return false;
+        }
       }
 
       // Search query
@@ -121,6 +133,18 @@ export function useNotificationTriageScreen({
       return true;
     });
   }, [notificationsList, activeTab, selectedTypeFilter, searchNotificationQuery]);
+
+  // Ensure active selection remains valid in filtered list
+  useEffect(() => {
+    if (filteredNotificationsList.length > 0) {
+      if (
+        !selectedNotificationId ||
+        !filteredNotificationsList.some((item) => item.notificationId === selectedNotificationId)
+      ) {
+        setSelectedNotificationId(filteredNotificationsList[0].notificationId);
+      }
+    }
+  }, [filteredNotificationsList, selectedNotificationId]);
 
   // Currently focused notification item
   const activeNotification = useMemo(() => {
@@ -156,6 +180,27 @@ export function useNotificationTriageScreen({
     }
   }, []);
 
+  const handleToggleReadCurrent = useCallback(async () => {
+    if (!selectedNotificationId) return;
+    const current = notificationsList.find((i) => i.notificationId === selectedNotificationId);
+    if (!current) return;
+    const nextReadState = !current.isNotificationRead;
+    try {
+      if (nextReadState) {
+        await notificationService.markAsRead(selectedNotificationId);
+      }
+      setNotificationsList((prevList) =>
+        prevList.map((item) =>
+          item.notificationId === selectedNotificationId
+            ? { ...item, isNotificationRead: nextReadState }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("[useNotificationTriageScreen] handleToggleReadCurrent error:", error);
+    }
+  }, [selectedNotificationId, notificationsList]);
+
   const handleMarkCurrentAsRead = useCallback(async () => {
     if (!selectedNotificationId) return;
     try {
@@ -172,6 +217,30 @@ export function useNotificationTriageScreen({
     }
   }, [selectedNotificationId]);
 
+  const handleToggleReadById = useCallback(async (notificationId: string) => {
+    const current = notificationsList.find((i) => i.notificationId === notificationId);
+    if (!current) return;
+    const nextReadState = !current.isNotificationRead;
+    try {
+      if (nextReadState) {
+        await notificationService.markAsRead(notificationId);
+      }
+      setNotificationsList((prevList) =>
+        prevList.map((item) =>
+          item.notificationId === notificationId
+            ? { ...item, isNotificationRead: nextReadState }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("[useNotificationTriageScreen] handleToggleReadById error:", error);
+    }
+  }, [notificationsList]);
+
+  const handleToggleExpandRow = useCallback((notificationId: string) => {
+    setExpandedRowId((prev) => (prev === notificationId ? null : notificationId));
+  }, []);
+
   const handleDismissNotification = useCallback((notificationId: string) => {
     setNotificationsList((prev) => prev.filter((item) => item.notificationId !== notificationId));
     setSelectedNotificationId((prevSelected) =>
@@ -184,6 +253,10 @@ export function useNotificationTriageScreen({
   }, []);
 
   return {
+    viewMode,
+    setViewMode,
+    expandedRowId,
+    handleToggleExpandRow,
     activeTab,
     notificationTabs,
     notificationsList,
@@ -201,6 +274,8 @@ export function useNotificationTriageScreen({
     handleTabChange,
     handleRefresh,
     handleMarkAllAsRead,
+    handleToggleReadCurrent,
+    handleToggleReadById,
     handleMarkCurrentAsRead,
     handleDismissNotification,
     handleSelectNotification,

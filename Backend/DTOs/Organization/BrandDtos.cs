@@ -6,6 +6,7 @@ public class BrandListItemDto
     public Guid Id { get; set; }
     public string BrandCode { get; set; } = string.Empty;
     public string BrandName { get; set; } = string.Empty;
+    public string ParentCompanyName { get; set; } = "Central Restaurants Group";
     public string? Category { get; set; }
     public string? BrandLogoUrl { get; set; }
     public string BrandIconName { get; set; } = "restaurant";
@@ -19,6 +20,7 @@ public class CreateBrandRequest
 {
     public string BrandCode { get; set; } = string.Empty;
     public string BrandName { get; set; } = string.Empty;
+    public string ParentCompanyName { get; set; } = "Central Restaurants Group";
     public string? Category { get; set; }
     public string? BrandLogoUrl { get; set; }
     public string BrandIconName { get; set; } = "restaurant";

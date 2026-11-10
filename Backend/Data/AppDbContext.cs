@@ -60,6 +60,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<BranchBrand>().ToTable("branch_brands");
         modelBuilder.Entity<Kiosk>().ToTable("kiosks");
         modelBuilder.Entity<SystemModule>().ToTable("system_modules");
+        modelBuilder.Entity<SystemModule>()
+            .HasOne(m => m.Parent)
+            .WithMany(m => m.Children)
+            .HasForeignKey(m => m.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Role>().ToTable("roles");
         modelBuilder.Entity<RolePermission>().ToTable("role_permissions");
         modelBuilder.Entity<User>().ToTable("users");

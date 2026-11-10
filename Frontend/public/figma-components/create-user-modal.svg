@@ -1,0 +1,324 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 544" width="1024" height="544" fill="none">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600;700&amp;display=swap');
+      text {
+        font-family: 'Prompt', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .font-mono {
+        font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+    </style>
+    <!-- Filter for Modal Container Drop Shadow -->
+    <filter id="modal-shadow" x="-8" y="-4" width="1040" height="560" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#0F172A" flood-opacity="0.12" />
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.06" />
+    </filter>
+    <!-- Filter for Active Tab Subtle Shadow -->
+    <filter id="tab-shadow" x="0" y="0" width="200" height="40" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000000" flood-opacity="0.06" />
+    </filter>
+  </defs>
+
+  <!-- ========================================== -->
+  <!-- 1. MODAL BACKGROUND CARD                    -->
+  <!-- ========================================== -->
+  <g id="Modal-Container" filter="url(#modal-shadow)">
+    <rect width="1024" height="544" rx="24" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- 2. MODAL HEADER BAR                        -->
+  <!-- ========================================== -->
+  <g id="Modal-Header">
+    <!-- Header Divider Line -->
+    <line x1="0" y1="68" x2="1024" y2="68" stroke="#F1F5F9" stroke-width="1"/>
+
+    <!-- User Action Squircle Icon -->
+    <g id="Header-Icon-Squircle" transform="translate(14, 14)">
+      <rect width="40" height="40" rx="14" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+      <g transform="translate(10, 10)" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M13.3 17.5v-1.67a3.33 3.33 0 0 0-3.33-3.33H5a3.33 3.33 0 0 0-3.33 3.33v1.67"/>
+        <circle cx="7.5" cy="5.83" r="3.33"/>
+        <line x1="15.83" y1="6.67" x2="15.83" y2="11.67"/>
+        <line x1="18.33" y1="9.17" x2="13.33" y2="9.17"/>
+      </g>
+    </g>
+
+    <!-- Title and Subtitle Badges -->
+    <g id="Header-Title-Group" transform="translate(64, 18)">
+      <text x="0" y="16" font-size="16" font-weight="700" fill="#0F172A">เพิ่มผู้ใช้งานใหม่ (Create New User)</text>
+
+      <!-- Badge 1: Super Admin -->
+      <g id="Badge-SuperAdmin" transform="translate(0, 24)">
+        <rect width="84" height="20" rx="10" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+        <text x="42" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="#1D4ED8">Super Admin</text>
+      </g>
+
+      <!-- Badge 2: Scope Hierarchy Path -->
+      <g id="Badge-EnterpriseScope" transform="translate(90, 24)">
+        <rect width="288" height="20" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <!-- Shield Icon -->
+        <g transform="translate(8, 4)" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M6 11s4-2 4-5V2.5L6 1.5 2 2.5V6c0 3 4 5 4 5z"/>
+        </g>
+        <text x="24" y="14" font-size="11" font-weight="500" fill="#334155">Global Enterprise Scope &gt; 🏢 ภาพรวมระดับองค์กร (S...</text>
+      </g>
+    </g>
+
+    <!-- Close Button Circle -->
+    <g id="Header-Close-Button" transform="translate(976, 18)">
+      <circle cx="16" cy="16" r="15" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+      <path d="M11 11l10 10m0-10L11 21" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- 3. LEFT SIDEBAR: SCOPE HIERARCHY TREE       -->
+  <!-- ========================================== -->
+  <g id="Sidebar-Scope-Hierarchy">
+    <!-- Sidebar Vertical Right Border -->
+    <line x1="218" y1="68" x2="218" y2="480" stroke="#F1F5F9" stroke-width="1"/>
+
+    <!-- Section Heading -->
+    <text x="14" y="88" font-size="10" font-weight="700" fill="#64748B" letter-spacing="0.6">SCOPE HIERARCHY</text>
+
+    <!-- Filter Brand / Branch Search Pill -->
+    <g id="Sidebar-Search-Input" transform="translate(14, 98)">
+      <rect width="190" height="28" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+      <!-- Search Glass Icon -->
+      <g transform="translate(10, 7)" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <circle cx="5.5" cy="5.5" r="4.5"/>
+        <line x1="8.8" y1="8.8" x2="13" y2="13"/>
+      </g>
+      <text x="30" y="18" font-size="11" font-weight="400" fill="#94A3B8">Filter brand / branch...</text>
+    </g>
+
+    <!-- Active Item: All Organizations -->
+    <g id="Sidebar-Item-AllOrganizations" transform="translate(14, 134)">
+      <rect width="190" height="30" rx="15" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+      <!-- Store / Org Outline Icon -->
+      <g transform="translate(10, 7)" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M1.5 6l6.5-4.5 6.5 4.5v7.5a1.5 1.5 0 0 1-1.5 1.5H3a1.5 1.5 0 0 1-1.5-1.5V6z"/>
+      </g>
+      <text x="32" y="19" font-size="11.5" font-weight="600" fill="#2563EB">All Organizations</text>
+    </g>
+
+    <!-- Tree Item 1: Auntie Anne's -->
+    <g id="Sidebar-Item-AuntieAnnes" transform="translate(14, 178)">
+      <path d="M8 3l4 4-4 4" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="26" cy="7" r="9" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1"/>
+      <text x="26" y="11" text-anchor="middle" font-size="10" font-weight="700" fill="#2563EB">A</text>
+      <text x="42" y="11" font-size="11.5" font-weight="500" fill="#1E293B">Auntie Anne's</text>
+    </g>
+
+    <!-- Tree Item 2: KFC -->
+    <g id="Sidebar-Item-KFC" transform="translate(14, 210)">
+      <path d="M8 3l4 4-4 4" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="26" cy="7" r="9" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1"/>
+      <text x="26" y="11" text-anchor="middle" font-size="10" font-weight="700" fill="#2563EB">K</text>
+      <text x="42" y="11" font-size="11.5" font-weight="500" fill="#1E293B">KFC</text>
+    </g>
+
+    <!-- Tree Item 3: Mister Donut -->
+    <g id="Sidebar-Item-MisterDonut" transform="translate(14, 242)">
+      <path d="M8 3l4 4-4 4" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="26" cy="7" r="9" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1"/>
+      <text x="26" y="11" text-anchor="middle" font-size="10" font-weight="700" fill="#2563EB">M</text>
+      <text x="42" y="11" font-size="11.5" font-weight="500" fill="#1E293B">Mister Donut</text>
+    </g>
+
+    <!-- Tree Item 4: Ootoya -->
+    <g id="Sidebar-Item-Ootoya" transform="translate(14, 274)">
+      <path d="M8 3l4 4-4 4" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="26" cy="7" r="9" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1"/>
+      <text x="26" y="11" text-anchor="middle" font-size="10" font-weight="700" fill="#2563EB">O</text>
+      <text x="42" y="11" font-size="11.5" font-weight="500" fill="#1E293B">Ootoya</text>
+    </g>
+
+    <!-- Tree Item 5: Pepper Lunch -->
+    <g id="Sidebar-Item-PepperLunch" transform="translate(14, 306)">
+      <path d="M8 3l4 4-4 4" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="26" cy="7" r="9" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1"/>
+      <text x="26" y="11" text-anchor="middle" font-size="10" font-weight="700" fill="#2563EB">P</text>
+      <text x="42" y="11" font-size="11.5" font-weight="500" fill="#1E293B">Pepper Lunch</text>
+    </g>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- 4. RIGHT CONTENT: TABS & FORM DETAILS       -->
+  <!-- ========================================== -->
+  <g id="Right-Workspace" transform="translate(242, 68)">
+    
+    <!-- 4.1 Tab Row & Breadcrumb -->
+    <g id="Tabs-Navigation" transform="translate(40, 16)">
+      <!-- Tab Capsule Container -->
+      <rect width="418" height="34" rx="17" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+      
+      <!-- Tab 1 Active Pill: Account Profile -->
+      <g id="Tab-AccountProfile">
+        <rect x="2" y="2" width="194" height="30" rx="15" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <!-- User Icon -->
+        <g transform="translate(18, 9)" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M11 13v-1.3a2.7 2.7 0 0 0-2.7-2.7H3.7A2.7 2.7 0 0 0 1 11.7V13"/>
+          <circle cx="6" cy="4.5" r="2.7"/>
+        </g>
+        <text x="36" y="20" font-size="11.5" font-weight="700" fill="#0F172A">Account Profile (ข้อมูลบัญชี)</text>
+      </g>
+
+      <!-- Tab 2 Inactive: DataAccess Scope -->
+      <g id="Tab-DataAccessScope" transform="translate(202, 0)">
+        <!-- Shield Icon -->
+        <g transform="translate(8, 9)" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M6 12s4.5-2.25 4.5-5.63V2.81L6 1.69 1.5 2.81v3.56C1.5 9.75 6 12 6 12z"/>
+        </g>
+        <text x="26" y="20" font-size="11.5" font-weight="500" fill="#64748B">DataAccess Scope (ขอบเขตข้อมูล)</text>
+      </g>
+
+      <!-- Breadcrumb indicator on far right -->
+      <g id="Scope-Breadcrumb" transform="translate(470, 11)">
+        <circle cx="4" cy="9" r="3.5" fill="#2563EB"/>
+        <text x="14" y="12" font-size="11" font-weight="500" fill="#475569">Global Enterprise Scope &gt; 🏢 ภาพรวมระดับองค์ก...</text>
+      </g>
+    </g>
+
+    <!-- 4.2 Form Section Title -->
+    <g id="Section-Heading-AccountDetails" transform="translate(40, 72)">
+      <!-- User Icon -->
+      <g stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M12 14v-1.5a3 3 0 0 0-3-3H4a3 3 0 0 0-3 3V14"/>
+        <circle cx="6.5" cy="5" r="3"/>
+      </g>
+      <text x="20" y="11" font-size="12" font-weight="700" fill="#0F172A" letter-spacing="0.2">ข้อมูลบัญชีผู้ใช้งาน (USER ACCOUNT DETAILS)</text>
+    </g>
+
+    <!-- 4.3 Form Fields Grid (Width: 350px per column, gap: 20px) -->
+    
+    <!-- ROW 1: First Name & Last Name -->
+    <g id="Form-Row-1" transform="translate(40, 96)">
+      <!-- Field: First Name -->
+      <g id="Field-FirstName">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">
+          ชื่อ (First Name) <tspan fill="#EF4444">*</tspan>
+        </text>
+        <rect y="16" width="350" height="34" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="11.5" font-weight="400" fill="#94A3B8">e.g. สมชาย</text>
+      </g>
+
+      <!-- Field: Last Name -->
+      <g id="Field-LastName" transform="translate(370, 0)">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">
+          นามสกุล (Last Name) <tspan fill="#EF4444">*</tspan>
+        </text>
+        <rect y="16" width="350" height="34" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="11.5" font-weight="400" fill="#94A3B8">e.g. เกียรติสกุล</text>
+      </g>
+    </g>
+
+    <!-- ROW 2: Email & Phone -->
+    <g id="Form-Row-2" transform="translate(40, 156)">
+      <!-- Field: Corporate Email -->
+      <g id="Field-Email">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">
+          อีเมล (Corporate Email) <tspan fill="#EF4444">*</tspan>
+        </text>
+        <rect y="16" width="350" height="34" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="11.5" font-weight="400" fill="#94A3B8">somchai@company.com</text>
+      </g>
+
+      <!-- Field: Phone Number -->
+      <g id="Field-Phone" transform="translate(370, 0)">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">เบอร์โทรศัพท์ (Phone)</text>
+        <rect y="16" width="350" height="34" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="11.5" font-weight="400" fill="#94A3B8">+66 81 234 5678</text>
+      </g>
+    </g>
+
+    <!-- ROW 3: Corporate ID & Corporate Password -->
+    <g id="Form-Row-3" transform="translate(40, 216)">
+      <!-- Field: Corporate ID -->
+      <g id="Field-CorporateId">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">
+          รหัสองค์กร (Corporate ID) <tspan fill="#EF4444">*</tspan>
+        </text>
+        <!-- Actions: สร้างรหัส | คัดลอก -->
+        <g transform="translate(260, 0)">
+          <!-- Lightning Icon -->
+          <path d="M6 1L1 8h5l-1 6 7-8H7l1-5z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <text x="14" y="10" font-size="10.5" font-weight="600" fill="#2563EB">สร้างรหัส</text>
+          <text x="56" y="10" font-size="10.5" font-weight="500" fill="#64748B">คัดลอก</text>
+        </g>
+        <rect y="16" width="350" height="34" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="12" font-weight="700" fill="#0F172A">SA-169</text>
+      </g>
+
+      <!-- Field: Corporate Password -->
+      <g id="Field-Password" transform="translate(370, 0)">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">
+          รหัสผ่านองค์กร (Corporate Password) <tspan fill="#EF4444">*</tspan>
+        </text>
+        <!-- Actions: สุ่มรหัสผ่าน | คัดลอก -->
+        <g transform="translate(244, 0)">
+          <!-- Lightning Icon -->
+          <path d="M6 1L1 8h5l-1 6 7-8H7l1-5z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <text x="14" y="10" font-size="10.5" font-weight="600" fill="#2563EB">สุ่มรหัสผ่าน</text>
+          <text x="68" y="10" font-size="10.5" font-weight="500" fill="#64748B">คัดลอก</text>
+        </g>
+        <rect y="16" width="350" height="34" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="12" font-weight="700" fill="#0F172A">CRG@1623#</text>
+        <!-- Eye-off Icon -->
+        <g transform="translate(320, 25)" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M14.94 14.94A8.39 8.39 0 0 1 10 16.67c-5.83 0-9.17-6.67-9.17-6.67a15.38 15.38 0 0 1 4.22-4.95M8.25 3.53A7.6 7.6 0 0 1 10 3.33c5.83 0 9.17 6.67 9.17 6.67a15.42 15.42 0 0 1-1.8 2.66m-5.6-0.89a2.5 2.5 0 1 1-3.53-3.54"/>
+          <line x1="0.83" y1="0.83" x2="19.17" y2="19.17"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ROW 4: System Role -->
+    <g id="Form-Row-4" transform="translate(40, 276)">
+      <g id="Field-SystemRole">
+        <text x="0" y="10" font-size="11" font-weight="700" fill="#334155">
+          บทบาทระบบ (System Role) <tspan fill="#EF4444">*</tspan>
+        </text>
+        <rect y="16" width="350" height="34" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="14" y="38" font-size="11.5" font-weight="500" fill="#0F172A">Administrator (ควบคุมระบบ)</text>
+        <!-- Chevron Down Icon -->
+        <path d="M332 30l4 4 4-4" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </g>
+    </g>
+
+    <!-- ROW 5: Account Status Checkbox Row -->
+    <g id="Form-Row-5" transform="translate(40, 342)">
+      <!-- Left Label -->
+      <text x="0" y="12" font-size="11.5" font-weight="600" fill="#334155">สถานะบัญชี (Account Status)</text>
+
+      <!-- Right Checkbox and Text -->
+      <g id="Checkbox-AccountStatus" transform="translate(574, 0)">
+        <rect x="0" y="0" width="16" height="16" rx="4" fill="#2563EB" stroke="#2563EB" stroke-width="1"/>
+        <path d="M4 8l3 3 5-6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <text x="22" y="13" font-size="11.5" font-weight="700" fill="#047857">Active (เปิดใช้งานทันที)</text>
+      </g>
+    </g>
+
+  </g>
+
+  <!-- ========================================== -->
+  <!-- 5. BOTTOM FOOTER ACTION BAR                 -->
+  <!-- ========================================== -->
+  <g id="Modal-Footer" transform="translate(0, 480)">
+    <!-- Top Divider Line -->
+    <line x1="0" y1="0" x2="1024" y2="0" stroke="#F1F5F9" stroke-width="1"/>
+
+    <!-- Cancel Button -->
+    <g id="Button-Cancel" transform="translate(840, 15)">
+      <rect width="66" height="34" rx="17" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+      <text x="33" y="21" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">Cancel</text>
+    </g>
+
+    <!-- Save User Button -->
+    <g id="Button-SaveUser" transform="translate(914, 15)">
+      <rect width="96" height="34" rx="17" fill="#1D4ED8"/>
+      <text x="48" y="21" text-anchor="middle" font-size="12" font-weight="600" fill="#FFFFFF">Save User</text>
+    </g>
+  </g>
+</svg>

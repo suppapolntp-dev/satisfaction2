@@ -14,180 +14,263 @@ export default function NavbarSearchDropdown({
     setQuery,
     selectedIndex,
     setSelectedIndex,
-    isMobileExpanded,
     containerRef,
     inputRef,
-    mobileInputRef,
     filteredActions,
     handleNavigate,
     handleInputKeyDown,
-    handleFocus,
     handleClear,
-    toggleMobileSearch,
+    openSpotlightSearch,
+    closeSpotlightSearch,
   } = useNavbarSearchDropdown();
 
   return (
-    <div ref={containerRef} className={`relative w-full ${className}`}>
-      {/* ─── Desktop Search Input Bar ─── */}
-      <div className="hidden sm:relative sm:flex sm:items-center w-full">
-        <div
-          className={`flex items-center gap-2.5 w-full min-h-10 px-3.5 rounded-full border transition-all duration-200 motion-reduce:transition-none ${
-            isOpen
-              ? "bg-white border-slate-300 shadow-[0_4px_16px_-2px_rgba(15,23,42,0.08)] ring-2 ring-[var(--primary-container)]/15"
-              : "bg-slate-100/90 border-slate-200/80 hover:bg-slate-200/70 hover:border-slate-300/80"
-          }`}
-        >
+    <div ref={containerRef} className={`w-full ${className}`}>
+      {/* ─── Left Search Bar Pill (Figma Node 31:18) ─── */}
+      <div
+        onClick={openSpotlightSearch}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openSpotlightSearch();
+          }
+        }}
+        className="group w-full h-10 bg-[#f1f5f9]/90 hover:bg-[#f1f5f9] border border-[#e1e8f0]/90 hover:border-blue-300 rounded-full px-3.5 flex items-center justify-between gap-2.5 cursor-pointer transition-all shadow-2xs outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+        role="button"
+        tabIndex={0}
+        aria-label={placeholder}
+      >
+        {/* Search Icon (Figma Node 31:19) */}
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <svg
-            aria-hidden="true"
-            className="w-4 h-4 text-slate-500 shrink-0"
+            className="w-4 h-4 text-[#90a1b9] group-hover:text-blue-600 transition-colors shrink-0"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            <circle cx="11" cy="11" r="7" />
+            <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
+          {/* Search Placeholder (Figma Node 31:23) */}
+          <span className="text-[12px] font-medium text-[#90a1b9] group-hover:text-slate-600 truncate transition-colors select-none">
+            {placeholder}
+          </span>
+        </div>
 
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={handleFocus}
-            onKeyDown={handleInputKeyDown}
-            placeholder={placeholder}
-            aria-label={placeholder}
-            aria-expanded={isOpen}
-            aria-haspopup="listbox"
-            className="w-full bg-transparent outline-none text-xs text-slate-900 placeholder:text-slate-400 font-medium"
-          />
-
-          {query ? (
-            <button
-              type="button"
-              onClick={handleClear}
-              aria-label="Clear search input"
-              className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors duration-150 cursor-pointer shrink-0"
-            >
-              <svg aria-hidden="true" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
-          ) : (
-            <span className="hidden md:flex items-center gap-1 shrink-0">
-              <kbd className="font-sans text-[10px] font-semibold text-slate-500 border border-slate-200/90 bg-white rounded px-1.5 py-0.5 shadow-2xs">
-                Ctrl K
-              </kbd>
-            </span>
-          )}
+        {/* Kbd Badge (Figma Node 31:25) */}
+        <div className="bg-white border border-[#e2e8f0]/90 shadow-2xs rounded px-1.5 py-0.5 shrink-0 flex items-center">
+          <kbd className="font-mono text-[10px] font-semibold text-[#62748e] tracking-tight">
+            Ctrl K
+          </kbd>
         </div>
       </div>
 
-      {/* ─── Mobile Search Trigger Button ─── */}
-      <div className="sm:hidden flex justify-end">
-        <button
-          type="button"
-          onClick={toggleMobileSearch}
-          aria-expanded={isMobileExpanded}
-          aria-label="Toggle search dropdown"
-          className="min-w-11 min-h-11 inline-flex items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] cursor-pointer"
-        >
-          <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-        </button>
-      </div>
-
-      {/* ─── Mobile Search Input Drawer (appears right below navbar, no full-screen modal) ─── */}
-      {isMobileExpanded && (
-        <div className="sm:hidden absolute top-full left-0 right-0 mt-2 z-50 p-2 bg-white border border-slate-200 rounded-2xl shadow-[0_12px_32px_-4px_rgba(15,23,42,0.16)]">
-          <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-xl">
-            <svg aria-hidden="true" className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-            <input
-              ref={mobileInputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleInputKeyDown}
-              placeholder={placeholder}
-              aria-label={placeholder}
-              className="w-full bg-transparent outline-none text-xs text-slate-900 placeholder:text-slate-400 font-medium"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={handleClear}
-                aria-label="Clear mobile search"
-                className="p-1 text-slate-400 hover:text-slate-700"
-              >
-                <svg aria-hidden="true" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─── The Direct Dropdown Menu (Inline Popover under Search Bar) ─── */}
+      {/* ─── Spotlight Command Palette Search Modal (Figma Modal) ─── */}
       {isOpen && (
         <div
-          role="listbox"
-          aria-label="Navigation search results"
-          className="absolute left-0 right-0 top-full mt-2 sm:mt-1.5 w-full bg-white border border-slate-200/90 rounded-2xl shadow-[0_16px_36px_-6px_rgba(15,23,42,0.14)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150 motion-reduce:animate-none"
+          id="spotlightModal"
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-start justify-center pt-20 sm:pt-24 px-4 animate-in fade-in duration-150"
+          onClick={closeSpotlightSearch}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Spotlight Command Search"
         >
-          <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5 [scrollbar-width:thin]">
-            {filteredActions.map((action, index) => {
-              const isSelected = index === selectedIndex;
-              return (
-                <button
-                  key={action.id || action.route}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => handleNavigate(action.route)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className={`w-full min-h-10 px-3 py-2 rounded-xl flex items-center justify-between text-left transition-colors duration-150 motion-reduce:transition-none cursor-pointer ${
-                    isSelected
-                      ? "bg-slate-100 text-slate-900 font-semibold"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
-                >
-                  <div className="flex flex-col min-w-0 pr-2">
-                    <span className="text-[10px] text-slate-400 font-medium truncate">
-                      {action.groupName}
-                    </span>
-                    <span className="text-xs truncate font-medium">
-                      {action.itemName}
-                    </span>
-                  </div>
-
-                  <kbd className="text-[10px] text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded font-mono shrink-0 shadow-2xs">
-                    {action.shortcut}
-                  </kbd>
-                </button>
-              );
-            })}
-
-            {filteredActions.length === 0 && (
-              <div className="p-5 text-center flex flex-col items-center gap-2">
-                <p className="text-xs font-medium text-slate-500">
-                  No matching pages or actions found.
-                </p>
+          <div
+            className="bg-white w-full max-w-xl rounded-2xl shadow-spotlight border border-slate-200 overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Search Input Bar */}
+            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+              <svg
+                className="w-5 h-5 text-slate-400 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                ref={inputRef}
+                id="spotlightSearchInput"
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+                placeholder="ค้นหาหน้า, แอ็กชัน, สาขา หรือโมดูล..."
+                className="flex-1 text-sm outline-none placeholder-slate-400 text-slate-800 bg-transparent font-medium"
+                autoFocus
+                aria-autocomplete="list"
+              />
+              {query ? (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold text-[var(--primary-container)] hover:bg-[var(--accent-bg)] transition-colors duration-150 cursor-pointer"
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-700 cursor-pointer"
+                  aria-label="Clear search input"
                 >
-                  Reset search
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
                 </button>
-              </div>
-            )}
+              ) : (
+                <kbd className="px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200 rounded">
+                  ESC
+                </kbd>
+              )}
+            </div>
+
+            {/* Search List & Suggested Navigation */}
+            <div className="p-2 space-y-1 text-xs max-h-[60vh] overflow-y-auto [scrollbar-width:thin]">
+              {!query.trim() && (
+                <>
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Suggested Navigation
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate("/notifications")}
+                    className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-50 flex items-center justify-between text-left text-slate-700 transition-colors cursor-pointer group"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <svg
+                        className="w-4 h-4 text-blue-500 shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                      <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                        Notification &amp; Alert Triage
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono shrink-0">
+                      Jump to
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate("/satisfaction")}
+                    className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-50 flex items-center justify-between text-left text-slate-700 transition-colors cursor-pointer group"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <svg
+                        className="w-4 h-4 text-emerald-500 shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
+                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                        <path d="M7 7h10M7 12h10M7 17h10" />
+                      </svg>
+                      <span className="font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors truncate">
+                        Branch Satisfaction Kiosk Feed
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono shrink-0">
+                      Jump to
+                    </span>
+                  </button>
+
+                  <div className="border-t border-slate-100 my-1" />
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    All Available Pages &amp; Modules
+                  </div>
+                </>
+              )}
+
+              {filteredActions.map((action, index) => {
+                const isSelected = index === selectedIndex;
+                return (
+                  <button
+                    key={action.id || action.route}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleNavigate(action.route)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition-colors cursor-pointer ${
+                      isSelected
+                        ? "bg-blue-50/80 text-blue-900 font-semibold"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <svg
+                        className={`w-4 h-4 shrink-0 ${
+                          isSelected ? "text-blue-600" : "text-slate-400"
+                        }`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-slate-400 font-medium truncate">
+                          {action.groupName}
+                        </span>
+                        <span className="text-xs truncate font-medium text-slate-900">
+                          {action.itemName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] text-slate-400 font-mono">Jump to</span>
+                      <kbd className="text-[10px] text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded font-mono shadow-2xs">
+                        {action.shortcut}
+                      </kbd>
+                    </div>
+                  </button>
+                );
+              })}
+
+              {filteredActions.length === 0 && (
+                <div className="p-6 text-center flex flex-col items-center gap-2">
+                  <p className="text-xs font-medium text-slate-500">
+                    ไม่พบหน้าหรือแอ็กชันที่ตรงกับคำค้นหา
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
+                    ล้างการค้นหา
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

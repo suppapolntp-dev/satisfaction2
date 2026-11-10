@@ -17,6 +17,7 @@ function getLocalIPs(): string[] {
 }
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   turbopack: {},
   allowedDevOrigins: getLocalIPs(),
 };

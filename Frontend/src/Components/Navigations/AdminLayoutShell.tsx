@@ -6,9 +6,7 @@ import { ApiModeProvider } from "@/Context/ApiModeContext";
 import { ModalProvider } from "@/Context/ModalContext";
 import Sidebar from "@/Components/Sidebars/sidebar";
 import ProfileDropdown from "./ProfileDropdown";
-import ApiModeToggle from "./ApiModeToggle";
 import NavbarSearchDropdown from "./NavbarSearchDropdown";
-import { useBreadcrumb } from "./useBreadcrumb";
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
@@ -16,7 +14,6 @@ interface AdminLayoutShellProps {
 
 function AdminLayoutInner({ children }: AdminLayoutShellProps) {
   const { openMobile } = useSidebar();
-  const activeBreadcrumb = useBreadcrumb();
 
   return (
     <div className="h-screen h-dvh flex overflow-hidden bg-[var(--background)] text-[var(--on-surface)] antialiased font-[var(--font-inter)]">
@@ -25,14 +22,18 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
 
       {/* ─── 2. Responsive Main Workspace ─── */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Floating Bento Top App Bar (Navbar) */}
-        <header className="shrink-0 z-20 mx-3 mt-3 min-h-16 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_6px_16px_-4px_rgba(15,23,42,0.04)] px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors duration-200 motion-reduce:transition-none">
-          <div className="flex items-center gap-3 min-w-0 shrink-0">
+        {/* Floating Bento Top App Bar (Navbar - Figma Node 31:2) */}
+        <header
+          id="mainNavbar"
+          className="shrink-0 z-40 mx-3 mt-3 sm:mx-6 sm:mt-4 h-16 bg-white/95 backdrop-blur-[12px] border border-slate-200/80 rounded-[24px] shadow-figma-navbar px-4 sm:px-6 flex items-center justify-between gap-4 transition-all duration-200 motion-reduce:transition-none"
+        >
+          {/* Left: Mobile Toggle (sm screens) + Search Bar Pill (Figma Node 31:18) */}
+          <div className="flex items-center gap-3 flex-1 max-w-[448px] min-w-0">
             {/* Mobile Hamburger Toggle (44x44px touch target) */}
             <button
               type="button"
               onClick={openMobile}
-              className="md:hidden min-w-11 min-h-11 inline-flex items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] cursor-pointer"
+              className="md:hidden min-w-10 min-h-10 inline-flex items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)] cursor-pointer shrink-0"
               aria-label="Open mobile navigation"
             >
               <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -42,38 +43,18 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
               </svg>
             </button>
 
-            {/* Dynamic Route Breadcrumbs */}
-            <nav aria-label="Breadcrumb" className="min-w-0">
-              <ol className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                <li className="text-slate-500 hidden sm:inline truncate">
-                  {activeBreadcrumb.groupName}
-                </li>
-                <li aria-hidden="true" className="hidden sm:inline-flex items-center text-slate-400">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </li>
-                <li aria-current="page" className="text-slate-900 font-bold truncate">
-                  {activeBreadcrumb.pageLabel}
-                </li>
-              </ol>
-            </nav>
+            {/* Search Bar Pill & Spotlight Command Palette */}
+            <NavbarSearchDropdown className="flex-1" />
           </div>
 
-          {/* Center: Direct Inline Search Dropdown in Navbar */}
-          <div className="flex-1 max-w-md mx-2 sm:mx-4 flex justify-end sm:justify-center">
-            <NavbarSearchDropdown />
-          </div>
-
-          {/* Header Right Profile & API Actions */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <ApiModeToggle />
+          {/* Right: User Account Menu Button (Figma Node 31:33) */}
+          <div className="relative shrink-0">
             <ProfileDropdown />
           </div>
         </header>
 
         {/* Dynamic Nested Content Outlet */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 [scrollbar-width:thin]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 [scrollbar-width:thin]">
           <div className="w-full pb-6">
             {children}
           </div>

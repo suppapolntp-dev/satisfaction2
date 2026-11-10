@@ -14,89 +14,199 @@ public static class DbInitializer
         // สร้างตารางใน Database อัตโนมัติถ้ายังไม่มี
         await context.Database.EnsureCreatedAsync();
 
-        // 1. หยอด System Modules (9 เมนูหลัก)
-        if (!await context.SystemModules.AnyAsync())
+        // 1. หยอด System Modules (ทั้ง 9 เมนูหลัก และฟังก์ชันย่อยแบบ Tree Hierarchy)
+        var moduleDefinitions = new List<(string Code, string Label, string? Description, short Order, List<(string Code, string Label, string? Description, short Order)> Children)>
         {
-            var modules = new List<SystemModule>
+            ("DASHBOARD", "dashboard (แดชบอร์ดและการวิเคราะห์)", "แดชบอร์ดแสดงผลรวมและแนวโน้ม CSAT", 1, new()
             {
-                new() { ModuleCode = AppConstants.Modules.Dashboard, ModuleLabel = "แดชบอร์ดและการวิเคราะห์", DisplayOrder = 1 },
-                new() { ModuleCode = AppConstants.Modules.Satisfaction, ModuleLabel = "ผลโหวตความพึงพอใจ", DisplayOrder = 2 },
-                new() { ModuleCode = AppConstants.Modules.Organization, ModuleLabel = "จัดการแบรนด์และสาขา", DisplayOrder = 3 },
-                new() { ModuleCode = AppConstants.Modules.Users, ModuleLabel = "จัดการผู้ใช้งาน", DisplayOrder = 4 },
-                new() { ModuleCode = AppConstants.Modules.Roles, ModuleLabel = "จัดการบทบาทและสิทธิ์", DisplayOrder = 5 },
-                new() { ModuleCode = AppConstants.Modules.DataAccess, ModuleLabel = "จัดการขอบเขตข้อมูล (Scope)", DisplayOrder = 6 },
-                new() { ModuleCode = AppConstants.Modules.Events, ModuleLabel = "ปฏิทินกิจกรรมและแคมเปญ", DisplayOrder = 7 },
-                new() { ModuleCode = AppConstants.Modules.Audit, ModuleLabel = "ประวัติการทำงาน (Audit Logs)", DisplayOrder = 8 },
-                new() { ModuleCode = AppConstants.Modules.Settings, ModuleLabel = "ตั้งค่าระบบ", DisplayOrder = 9 }
-            };
-            await context.SystemModules.AddRangeAsync(modules);
+                ("DASHBOARD_FILTER", "filter", "ตัวกรองข้อมูลและช่วงเวลา", 1),
+                ("DASHBOARD_TIMELINE", "Sentiment Score Timeline", "กราฟแนวโน้มความพึงพอใจตามไทม์ไลน์", 2),
+                ("DASHBOARD_ANALYSES", "Analyses tabpill", "แท็บเจาะลึกสถิติและการวิเคราะห์", 3),
+            }),
+            ("SATISFACTION", "satisfaction (ผลโหวตความพึงพอใจ)", "ข้อมูลคะแนนความพึงพอใจและการประเมินลูกค้า", 2, new()
+            {
+                ("SATISFACTION_FEED", "Live Vote Ingestion Feed", "ฟีดข้อมูลผลโหวตแบบเรียลไทม์", 1),
+                ("SATISFACTION_BREAKDOWN", "Branch CSAT Breakdown", "รายงานคะแนนแยกตามสาขา", 2),
+                ("SATISFACTION_COMMENTS", "Customer Feedback & Voice", "ความคิดเห็นและข้อเสนอแนะลูกค้า", 3),
+            }),
+            ("ORGANIZATION", "brands (จัดการแบรนด์และสาขา)", "บริหารจัดการแบรนด์ สาขา และตู้ประเมิน", 3, new()
+            {
+                ("BRANDS_CATALOG", "Brand Catalog & Info", "จัดการข้อมูลแบรนด์ในเครือ", 1),
+                ("BRANDS_BRANCHES", "Branch Outlets Directory", "จัดการข้อมูลสาขาและพิกัด", 2),
+                ("BRANDS_KIOSKS", "Kiosk Touchscreen Binding", "ผูกและควบคุมเครื่องคีออสหน้าร้าน", 3),
+            }),
+            ("USERS", "users (จัดการผู้ใช้งาน)", "รายชื่อผู้ใช้งานและกำหนดสิทธิ์ผู้ใช้", 4, new()
+            {
+                ("USERS_DIRECTORY", "User Accounts Directory", "รายชื่อบัญชีผู้ใช้งานระบบ", 1),
+                ("USERS_SCOPE", "5-Tier Scope Hierarchy Access", "การจัดสรรขอบเขตข้อมูลรายบุคคล", 2),
+                ("USERS_SECURITY", "MFA & Password Security", "รีเซ็ตรหัสผ่านและตั้งค่าความปลอดภัย", 3),
+            }),
+            ("ROLES", "roles (จัดการบทบาทและสิทธิ์)", "กำหนดและจัดการบทบาทผู้ใช้งานในระบบ", 5, new()
+            {
+                ("ROLES_LIST", "System Roles Directory", "กำหนดและจัดการบทบาทผู้ใช้งาน", 1),
+                ("ROLES_MATRIX", "Granular Permission Matrix", "กำหนดสิทธิ์ระดับฟังก์ชัน (Tree Access)", 2),
+            }),
+            ("DATA_ACCESS", "data_access (จัดการขอบเขตข้อมูล Scope)", "ขอบเขตการเข้าถึงข้อมูลตามลำดับขั้น 5 ระดับ", 6, new()
+            {
+                ("DATA_ACCESS_SCOPES", "User Scope Assignments", "มอบหมายและจัดการขอบเขตข้อมูล 5 ระดับ", 1),
+                ("DATA_ACCESS_PERMISSIONS", "Tier Grid Matrix", "สิทธิ์การมองเห็นแดชบอร์ดรายระดับ", 2),
+            }),
+            ("EVENTS", "event (ปฏิทินกิจกรรมและแคมเปญ)", "ปฏิทินกิจกรรม แคมเปญการตลาด และการตรวจสอบสาขา", 7, new()
+            {
+                ("EVENTS_CALENDAR_VIEW", "calendar view", "มุมมองปฏิทินตารางกิจกรรม", 1),
+                ("EVENTS_CAMPAIGNS", "Events & Campaigns", "จัดการกิจกรรม แคมเปญ และโปรโมชั่น", 2),
+            }),
+            ("AUDIT", "audit (ประวัติการทำงาน Audit Logs)", "บันทึกประวัติการเปลี่ยนแปลงและการเข้าสู่ระบบ", 8, new()
+            {
+                ("AUDIT_AUTH_LOGS", "Authentication & Login Logs", "บันทึกการเข้าสู่ระบบและ SMS OTP", 1),
+                ("AUDIT_ACTIVITY", "Operation Change Trail", "ประวัติการแก้ไขข้อมูลสำคัญในระบบ", 2),
+            }),
+            ("SETTINGS", "settings (ตั้งค่าระบบ)", "ตั้งค่าความปลอดภัยและเกณฑ์มาตรฐาน CSAT", 9, new()
+            {
+                ("SETTINGS_SECURITY", "Security & SMS OTP Rules", "นโยบายความปลอดภัยและ Session", 1),
+                ("SETTINGS_BENCHMARKS", "CSAT Benchmark Thresholds", "เกณฑ์คะแนนชี้วัดความพึงพอใจ", 2),
+            }),
+        };
+
+        foreach (var def in moduleDefinitions)
+        {
+            var parent = await context.SystemModules.FirstOrDefaultAsync(m => m.ModuleCode == def.Code);
+            if (parent == null)
+            {
+                parent = new SystemModule
+                {
+                    ModuleCode = def.Code,
+                    ModuleLabel = def.Label,
+                    Description = def.Description,
+                    DisplayOrder = def.Order,
+                    ParentId = null
+                };
+                await context.SystemModules.AddAsync(parent);
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                parent.ModuleLabel = def.Label;
+                parent.Description = def.Description;
+                parent.DisplayOrder = def.Order;
+                parent.ParentId = null;
+                await context.SaveChangesAsync();
+            }
+
+            foreach (var childDef in def.Children)
+            {
+                var child = await context.SystemModules.FirstOrDefaultAsync(m => m.ModuleCode == childDef.Code);
+                if (child == null)
+                {
+                    child = new SystemModule
+                    {
+                        ModuleCode = childDef.Code,
+                        ModuleLabel = childDef.Label,
+                        Description = childDef.Description,
+                        DisplayOrder = childDef.Order,
+                        ParentId = parent.Id
+                    };
+                    await context.SystemModules.AddAsync(child);
+                }
+                else
+                {
+                    child.ModuleLabel = childDef.Label;
+                    child.Description = childDef.Description;
+                    child.DisplayOrder = childDef.Order;
+                    child.ParentId = parent.Id;
+                }
+            }
             await context.SaveChangesAsync();
         }
 
         // 2. หยอด Roles เริ่มต้น
-        if (!await context.Roles.AnyAsync())
+        var rolesToEnsure = new List<(string Code, string Name, string Desc)>
         {
-            var superAdminRole = new Role
-            {
-                RoleCode = "SUPER_ADMIN",
-                RoleName = "Super Admin (ผู้ดูแลระบบสูงสุด)",
-                RoleDescription = "เข้าถึงได้ทุกข้อมูลและจัดการได้ทุกโมดูลในระบบ",
-                RoleStatus = "Active",
-                IsSystemDefault = true
-            };
+            ("SUPER_ADMIN", "Super Admin (ผู้ดูแลระบบสูงสุด)", "เข้าถึงได้ทุกข้อมูลและจัดการได้ทุกโมดูลในระบบ"),
+            ("BRAND_MANAGER", "Brand Manager (ผู้บริหารแบรนด์)", "ดูแลและวิเคราะห์ข้อมูลเฉพาะแบรนด์ที่ได้รับมอบหมาย"),
+            ("REGIONAL_MANAGER", "Regional Manager (ผู้จัดการภาค)", "ดูแลและวิเคราะห์ข้อมูลสาขาในเขตภาคที่รับผิดชอบ"),
+            ("AREA_MANAGER", "Area Manager (ผู้จัดการเขต)", "ดูแลสาขาและตู้ Kiosk ในจังหวัด/พื้นที่รับผิดชอบ"),
+            ("BRANCH_STAFF", "Branch Staff (พนักงานประจำสาขา)", "ดูผลคะแนนและจัดการตู้ Kiosk ประจำสาขาของตนเอง")
+        };
 
-            var brandManagerRole = new Role
+        var seededRoles = new List<Role>();
+        foreach (var r in rolesToEnsure)
+        {
+            var existingRole = await context.Roles.FirstOrDefaultAsync(ro => ro.RoleCode == r.Code);
+            if (existingRole == null)
             {
-                RoleCode = "BRAND_MANAGER",
-                RoleName = "Brand Manager (ผู้บริหารแบรนด์)",
-                RoleDescription = "ดูแลและวิเคราะห์ข้อมูลเฉพาะแบรนด์ที่ได้รับมอบหมาย",
-                RoleStatus = "Active",
-                IsSystemDefault = true
-            };
-
-            var regionalManagerRole = new Role
-            {
-                RoleCode = "REGIONAL_MANAGER",
-                RoleName = "Regional Manager (ผู้จัดการภาค)",
-                RoleDescription = "ดูแลและวิเคราะห์ข้อมูลสาขาในเขตภาคที่รับผิดชอบ",
-                RoleStatus = "Active",
-                IsSystemDefault = true
-            };
-
-            var areaManagerRole = new Role
-            {
-                RoleCode = "AREA_MANAGER",
-                RoleName = "Area Manager (ผู้จัดการเขต)",
-                RoleDescription = "ดูแลสาขาและตู้ Kiosk ในจังหวัด/พื้นที่รับผิดชอบ",
-                RoleStatus = "Active",
-                IsSystemDefault = true
-            };
-
-            var staffRole = new Role
-            {
-                RoleCode = "BRANCH_STAFF",
-                RoleName = "Branch Staff (พนักงานประจำสาขา)",
-                RoleDescription = "ดูผลคะแนนและจัดการตู้ Kiosk ประจำสาขาของตนเอง",
-                RoleStatus = "Active",
-                IsSystemDefault = true
-            };
-
-            await context.Roles.AddRangeAsync(superAdminRole, brandManagerRole, regionalManagerRole, areaManagerRole, staffRole);
-            await context.SaveChangesAsync();
-
-            // ให้สิทธิ์ Super Admin เข้าถึงได้ทุกโมดูล (All Permissions = true)
-            var allModules = await context.SystemModules.ToListAsync();
-            foreach (var mod in allModules)
-            {
-                context.RolePermissions.Add(new RolePermission
+                existingRole = new Role
                 {
-                    RoleId = superAdminRole.Id,
+                    RoleCode = r.Code,
+                    RoleName = r.Name,
+                    RoleDescription = r.Desc,
+                    RoleStatus = "Active",
+                    IsSystemDefault = true
+                };
+                await context.Roles.AddAsync(existingRole);
+                await context.SaveChangesAsync();
+            }
+            seededRoles.Add(existingRole);
+        }
+
+        // หยอด RolePermissions สำหรับทุก Role และทุกโมดูล
+        var allSystemModules = await context.SystemModules.ToListAsync();
+        foreach (var role in seededRoles)
+        {
+            var existingPerms = await context.RolePermissions.Where(rp => rp.RoleId == role.Id).ToListAsync();
+            foreach (var mod in allSystemModules)
+            {
+                if (existingPerms.Any(rp => rp.ModuleId == mod.Id)) continue;
+
+                bool isSuperAdmin = role.RoleCode == "SUPER_ADMIN";
+                bool isBrandManager = role.RoleCode == "BRAND_MANAGER";
+                bool isRegionalOrArea = role.RoleCode == "REGIONAL_MANAGER" || role.RoleCode == "AREA_MANAGER";
+                bool isStaff = role.RoleCode == "BRANCH_STAFF";
+
+                bool canView = false;
+                bool canCreate = false;
+                bool canUpdate = false;
+                bool canDelete = false;
+                bool canExport = false;
+
+                if (isSuperAdmin)
+                {
+                    canView = canCreate = canUpdate = canDelete = canExport = true;
+                }
+                else if (isBrandManager)
+                {
+                    bool isSettingsOrRoles = mod.ModuleCode.StartsWith("SETTINGS") || mod.ModuleCode.StartsWith("ROLES");
+                    canView = true;
+                    canCreate = !isSettingsOrRoles;
+                    canUpdate = !isSettingsOrRoles;
+                    canDelete = mod.ModuleCode == "EVENTS_CAMPAIGNS";
+                    canExport = true;
+                }
+                else if (isRegionalOrArea)
+                {
+                    bool isSystemMgmt = mod.ModuleCode.StartsWith("SETTINGS") || mod.ModuleCode.StartsWith("ROLES") || mod.ModuleCode.StartsWith("DATA_ACCESS");
+                    canView = !isSystemMgmt;
+                    canCreate = false;
+                    canUpdate = false;
+                    canDelete = false;
+                    canExport = canView;
+                }
+                else if (isStaff)
+                {
+                    bool isSatisfaction = mod.ModuleCode.StartsWith("SATISFACTION");
+                    canView = isSatisfaction;
+                    canCreate = isSatisfaction;
+                }
+
+                await context.RolePermissions.AddAsync(new RolePermission
+                {
+                    RoleId = role.Id,
                     ModuleId = mod.Id,
-                    CanView = true,
-                    CanCreate = true,
-                    CanUpdate = true,
-                    CanDelete = true,
-                    CanExport = true
+                    CanView = canView,
+                    CanCreate = canCreate,
+                    CanUpdate = canUpdate,
+                    CanDelete = canDelete,
+                    CanExport = canExport
                 });
             }
             await context.SaveChangesAsync();

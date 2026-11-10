@@ -19,11 +19,9 @@ export function useNavbarSearchDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [isMobileExpanded, setIsMobileExpanded] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const mobileInputRef = useRef<HTMLInputElement>(null);
 
   const allActions = useMemo<SearchActionItem[]>(() => {
     const list: SearchActionItem[] = [];
@@ -64,7 +62,9 @@ export function useNavbarSearchDropdown() {
     return allActions.filter(
       (action) =>
         action.label.toLowerCase().includes(q) ||
-        action.route.toLowerCase().includes(q)
+        action.route.toLowerCase().includes(q) ||
+        action.itemName.toLowerCase().includes(q) ||
+        action.groupName.toLowerCase().includes(q)
     );
   }, [allActions, query]);
 
@@ -76,13 +76,25 @@ export function useNavbarSearchDropdown() {
   const handleNavigate = useCallback(
     (route: string) => {
       setIsOpen(false);
-      setIsMobileExpanded(false);
+      setQuery("");
       startTransition(() => {
         router.push(route);
       });
     },
     [router]
   );
+
+  const openSpotlightSearch = useCallback(() => {
+    setIsOpen(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 60);
+  }, []);
+
+  const closeSpotlightSearch = useCallback(() => {
+    setIsOpen(false);
+    setQuery("");
+  }, []);
 
   // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
@@ -92,39 +104,20 @@ export function useNavbarSearchDropdown() {
 
       if (isMeta && key === "k") {
         event.preventDefault();
-        setIsOpen(true);
-        setTimeout(() => {
-          if (window.innerWidth < 640) {
-            setIsMobileExpanded(true);
-            mobileInputRef.current?.focus();
-          } else {
-            inputRef.current?.focus();
+        setIsOpen((prev) => {
+          const next = !prev;
+          if (next) {
+            setTimeout(() => inputRef.current?.focus(), 60);
           }
-        }, 50);
+          return next;
+        });
       } else if (key === "escape") {
         setIsOpen(false);
-        setIsMobileExpanded(false);
       }
     }
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
-
-  // Click outside listener
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        setIsMobileExpanded(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -155,34 +148,13 @@ export function useNavbarSearchDropdown() {
       }
     } else if (event.key === "Escape") {
       event.preventDefault();
-      setIsOpen(false);
-      setIsMobileExpanded(false);
-      inputRef.current?.blur();
-      mobileInputRef.current?.blur();
+      closeSpotlightSearch();
     }
-  };
-
-  const handleFocus = () => {
-    setIsOpen(true);
   };
 
   const handleClear = () => {
     setQuery("");
     inputRef.current?.focus();
-    mobileInputRef.current?.focus();
-  };
-
-  const toggleMobileSearch = () => {
-    setIsMobileExpanded((prev) => {
-      const next = !prev;
-      if (next) {
-        setIsOpen(true);
-        setTimeout(() => mobileInputRef.current?.focus(), 50);
-      } else {
-        setIsOpen(false);
-      }
-      return next;
-    });
   };
 
   return {
@@ -191,16 +163,14 @@ export function useNavbarSearchDropdown() {
     setQuery,
     selectedIndex,
     setSelectedIndex,
-    isMobileExpanded,
     containerRef,
     inputRef,
-    mobileInputRef,
     filteredActions,
     handleNavigate,
     handleInputKeyDown,
-    handleFocus,
     handleClear,
-    toggleMobileSearch,
+    openSpotlightSearch,
+    closeSpotlightSearch,
     setIsOpen,
   };
 }

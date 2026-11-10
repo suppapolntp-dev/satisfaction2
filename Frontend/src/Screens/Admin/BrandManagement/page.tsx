@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import MetricCard from "@/Components/Cards/MetricCard";
 import BrandTable from "@/Components/Tables/BrandTable";
@@ -9,6 +9,7 @@ import BrandModal from "@/Components/Modals/BrandModal";
 import BranchModal from "@/Components/Modals/BranchModal";
 import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSidebar";
 import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
+import { buildHierarchyTree } from "@/Services/dataAccessService";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
 
 export interface BrandManagementScreenProps {
@@ -22,7 +23,6 @@ export default function BrandManagementScreen({
     activeTab,
     brandTabs,
     brandMetrics,
-    branchMetrics,
     brands,
     branches,
     isLoading,
@@ -44,6 +44,12 @@ export default function BrandManagementScreen({
     handleDeleteBranch,
   } = useBrandManagementScreen({ initialTab });
 
+  // 1. Build hierarchy tree from loaded brands and branches
+  const hierarchyTreeData = useMemo(() => {
+    return buildHierarchyTree(brands, branches);
+  }, [brands, branches]);
+
+  // 2. Synchronize Org Tree with live data
   const {
     searchQuery,
     setSearchQuery,
@@ -60,14 +66,101 @@ export default function BrandManagementScreen({
     selectRegion,
     selectProvince,
     selectBranch,
-  } = useOrgTree();
+    scopePath,
+  } = useOrgTree({
+    data: hierarchyTreeData.length > 0 ? hierarchyTreeData : undefined,
+  });
+
+  // 3. Connect State from Org Tree to filter branch dataset
+  const filteredBranches = useMemo(() => {
+    if (!branches || branches.length === 0) return [];
+
+    // All Organization (Super Admin level or no filter)
+    if (
+      selectedScopeLevel === "SUPER_ADMIN" ||
+      (!selectedBrand && !selectedRegion && !selectedProvince && !selectedBranch)
+    ) {
+      return branches;
+    }
+
+    return branches.filter((branch) => {
+      // Level 5: Branch
+      if (selectedScopeLevel === "BRANCH" && selectedBranch) {
+        return (
+          branch.id === selectedBranch.id ||
+          (Boolean(branch.code) && branch.code.toLowerCase() === selectedBranch.code.toLowerCase()) ||
+          branch.name.trim().toLowerCase() === selectedBranch.name.trim().toLowerCase()
+        );
+      }
+
+      // Level 2, 3, 4: Brand matching
+      if (selectedBrand) {
+        const brandName = selectedBrand.name.trim().toLowerCase();
+        const brandCode = (selectedBrand.code || "").trim().toLowerCase();
+
+        const matchBrandList =
+          Array.isArray(branch.brands) &&
+          branch.brands.some((b) => {
+            const lower = b.trim().toLowerCase();
+            return lower === brandName || (Boolean(brandCode) && lower === brandCode);
+          });
+
+        const matchBrandStr =
+          typeof branch.brand === "string" &&
+          (branch.brand.toLowerCase().includes(brandName) ||
+            (Boolean(brandCode) && branch.brand.toLowerCase().includes(brandCode)));
+
+        if (!matchBrandList && !matchBrandStr) {
+          return false;
+        }
+      }
+
+      // Level 3, 4: Region matching
+      if (selectedRegion) {
+        const regionName = selectedRegion.name.trim().toLowerCase();
+        const branchRegion = (branch.region || "").trim().toLowerCase();
+        if (branchRegion !== regionName) {
+          return false;
+        }
+      }
+
+      // Level 4: Province matching
+      if (selectedProvince) {
+        const provName = selectedProvince.name.trim().toLowerCase();
+        const branchProvince = (branch.province || "").trim().toLowerCase();
+        if (branchProvince !== provName) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [branches, selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
+
+  // Compute active scope filter pill for BranchTable
+  const scopeFilter = useMemo(() => {
+    if (selectedScopeLevel === "BRANCH" && selectedBranch) {
+      return { level: "Branch", label: selectedBranch.name };
+    }
+    if (selectedScopeLevel === "PROVINCE" && selectedProvince) {
+      return { level: "Province", label: `จ.${selectedProvince.name}` };
+    }
+    if (selectedScopeLevel === "REGION" && selectedRegion) {
+      return { level: "Region", label: selectedRegion.name };
+    }
+    if (selectedScopeLevel === "BRAND" && selectedBrand) {
+      return { level: "Brand", label: selectedBrand.name };
+    }
+    return undefined;
+  }, [selectedScopeLevel, selectedBrand, selectedRegion, selectedProvince, selectedBranch]);
 
   useEffect(() => {
     console.log("[BrandManagementScreen] Mounted / Updated with activeTab:", activeTab, {
       brandMetricsCount: brandMetrics.length,
-      branchMetricsCount: branchMetrics.length,
+      filteredBranchesCount: filteredBranches.length,
+      selectedScopeLevel,
     });
-  }, [activeTab, brandMetrics.length, branchMetrics.length]);
+  }, [activeTab, brandMetrics.length, filteredBranches.length, selectedScopeLevel]);
 
   const isBrandTab = activeTab === "brands";
 
@@ -123,47 +216,42 @@ export default function BrandManagementScreen({
         </div>
       )}
 
-      {/* ─── TAB 2: BRANCHES OVERVIEW, TREE SIDEBAR & TABLE ─── */}
+      {/* ─── TAB 2: BRANCHES OVERVIEW, CLEAN 2-GRID (TREE SIDEBAR & TABLE) ─── */}
       {activeTab === "branches" && (
-        <div className="space-y-6">
-          <div className="flex flex-wrap gap-4">
-            {branchMetrics.map((item) => (
-              <MetricCard key={item.id || item.label} item={item} />
-            ))}
-          </div>
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* Left: Collapsible 5-Tier Organization Hierarchy Tree Navigation */}
+          <OrgHierarchyTreeSidebar
+            brandHierarchy={brandHierarchy}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedScopeLevel={selectedScopeLevel}
+            selectedBrand={selectedBrand}
+            selectedRegion={selectedRegion}
+            selectedProvince={selectedProvince}
+            selectedBranch={selectedBranch}
+            expandedNodes={expandedNodes}
+            onToggleNode={toggleNode}
+            onSelectSuperAdmin={selectSuperAdmin}
+            onSelectBrand={selectBrand}
+            onSelectRegion={selectRegion}
+            onSelectProvince={selectProvince}
+            onSelectBranch={selectBranch}
+            scopePath={scopePath}
+            collapsible={true}
+            defaultCollapsed={false}
+          />
 
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
-            {/* Left: Collapsible 5-Tier Organization Hierarchy Tree Navigation */}
-            <OrgHierarchyTreeSidebar
-              brandHierarchy={brandHierarchy}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              selectedScopeLevel={selectedScopeLevel}
-              selectedBrand={selectedBrand}
-              selectedRegion={selectedRegion}
-              selectedProvince={selectedProvince}
-              selectedBranch={selectedBranch}
-              expandedNodes={expandedNodes}
-              onToggleNode={toggleNode}
-              onSelectSuperAdmin={selectSuperAdmin}
-              onSelectBrand={selectBrand}
-              onSelectRegion={selectRegion}
-              onSelectProvince={selectProvince}
-              onSelectBranch={selectBranch}
-              collapsible={true}
-              defaultCollapsed={false}
+          {/* Right: Branch Directory Table with in-table Add Branch button */}
+          <div className="flex-1 w-full min-w-0">
+            <BranchTable
+              branches={filteredBranches}
+              isLoading={isLoading}
+              onAddBranch={handleAddBranch}
+              onEditBranch={handleEditBranch}
+              onDeleteBranch={handleDeleteBranch}
+              scopeFilter={scopeFilter}
+              onClearScopeFilter={selectSuperAdmin}
             />
-
-            {/* Right: Branch Directory Table with in-table Add Branch button */}
-            <div className="flex-1 w-full min-w-0">
-              <BranchTable
-                branches={branches}
-                isLoading={isLoading}
-                onAddBranch={handleAddBranch}
-                onEditBranch={handleEditBranch}
-                onDeleteBranch={handleDeleteBranch}
-              />
-            </div>
           </div>
         </div>
       )}

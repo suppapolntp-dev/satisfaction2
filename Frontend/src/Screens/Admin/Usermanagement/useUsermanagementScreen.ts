@@ -83,12 +83,12 @@ export function useUsermanagementScreen({
     () => [
       {
         id: "users",
-        label: "User Accounts (บัญชีผู้ใช้)",
+        label: "User Accounts",
         badge: users.length > 0 ? users.length : undefined,
       },
       {
         id: "dataaccess",
-        label: "Data Access Scope (ขอบเขตข้อมูล)",
+        label: "Data Access Scope",
       },
     ],
     [users.length]
