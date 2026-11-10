@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import PageHeader from "@/Components/Headers/PageHeader";
 import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import SearchInput from "@/Components/Inputs/SearchInput";
 import NotificationInboxList from "@/Components/Lists/NotificationInboxList";
@@ -15,15 +16,20 @@ export default function NotificationTriageScreen({
 }: NotificationTriageScreenProps = {}) {
   const {
     activeTab,
+    notificationTabs,
     notificationsList,
     filteredNotificationsList,
     activeNotification,
     selectedNotificationId,
     unreadCount,
+    isLoading,
+    isRefreshing,
     searchNotificationQuery,
     selectedTypeFilter,
     setSearchNotificationQuery,
     setSelectedTypeFilter,
+    handleTabChange,
+    handleRefresh,
     handleMarkAllAsRead,
     handleMarkCurrentAsRead,
     handleDismissNotification,
@@ -79,33 +85,75 @@ export default function NotificationTriageScreen({
   return (
     <div className="space-y-6">
       
-      {/* ─── 1. PAGE HEADER SECTION ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Notification & Alert Triage
-            </h1>
-            {unreadCount > 0 && (
-              <span className="bg-rose-500 text-white px-2.5 py-0.5 rounded-full text-xs font-bold shadow-xs">
-                {unreadCount} Unread
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk และข้อเสนอแนะความพึงพอใจ
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleMarkAllAsRead}
-          className="btn-secondary self-start sm:self-auto"
-        >
-          <span className="material-symbols-outlined text-[16px]">done_all</span>
-          Mark All as Read
-        </button>
-      </div>
+      {/* ─── 1. MODULAR STANDARDIZED PAGE HEADER COMPONENT ─── */}
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+            </span>
+            <span>Notification &amp; Alert Triage</span>
+          </span>
+        }
+        description="ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk ตลอดจนข้อเสนอแนะความพึงพอใจ เพื่อการวิเคราะห์และแก้ไขปัญหาได้อย่างทันท่วงที"
+        tabs={notificationTabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        primaryAction={{
+          label: "Mark All as Read",
+          variant: "dark",
+          icon: (
+            <svg
+              className="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 7 17l-5-5" />
+              <path d="m22 10-7.5 7.5L13 16" />
+            </svg>
+          ),
+          onClick: handleMarkAllAsRead,
+        }}
+        secondaryActions={
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 select-none"
+          >
+            <svg
+              className={`w-3.5 h-3.5 shrink-0 ${isRefreshing ? "animate-spin" : ""}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 21h5v-5" />
+            </svg>
+            <span>{isRefreshing ? "กำลังรีเฟรช..." : "Refresh Telemetry"}</span>
+          </button>
+        }
+      />
 
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
       <StatsGrid data={notificationStatsData} />
@@ -186,7 +234,19 @@ export default function NotificationTriageScreen({
                     title="Mark as Read"
                     className="p-1.5 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[18px]">mark_email_read</span>
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 10.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                      <path d="m16 19 2 2 4-4" />
+                    </svg>
                   </button>
                   <button
                     type="button"
@@ -194,7 +254,19 @@ export default function NotificationTriageScreen({
                     title="Dismiss Notification"
                     className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -205,7 +277,19 @@ export default function NotificationTriageScreen({
                 {/* Title & Timestamp */}
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-                    <span className="material-symbols-outlined text-[22px]">warning</span>
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-slate-900 leading-tight">
@@ -238,7 +322,19 @@ export default function NotificationTriageScreen({
                       onClick={() => alert(`ตรวจสอบรายงานเรียลไทม์ของ ${activeNotification.targetBranchCode}`)}
                       className="btn-primary"
                     >
-                      <span className="material-symbols-outlined text-[16px]">monitoring</span>
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect width="20" height="14" x="2" y="3" rx="2" />
+                        <line x1="8" x2="16" y1="21" y2="21" />
+                        <line x1="12" x2="12" y1="17" y2="21" />
+                      </svg>
                       ตรวจสอบสถานะสาขา
                     </button>
                     <button
@@ -246,7 +342,17 @@ export default function NotificationTriageScreen({
                       onClick={handleMarkCurrentAsRead}
                       className="btn-secondary"
                     >
-                      <span className="material-symbols-outlined text-[16px]">check</span>
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                       ทำเครื่องหมายว่าตรวจสอบแล้ว
                     </button>
                   </div>

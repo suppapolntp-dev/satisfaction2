@@ -22,10 +22,21 @@ export default function NotificationInboxList({
   
   if (notifications.length === 0) {
     return (
-      <div className="p-8 text-center text-xs text-slate-400 select-none">
-        <span className="material-symbols-outlined text-2xl block mb-1 text-slate-300">
-          notifications_off
-        </span>
+      <div className="p-8 text-center text-xs text-slate-400 select-none flex flex-col items-center justify-center">
+        <svg
+          className="w-8 h-8 mb-2 text-slate-300"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          <path d="M18.63 13A17.89 17.89 0 0 1 18 8" />
+          <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14" />
+          <path d="m2 2 20 20" />
+        </svg>
         ยังไม่มีรายการแจ้งเตือนในระบบ
       </div>
     );
@@ -57,9 +68,47 @@ export default function NotificationInboxList({
                 ? "bg-blue-50 text-blue-800 border border-blue-200"
                 : "bg-slate-100 text-slate-600 border border-slate-200"
             }`}>
-              <span className="material-symbols-outlined text-[18px]">
-                {isAlert ? "warning" : isFeedback ? "chat" : "info"}
-              </span>
+              {isAlert ? (
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              ) : isFeedback ? (
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              ) : (
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              )}
             </div>
 
             {/* Notification Summary */}
