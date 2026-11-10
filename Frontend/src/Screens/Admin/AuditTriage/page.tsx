@@ -4,6 +4,7 @@ import React from "react";
 import PageHeader from "@/Components/Headers/PageHeader";
 import AuditMetricCards from "@/Components/Cards/AuditMetricCards";
 import AuditLogTable from "@/Components/Tables/AuditLogTable";
+import ServiceHealthTable from "@/Components/Tables/ServiceHealthTable";
 import { useAuditTriageScreen, AuditTabType } from "./useAuditTriageScreen";
 
 export interface AuditScreenProps {
@@ -118,7 +119,7 @@ export default function AuditScreen({
         onFilterClick={handleFilterMetrics}
       />
 
-      {/* ─── 3. TAB 1: ACTIVITY AUDIT LOGS & DIFF INSPECTOR (Step 3) ─── */}
+      {/* ─── 3. TAB 1: ACTIVITY AUDIT LOGS & DIFF INSPECTOR ─── */}
       {activeTab === "activity_logs" && (
         <AuditLogTable
           logs={activityLogs}
@@ -126,34 +127,13 @@ export default function AuditScreen({
         />
       )}
 
-      {/* ─── 4. TAB 2: API & SERVICE HEALTH MONITOR (Ready for Step 4) ─── */}
+      {/* ─── 4. TAB 2: API & SERVICE HEALTH TELEMETRY MONITOR (Step 4) ─── */}
       {activeTab === "api_health" && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] p-8 text-center">
-          <div className="max-w-md mx-auto space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mx-auto">
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
-                <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
-                <line x1="6" x2="6.01" y1="6" y2="6" />
-                <line x1="6" x2="6.01" y1="18" y2="18" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-bold text-slate-800">
-              พร้อมต่อยอด Step 4: API &amp; Service Health Monitor
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              แท็บนี้จะแสดงสถานะ Uptime %, Latency ms, และปุ่ม Ping Test สด สำหรับทุก Microservices
-            </p>
-          </div>
-        </div>
+        <ServiceHealthTable
+          services={apiServices}
+          isLoading={isLoading}
+          onRefreshAll={handleRefresh}
+        />
       )}
     </div>
   );

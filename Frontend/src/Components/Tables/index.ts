@@ -10,4 +10,7 @@ export { default as RolePermissionTable } from "./RolePermissionTable";
 export * from "./RolePermissionTable";
 export { default as AuditLogTable } from "./AuditLogTable";
 export * from "./AuditLogTable";
+export { default as ServiceHealthTable } from "./ServiceHealthTable";
+export * from "./ServiceHealthTable";
+
 

@@ -132,4 +132,22 @@ export const auditService = {
       console.log("[AuditService] Action logged locally:", newLog);
     }
   },
+
+  async pingService(serviceId: string): Promise<{ success: boolean; latencyMs: number }> {
+    // TODO: Connect API [/services/{serviceId}/ping]
+    const startTime = Date.now();
+    try {
+      if (isApiModeEnabled()) {
+        await apiClient.get("/services/health");
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+      return {
+        success: true,
+        latencyMs: Math.max(12, Date.now() - startTime),
+      };
+    } catch {
+      return { success: false, latencyMs: 999 };
+    }
+  },
 };
