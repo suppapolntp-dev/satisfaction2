@@ -6,6 +6,7 @@ import RolePermissionTable from "@/Components/Tables/RolePermissionTable";
 import RoleModal from "@/Components/Modals/RoleModal";
 import ConfirmDialogModal from "@/Components/Modals/ConfirmDialogModal";
 import { useRoleManagementScreen } from "./useRoleManagementScreen";
+import { useRoleSettings } from "@/Lib/pageHeaderSettings";
 
 // ==========================================================================
 // ─── MAIN ROLE MANAGEMENT SCREEN COMPONENT
@@ -41,24 +42,17 @@ export default function RoleManagementScreen() {
     handleConfirmDeleteRole,
   } = useRoleManagementScreen();
 
+  const { config: roleConfig } = useRoleSettings();
+
   return (
     <div className="space-y-6">
       {/* ─── 1. MODULAR PAGE HEADER COMPONENT ─── */}
       <PageHeader
-        title={
-          <span className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </span>
-            <span>Role &amp; Permission Matrix</span>
-          </span>
-        }
-        description="กำหนดสิทธิ์การเข้าถึงเมนูและการทำงานต่าง ๆ ของระบบแบบแยกรายโมดูล (Granular Access Control)"
+        title={roleConfig.pageTitle || "Role & Permission Matrix"}
+        description={roleConfig.pageSubtitle || "กำหนดสิทธิ์การเข้าถึงเมนูและการทำงานต่าง ๆ ของระบบแบบแยกรายโมดูล (Granular Access Control)"}
         primaryAction={{
           label: "Create New Role",
-          variant: "dark",
+          variant: "primary",
           icon: (
             <svg
               className="w-4 h-4 shrink-0"

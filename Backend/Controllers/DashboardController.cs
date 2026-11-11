@@ -121,7 +121,10 @@ public class DashboardController : ControllerBase
         var now = DateTime.UtcNow;
         if (startDate.HasValue && endDate.HasValue)
         {
-            return (startDate.Value, endDate.Value);
+            var endResolved = endDate.Value.TimeOfDay == TimeSpan.Zero
+                ? endDate.Value.Date.AddDays(1).AddTicks(-1)
+                : endDate.Value;
+            return (startDate.Value, endResolved);
         }
 
         return timeFilter?.ToLower() switch

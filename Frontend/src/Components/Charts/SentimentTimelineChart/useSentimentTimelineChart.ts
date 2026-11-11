@@ -9,6 +9,15 @@ export interface SentimentTimelinePoint {
   sad: number;
 }
 
+export interface ComputedTimelinePoint extends SentimentTimelinePoint {
+  total: number;
+  happyPct: number;
+  neutralPct: number;
+  sadPct: number;
+}
+
+export type TimelineMetricMode = "count" | "percent";
+
 export interface TimelineRangeOption {
   id: string;
   label: string;
@@ -18,8 +27,14 @@ export interface TimelineRangeOption {
 
 export const DEFAULT_TIMELINE_RANGES: TimelineRangeOption[] = [
   {
+    id: "all",
+    label: "08:00 - 21:00 (ทุกช่วงเวลาทำการ)",
+    startHour: 8,
+    endHour: 21,
+  },
+  {
     id: "standard",
-    label: "08:00 - 17:00 (เวลามาตรฐาน Default)",
+    label: "08:00 - 17:00 (เวลาทำการมาตรฐาน)",
     startHour: 8,
     endHour: 17,
   },
@@ -31,9 +46,9 @@ export const DEFAULT_TIMELINE_RANGES: TimelineRangeOption[] = [
   },
   {
     id: "mall",
-    label: "10:00 - 22:00 (สาขาในห้าง)",
+    label: "10:00 - 21:00 (สาขาในห้าง)",
     startHour: 10,
-    endHour: 22,
+    endHour: 21,
   },
 ];
 
@@ -41,7 +56,9 @@ export interface UseSentimentTimelineChartProps {
   data?: SentimentTimelinePoint[] | null;
   ranges?: TimelineRangeOption[];
   defaultRangeId?: string;
+  defaultMetricMode?: TimelineMetricMode;
   isLoading?: boolean;
+  errorMessage?: string | null;
 }
 
 export interface PointCoordinates {
@@ -67,6 +84,10 @@ export interface DonutSlice {
 }
 
 export interface TimelineSummary {
+  totalVotes: number;
+  totalHappy: number;
+  totalNeutral: number;
+  totalSad: number;
   avgHappy: string;
   avgNeutral: string;
   avgSad: string;
@@ -77,14 +98,21 @@ export interface TimelineSummary {
 export function useSentimentTimelineChart({
   data = null,
   ranges = DEFAULT_TIMELINE_RANGES,
-  defaultRangeId = "standard",
+  defaultRangeId = "all",
+  defaultMetricMode = "count",
   isLoading = false,
+  errorMessage = null,
 }: UseSentimentTimelineChartProps = {}) {
   const [selectedRangeId, setSelectedRangeId] = useState<string>(defaultRangeId);
+  const [metricMode, setMetricMode] = useState<TimelineMetricMode>(defaultMetricMode);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [focusedSeries, setFocusedSeries] = useState<SentimentFocusSeries>(null);
 
-  const toggleFocusSeries = useCallback((series: "happy" | "neutral" | "sad") => {
+  const toggleFocusSeries = useCallback((series: "happy" | "neutral" | "sad" | null) => {
+    if (series === null) {
+      setFocusedSeries(null);
+      return;
+    }
     setFocusedSeries((prev) => (prev === series ? null : series));
   }, []);
 
@@ -96,7 +124,6 @@ export function useSentimentTimelineChart({
     );
   }, [ranges, selectedRangeId]);
 
-  // Generate hourly slots based on active range
   const expectedHours = useMemo(() => {
     const list: string[] = [];
     for (let h = activeRange.startHour; h <= activeRange.endHour; h++) {
@@ -105,9 +132,7 @@ export function useSentimentTimelineChart({
     return list;
   }, [activeRange]);
 
-  // Map incoming data to expected hours with safe defaults
-  // TODO: Connect API [sentiment_timeline_hourly]
-  const timelinePoints = useMemo<SentimentTimelinePoint[]>(() => {
+  const timelinePoints = useMemo<ComputedTimelinePoint[]>(() => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -119,28 +144,60 @@ export function useSentimentTimelineChart({
 
     return expectedHours.map((hour) => {
       const match = dataMap.get(hour);
-      if (match) {
-        return match;
-      }
+      const happy = match?.happy ?? 0;
+      const neutral = match?.neutral ?? 0;
+      const sad = match?.sad ?? 0;
+      const total = happy + neutral + sad;
+      const denom = total > 0 ? total : 1;
+
       return {
         time: hour,
-        happy: 0,
-        neutral: 0,
-        sad: 0,
+        happy,
+        neutral,
+        sad,
+        total,
+        happyPct: total > 0 ? Number(((happy / denom) * 100).toFixed(1)) : 0,
+        neutralPct: total > 0 ? Number(((neutral / denom) * 100).toFixed(1)) : 0,
+        sadPct: total > 0 ? Number(((sad / denom) * 100).toFixed(1)) : 0,
       };
     });
   }, [data, expectedHours]);
 
-  const isEmpty = timelinePoints.length === 0;
+  const isEmpty =
+    timelinePoints.length === 0 ||
+    timelinePoints.every((p) => p.happy === 0 && p.neutral === 0 && p.sad === 0);
 
-  // Calculate summary metrics & donut slices with null safety
+  // Dynamic Y-Axis ceiling calculation (fixes Blocker 1 clamping at 100)
+  const yMax = useMemo<number>(() => {
+    if (metricMode === "percent") {
+      return 100;
+    }
+    if (timelinePoints.length === 0) {
+      return 100;
+    }
+    const maxRaw = Math.max(
+      ...timelinePoints.map((p) => Math.max(p.happy, p.neutral, p.sad)),
+      10
+    );
+    return Math.max(50, Math.ceil((maxRaw * 1.1) / 50) * 50);
+  }, [metricMode, timelinePoints]);
+
+  const yTicks = useMemo<number[]>(() => {
+    return [0, 0.25, 0.5, 0.75, 1].map((ratio) => Math.round(ratio * yMax));
+  }, [yMax]);
+
+  // Calculate accurate summary metrics & donut slices (fixes Blocker 2)
   const summary = useMemo<TimelineSummary>(() => {
     if (isEmpty) {
       return {
+        totalVotes: 0,
+        totalHappy: 0,
+        totalNeutral: 0,
+        totalSad: 0,
         avgHappy: "-",
         avgNeutral: "-",
         avgSad: "-",
-        overallScore: "-",
+        overallScore: "0.0%",
         donutSlices: [],
       };
     }
@@ -148,18 +205,13 @@ export function useSentimentTimelineChart({
     const totalHappy = timelinePoints.reduce((acc, p) => acc + (p.happy ?? 0), 0);
     const totalNeutral = timelinePoints.reduce((acc, p) => acc + (p.neutral ?? 0), 0);
     const totalSad = timelinePoints.reduce((acc, p) => acc + (p.sad ?? 0), 0);
-    const count = timelinePoints.length;
+    const totalVotes = totalHappy + totalNeutral + totalSad;
+    const sumAll = totalVotes > 0 ? totalVotes : 1;
 
-    const avgHappyNum = totalHappy / count;
-    const avgNeutralNum = totalNeutral / count;
-    const avgSadNum = totalSad / count;
-    const sumAll = avgHappyNum + avgNeutralNum + avgSadNum || 1;
+    const happyPercent = (totalHappy / sumAll) * 100;
+    const neutralPercent = (totalNeutral / sumAll) * 100;
+    const sadPercent = (totalSad / sumAll) * 100;
 
-    const happyPercent = (avgHappyNum / sumAll) * 100;
-    const neutralPercent = (avgNeutralNum / sumAll) * 100;
-    const sadPercent = (avgSadNum / sumAll) * 100;
-
-    // SVG Donut calculation with Radius = 46, Circumference = 2 * pi * 46 ≈ 289.027
     const circumference = 2 * Math.PI * 46;
     const happyLen = (happyPercent / 100) * circumference;
     const neutralLen = (neutralPercent / 100) * circumference;
@@ -168,8 +220,8 @@ export function useSentimentTimelineChart({
     const donutSlices: DonutSlice[] = [
       {
         key: "happy",
-        label: "ดี",
-        value: Number(avgHappyNum.toFixed(1)),
+        label: "ดี (Satisfied)",
+        value: totalHappy,
         percentage: Number(happyPercent.toFixed(1)),
         color: "var(--success)",
         dashArray: `${happyLen} ${circumference}`,
@@ -177,8 +229,8 @@ export function useSentimentTimelineChart({
       },
       {
         key: "neutral",
-        label: "ปานกลาง",
-        value: Number(avgNeutralNum.toFixed(1)),
+        label: "ปานกลาง (Neutral)",
+        value: totalNeutral,
         percentage: Number(neutralPercent.toFixed(1)),
         color: "var(--warning)",
         dashArray: `${neutralLen} ${circumference}`,
@@ -186,8 +238,8 @@ export function useSentimentTimelineChart({
       },
       {
         key: "sad",
-        label: "ปรับปรุง",
-        value: Number(avgSadNum.toFixed(1)),
+        label: "ปรับปรุง (Unsatisfied)",
+        value: totalSad,
         percentage: Number(sadPercent.toFixed(1)),
         color: "var(--error)",
         dashArray: `${sadLen} ${circumference}`,
@@ -195,16 +247,22 @@ export function useSentimentTimelineChart({
       },
     ];
 
+    const count = timelinePoints.length || 1;
+
     return {
-      avgHappy: avgHappyNum.toFixed(1),
-      avgNeutral: avgNeutralNum.toFixed(1),
-      avgSad: avgSadNum.toFixed(1),
-      overallScore: `${avgHappyNum.toFixed(1)}%`,
+      totalVotes,
+      totalHappy,
+      totalNeutral,
+      totalSad,
+      avgHappy: (totalHappy / count).toFixed(1),
+      avgNeutral: (totalNeutral / count).toFixed(1),
+      avgSad: (totalSad / count).toFixed(1),
+      overallScore: `${happyPercent.toFixed(1)}%`,
       donutSlices,
     };
   }, [timelinePoints, isEmpty]);
 
-  // Dimension helpers for responsive SVG calculation
+  // Dimension helpers for responsive SVG calculation with dynamic maxY and curve tension
   const getCoordinates = useCallback(
     (
       values: number[],
@@ -212,16 +270,18 @@ export function useSentimentTimelineChart({
       chartHeight: number,
       paddingLeft: number,
       paddingTop: number,
-      paddingBottom: number
+      maxScale: number = 100,
+      curveType: "smooth" | "straight" = "smooth"
     ): CurvePathResult => {
       if (values.length === 0) return { d: "", points: [] };
 
+      const safeMax = maxScale > 0 ? maxScale : 100;
       const stepX = values.length > 1 ? chartWidth / (values.length - 1) : 0;
       const points = values.map((val, i) => {
-        const clamped = Math.max(0, Math.min(100, val ?? 0));
+        const clamped = Math.max(0, Math.min(safeMax, val ?? 0));
         return {
           x: paddingLeft + i * stepX,
-          y: paddingTop + chartHeight - (clamped / 100) * chartHeight,
+          y: paddingTop + chartHeight - (clamped / safeMax) * chartHeight,
         };
       });
 
@@ -236,11 +296,12 @@ export function useSentimentTimelineChart({
       for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[i];
         const p1 = points[i + 1];
-        const cp1x = p0.x + (p1.x - p0.x) / 2;
-        const cp1y = p0.y;
-        const cp2x = p0.x + (p1.x - p0.x) / 2;
-        const cp2y = p1.y;
-        d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
+        if (curveType === "straight") {
+          d += ` L ${p1.x} ${p1.y}`;
+        } else {
+          const cpx = p0.x + (p1.x - p0.x) / 2;
+          d += ` C ${cpx} ${p0.y}, ${cpx} ${p1.y}, ${p1.x} ${p1.y}`;
+        }
       }
 
       return { d, points };
@@ -251,12 +312,17 @@ export function useSentimentTimelineChart({
   return {
     selectedRangeId,
     setSelectedRangeId,
+    metricMode,
+    setMetricMode,
     ranges,
     activeRange,
     expectedHours,
     timelinePoints,
     isEmpty,
     isLoading,
+    errorMessage,
+    yMax,
+    yTicks,
     summary,
     hoveredPointIndex,
     setHoveredPointIndex,

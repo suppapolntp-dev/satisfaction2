@@ -49,6 +49,22 @@
   --radius-md: 0.75rem;             /* 12px */
   --radius-lg: 1rem;                /* 16px */
   --radius-xl: 1.5rem;              /* 24px */
+
+  /* ==========================================================================
+     🔘 HEADER TITLE ACTION BUTTON TOKENS (มาตรฐานสีปุ่มเทาของ Header ตาม Dashboard)
+     ========================================================================== */
+  --header-btn-bg: #334155;          /* Slate 700: พื้นหลังปุ่มเทาหลักของ Header */
+  --header-btn-hover: #1e293b;       /* Slate 800: สีเมื่อ Hover */
+  --header-btn-active: #0f172a;      /* Slate 900: สีเมื่อ Active กดค้าง */
+  --header-btn-text: #ffffff;        /* สีข้อความบนปุ่ม Header */
+  --header-btn-border: #475569;      /* Slate 600: เส้นขอบปุ่ม */
+  --header-btn-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.08);
+
+  /* Secondary Header Button (ปุ่มรองสีขาวเทาสะอาดตา) */
+  --header-btn-secondary-bg: #ffffff;
+  --header-btn-secondary-hover: #f8fafc;
+  --header-btn-secondary-text: #334155;
+  --header-btn-secondary-border: #e2e8f0;
 }
 
 @layer base {
@@ -141,6 +157,27 @@
 
   .btn-primary {
     @apply bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white shadow-xs;
+  }
+
+  /* ─── Header Action Button Styles (ตามแบบ Dashboard) ─── */
+  .btn-header-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 min-h-11 sm:min-h-10 rounded-full
+           bg-[var(--header-btn-bg)] hover:bg-[var(--header-btn-hover)] active:bg-[var(--header-btn-active)]
+           text-[var(--header-btn-text)] font-semibold text-xs sm:text-sm tracking-wide
+           border border-[var(--header-btn-border)]/50 shadow-xs
+           transition-all duration-200 cursor-pointer select-none
+           active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700;
+  }
+
+  .btn-header-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 px-3.5 min-h-10 sm:min-h-9 rounded-full
+           bg-[var(--header-btn-secondary-bg)] hover:bg-[var(--header-btn-secondary-hover)]
+           text-[var(--header-btn-secondary-text)] font-semibold text-xs
+           border border-[var(--header-btn-secondary-border)] shadow-2xs
+           transition-all duration-200 cursor-pointer select-none
+           active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400;
   }
 
   .btn-secondary {

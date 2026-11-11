@@ -11,6 +11,7 @@ import {
   useEventManagementScreen,
   EventManagementTab,
 } from "./useEventManagementScreen";
+import { useEventSettings } from "@/Lib/pageHeaderSettings";
 
 export interface EventManagementScreenProps {
   initialTab?: EventManagementTab;
@@ -42,12 +43,14 @@ export default function EventManagementScreen({
     handleCreateEvent,
   } = useEventManagementScreen({ initialTab });
 
+  const { config: eventConfig } = useEventSettings();
+
   return (
     <div className="space-y-6">
       {/* ─── 1. MODULAR PAGE HEADER WITH TABS & ACTIONS ─── */}
       <PageHeader
-        title="Event & Campaigns"
-        description="Enterprise calendar scheduling, CSAT survey campaigns, and branch kiosk operations management"
+        title={eventConfig.pageTitle || "Event & Campaigns"}
+        description={eventConfig.pageSubtitle || "Enterprise calendar scheduling, CSAT survey campaigns, and branch kiosk operations management"}
         tabs={eventTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}

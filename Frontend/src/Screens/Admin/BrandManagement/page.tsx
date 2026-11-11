@@ -11,6 +11,7 @@ import OrgHierarchyTreeSidebar from "@/Components/Sidebars/OrgHierarchyTreeSideb
 import { useOrgTree } from "@/Components/Sidebars/OrgHierarchyTreeSidebar/useOrgTree";
 import { buildHierarchyTree } from "@/Services/dataAccessService";
 import { useBrandManagementScreen, BrandManagementTab } from "./useBrandManagementScreen";
+import { useBrandSettings } from "@/Lib/pageHeaderSettings";
 
 export interface BrandManagementScreenProps {
   initialTab?: BrandManagementTab;
@@ -162,14 +163,15 @@ export default function BrandManagementScreen({
     });
   }, [activeTab, brandMetrics.length, filteredBranches.length, selectedScopeLevel]);
 
+  const { config: brandConfig } = useBrandSettings();
   const isBrandTab = activeTab === "brands";
 
   return (
     <div className="space-y-6">
       {/* ─── 1. MODULAR PAGE HEADER WITH TABS & ACTIONS ─── */}
       <PageHeader
-        title="Brand & Branch"
-        description="Enterprise corporate brand portfolio, regional branch networks, and location hierarchy management"
+        title={brandConfig.pageTitle || "Brand & Branch"}
+        description={brandConfig.pageSubtitle || "Enterprise corporate brand portfolio, regional branch networks, and location hierarchy management"}
         tabs={brandTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}

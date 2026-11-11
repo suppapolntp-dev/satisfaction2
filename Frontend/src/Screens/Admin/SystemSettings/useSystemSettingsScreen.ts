@@ -18,6 +18,12 @@ import {
   getStoredSatisfactionConfig, 
   saveStoredSatisfactionConfig 
 } from "@/Lib/satisfactionSettings";
+import {
+  DashboardConfig,
+  DEFAULT_DASHBOARD_CONFIG,
+  getStoredDashboardConfig,
+  saveStoredDashboardConfig,
+} from "@/Lib/dashboardSettings";
 import { BrandSettingsState, DEFAULT_BRAND_SETTINGS } from "@/Components/Forms/BrandSettingsSection";
 import { EventSettingsState, DEFAULT_EVENT_SETTINGS } from "@/Components/Forms/EventSettingsSection";
 import { UserSettingsState, DEFAULT_USER_SETTINGS } from "@/Components/Forms/UserSettingsSection";
@@ -25,14 +31,30 @@ import { RoleSettingsState, DEFAULT_ROLE_SETTINGS } from "@/Components/Forms/Rol
 import { AuditSettingsState, DEFAULT_AUDIT_SETTINGS } from "@/Components/Forms/AuditSettingsSection";
 import { NotificationSettingsState, DEFAULT_NOTIFICATION_SETTINGS } from "@/Components/Forms/NotificationSettingsSection";
 import { useModal } from "@/Context/ModalContext";
+import {
+  getStoredAuditConfig,
+  saveStoredAuditConfig,
+  getStoredBrandConfig,
+  saveStoredBrandConfig,
+  getStoredEventConfig,
+  saveStoredEventConfig,
+  getStoredNotificationConfig,
+  saveStoredNotificationConfig,
+  getStoredRoleConfig,
+  saveStoredRoleConfig,
+  getStoredUserSettingsConfig,
+  saveStoredUserSettingsConfig,
+} from "@/Lib/pageHeaderSettings";
 
 export type SettingsCategoryTab = 
-  | "general" 
-  | "auth" 
+  | "all"
   | "dashboard" 
   | "satisfaction" 
+  | "general" 
+  | "auth" 
   | "brand" 
   | "events" 
+  | "governance"
   | "users" 
   | "roles" 
   | "audit" 
@@ -47,11 +69,7 @@ export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsState = {
   systemLogoUrl: "",
 };
 
-export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettingsState = {
-  refreshInterval: "30s",
-  enableRealtimeSound: false,
-  benchmarkThreshold: 85,
-};
+export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettingsState = DEFAULT_DASHBOARD_CONFIG;
 
 export const DEFAULT_REPORT_SETTINGS: ReportSettingsState = {
   pdfHeaderTitle: "Confidential - Executive CSAT Performance & Sentiment Report",
@@ -90,6 +108,13 @@ export function useSystemSettingsScreen() {
   useEffect(() => {
     setSatisfactionConfig(getStoredSatisfactionConfig());
     setAuthConfig(getStoredAuthHeroConfig());
+    setDashboardConfig(getStoredDashboardConfig());
+    setAuditConfig(getStoredAuditConfig());
+    setBrandConfig(getStoredBrandConfig());
+    setEventConfig(getStoredEventConfig());
+    setNotificationConfig(getStoredNotificationConfig());
+    setRoleConfig(getStoredRoleConfig());
+    setUserConfig(getStoredUserSettingsConfig());
   }, []);
 
   // Smooth scroll to target section and update active tab
@@ -156,6 +181,13 @@ export function useSystemSettingsScreen() {
     try {
       saveStoredSatisfactionConfig(satisfactionConfig);
       saveStoredAuthHeroConfig(authConfig);
+      saveStoredDashboardConfig(dashboardConfig);
+      saveStoredAuditConfig(auditConfig);
+      saveStoredBrandConfig(brandConfig);
+      saveStoredEventConfig(eventConfig);
+      saveStoredNotificationConfig(notificationConfig);
+      saveStoredRoleConfig(roleConfig);
+      saveStoredUserSettingsConfig(userConfig);
       showSuccess("บันทึกการตั้งค่าระบบและข้อความทุกหน้าจอสำเร็จเรียบร้อยแล้ว!");
     } catch (err: any) {
       showError(err?.message || "ไม่สามารถบันทึกการตั้งค่าได้");
@@ -172,7 +204,7 @@ export function useSystemSettingsScreen() {
       onConfirm: () => {
         setGeneralConfig(DEFAULT_GENERAL_SETTINGS);
         setAuthConfig(DEFAULT_AUTH_HERO_CONFIG);
-        setDashboardConfig(DEFAULT_DASHBOARD_SETTINGS);
+        setDashboardConfig(DEFAULT_DASHBOARD_CONFIG);
         setSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
         setBrandConfig(DEFAULT_BRAND_SETTINGS);
         setEventConfig(DEFAULT_EVENT_SETTINGS);
@@ -185,6 +217,13 @@ export function useSystemSettingsScreen() {
 
         saveStoredSatisfactionConfig(DEFAULT_SATISFACTION_CONFIG);
         saveStoredAuthHeroConfig(DEFAULT_AUTH_HERO_CONFIG);
+        saveStoredDashboardConfig(DEFAULT_DASHBOARD_CONFIG);
+        saveStoredAuditConfig(DEFAULT_AUDIT_SETTINGS);
+        saveStoredBrandConfig(DEFAULT_BRAND_SETTINGS);
+        saveStoredEventConfig(DEFAULT_EVENT_SETTINGS);
+        saveStoredNotificationConfig(DEFAULT_NOTIFICATION_SETTINGS);
+        saveStoredRoleConfig(DEFAULT_ROLE_SETTINGS);
+        saveStoredUserSettingsConfig(DEFAULT_USER_SETTINGS);
         showSuccess("รีเซ็ตการตั้งค่าทุกหน้าจอกลับเป็นค่ามาตรฐานเรียบร้อยแล้ว");
       },
     });

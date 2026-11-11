@@ -62,6 +62,9 @@ export interface DashboardAggregatedStats {
   satPercent: string;
   neuPercent: string;
   unsPercent: string;
+  activeBranches?: number;
+  activeKiosks?: number;
+  comparisonChange?: number;
 }
 
 export interface DashboardDataResponse {

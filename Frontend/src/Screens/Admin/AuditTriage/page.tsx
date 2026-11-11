@@ -6,6 +6,7 @@ import AuditMetricCards from "@/Components/Cards/AuditMetricCards";
 import AuditLogTable from "@/Components/Tables/AuditLogTable";
 import ServiceHealthTable from "@/Components/Tables/ServiceHealthTable";
 import { useAuditTriageScreen, AuditTabType } from "./useAuditTriageScreen";
+import { useAuditSettings } from "@/Lib/pageHeaderSettings";
 
 export interface AuditScreenProps {
   initialTab?: AuditTabType;
@@ -27,36 +28,20 @@ export default function AuditScreen({
     handleFilterMetrics,
   } = useAuditTriageScreen({ initialTab });
 
+  const { config: auditConfig } = useAuditSettings();
+
   return (
     <div className="space-y-6">
       {/* ─── 1. MODULAR PAGE HEADER COMPONENT (Clean & Badge-Free) ─── */}
       <PageHeader
-        title={
-          <span className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </span>
-            <span>Audit Trail &amp; System Health</span>
-          </span>
-        }
-        description="ตรวจสอบประวัติการเปลี่ยนแปลงระดับผู้ดูแลระบบ (Audit Trail) เปรียบเทียบข้อมูลก่อน-หลัง (Data Diff) และมอนิเตอร์สถานะความพร้อมของบริการ API แบบ Real-time"
+        title={auditConfig.pageTitle || "Audit Trail & System Health"}
+        description={auditConfig.pageSubtitle || "ตรวจสอบประวัติการเปลี่ยนแปลงระดับผู้ดูแลระบบ (Audit Trail) เปรียบเทียบข้อมูลก่อน-หลัง (Data Diff) และมอนิเตอร์สถานะความพร้อมของบริการ API แบบ Real-time"}
         tabs={auditTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         primaryAction={{
           label: "Export Audit Logs",
-          variant: "dark",
+          variant: "primary",
           icon: (
             <svg
               className="w-4 h-4 shrink-0"
@@ -79,7 +64,7 @@ export default function AuditScreen({
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 select-none"
+            className="btn-header-secondary disabled:opacity-50"
           >
             <svg
               className={`w-3.5 h-3.5 shrink-0 ${isRefreshing ? "animate-spin" : ""}`}

@@ -5,6 +5,7 @@ import StatsGrid, { StatItem } from "@/Components/Grids/StatsGrid";
 import DataTable, { TableColumn, TableAction } from "@/Components/Tables/DataTable";
 import SelectInput from "@/Components/Inputs/SelectInput";
 import BranchModal from "@/Components/Modals/BranchModal";
+import PageHeader from "@/Components/Headers/PageHeader/PageHeader";
 import { BranchModel } from "@/Types/branch";
 import { branchService } from "@/Services/branchService";
 import { brandService } from "@/Services/brandService";
@@ -258,25 +259,15 @@ export default function BranchManagementScreen() {
     <div className="space-y-6">
       
       {/* ─── 1. PAGE HEADER SECTION ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-            Branch & Co-Location Store Management
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            จัดการข้อมูลสาขาในเครือ CRG รองรับสาขา Dual-Brand (เช่น Mister Donut + Arigato ในสาขาเดียวกัน)
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="btn-primary text-xs shadow-xs"
-        >
-          <span className="material-symbols-outlined text-[18px]">add_location_alt</span>
-          + เพิ่มสาขาใหม่
-        </button>
-      </div>
+      <PageHeader
+        title="Branch & Co-Location Store Management"
+        description="จัดการข้อมูลสาขาในเครือ CRG รองรับสาขา Dual-Brand (เช่น Mister Donut + Arigato ในสาขาเดียวกัน)"
+        primaryAction={{
+          label: "+ เพิ่มสาขาใหม่",
+          icon: <span className="material-symbols-outlined text-[18px]">add_location_alt</span>,
+          onClick: handleOpenCreateModal,
+        }}
+      />
 
       {/* ─── 2. STATS OVERVIEW SECTION ─── */}
       <StatsGrid data={statsOverviewData} />

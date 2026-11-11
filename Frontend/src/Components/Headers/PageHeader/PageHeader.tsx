@@ -80,18 +80,12 @@ export default function PageHeader({
             if (React.isValidElement(primaryAction)) return primaryAction;
             if (typeof primaryAction === "object" && "label" in primaryAction) {
               const action = primaryAction as PrimaryActionConfig;
-              const btnBg =
-                action.variant === "emerald" || !action.variant
-                  ? "bg-[var(--primary-container)] hover:bg-[var(--primary-hover)] text-white shadow-xs"
-                  : action.variant === "dark"
-                  ? "bg-slate-900 hover:bg-slate-800 text-white"
-                  : "bg-slate-700 hover:bg-slate-800 text-white";
 
               return (
                 <button
                   type="button"
                   onClick={action.onClick}
-                  className={`inline-flex items-center justify-center gap-2 px-4 min-h-11 sm:min-h-10 rounded-full ${btnBg} active:scale-95 font-semibold text-xs sm:text-sm transition-all duration-200 motion-reduce:transition-none motion-reduce:active:scale-100 cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-container)]`}
+                  className="btn-header-primary"
                 >
                   {action.icon}
                   <span className="font-medium">{action.label}</span>

@@ -564,27 +564,21 @@ export default function DataAccessManagementScreen({
               window.location.href = "/usermanagement";
             }
           }}
+          primaryAction={{
+            label: "+ กำหนดสิทธิ์ใหม่ (Assign Scope)",
+            icon: <span className="material-symbols-outlined text-[18px]">person_add</span>,
+            onClick: handleOpenAddModal,
+          }}
           secondaryActions={
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsTierManagementModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
-              >
-                <span className="material-symbols-outlined text-[18px] text-blue-900">military_tech</span>
-                <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="btn-primary text-xs shadow-xs"
-              >
-                <span className="material-symbols-outlined text-[18px]">person_add</span>
-                <span>+ กำหนดสิทธิ์ใหม่ (Assign Scope)</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsTierManagementModalOpen(true)}
+              className="btn-header-secondary"
+              title="จัดการระดับสิทธิ์องค์กร (Tier Levels) เพิ่ม/แก้ไข/ลบระดับสิทธิ์"
+            >
+              <span className="material-symbols-outlined text-[18px]">military_tech</span>
+              <span>ระดับสิทธิ์องค์กร (Tier Levels)</span>
+            </button>
           }
         />
       )}

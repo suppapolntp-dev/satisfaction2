@@ -47,6 +47,15 @@ export default function UsermanagementScreen() {
         tabs={userManagementTabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        primaryAction={
+          activeTab === "users"
+            ? {
+                label: "+ เพิ่มผู้ใช้งานใหม่ (Add User)",
+                icon: <span className="material-symbols-outlined text-[18px]">person_add</span>,
+                onClick: handleOpenCreateModal,
+              }
+            : undefined
+        }
       />
 
       {/* ─── 2. TAB CONTENT: USER ACCOUNTS vs DATA ACCESS SCOPE ─── */}

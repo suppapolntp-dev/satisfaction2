@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import PageHeader, { HeaderTabItem } from "@/Components/Headers/PageHeader";
 import NotificationInboxList from "@/Components/Lists/NotificationInboxList";
 import { useNotificationTriageScreen, NotificationTabType } from "./useNotificationTriageScreen";
+import { useNotificationSettings } from "@/Lib/pageHeaderSettings";
 
 export interface NotificationTriageScreenProps {
   initialTab?: NotificationTabType;
@@ -35,6 +37,7 @@ export default function NotificationTriageScreen({
     handleSelectNotification,
   } = useNotificationTriageScreen({ initialTab });
 
+  const { config: notificationConfig } = useNotificationSettings();
   const totalCount = notificationsList.length;
 
   // Dynamic actions based on notification type
@@ -53,123 +56,61 @@ export default function NotificationTriageScreen({
       ? "รับทราบแล้ว"
       : "ทำเครื่องหมายว่าตรวจสอบแล้ว";
 
+  const notificationHeaderTabs: HeaderTabItem[] = useMemo(() => [
+    {
+      id: "all",
+      label: "การแจ้งเตือนทั้งหมด (All Alerts)",
+      badge: totalCount,
+    },
+    {
+      id: "unread",
+      label: "ยังไม่ได้อ่าน (Unread Queue)",
+      badge: unreadCount,
+    },
+    {
+      id: "priority",
+      label: "เร่งด่วนพิเศษ (High Priority)",
+      badge: highPriorityCount,
+    },
+  ], [totalCount, unreadCount, highPriorityCount]);
+
   return (
     <div className="max-w-[1440px] mx-auto space-y-6">
-      {/* ─── 1. TOP HEADER CARD ─── */}
-      <header className="bg-white border-[0.8px] border-[#e2e8f0]/90 rounded-[24px] shadow-[0px_1px_3px_0px_rgba(15,23,42,0.03)] overflow-hidden">
-        {/* Top Section */}
-        <div className="p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-[20px] font-bold text-[#0f172b] tracking-[-0.5px] leading-7 flex items-center gap-2">
-              Notification &amp; Alert Triage
-            </h1>
-            <p className="text-[12px] text-[#62748e] mt-1 leading-[19.5px]">
-              ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk ตลอดจนข้อเสนอแนะความพึงพอใจ เพื่อการวิเคราะห์และแก้ไขปัญหาได้อย่างทันท่วงที
-            </p>
-          </div>
-          <div className="flex items-center shrink-0">
-            <button
-              type="button"
-              onClick={handleMarkAllAsRead}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.98] transition-all text-white text-[14px] font-medium px-4 py-2 rounded-full flex items-center gap-2 shadow-sm cursor-pointer"
+      {/* ─── 1. MODULAR PAGE HEADER COMPONENT (Matching Dashboard Badge-Tabs) ─── */}
+      <PageHeader
+        title={notificationConfig.pageTitle || "Notification & Alert Triage"}
+        description={notificationConfig.pageSubtitle || "ศูนย์กลางการติดตามเหตุการณ์แจ้งเตือน ความผิดปกติของตู้ Kiosk ตลอดจนข้อเสนอแนะความพึงพอใจ เพื่อการวิเคราะห์และแก้ไขปัญหาได้อย่างทันท่วงที"}
+        tabs={notificationHeaderTabs}
+        activeTab={activeTab === "high_priority" ? "priority" : activeTab}
+        onTabChange={(tabId) => handleTabChange(tabId as NotificationTabType)}
+        primaryAction={{
+          label: "Mark All as Read",
+          icon: (
+            <svg
+              className="w-4 h-4 shrink-0"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 4L4.66667 11.3333L1.33333 8"
-                  stroke="currentColor"
-                  strokeWidth="1.33333"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M14.6667 6.66667L9.66667 11.6667L8.66667 10.6667"
-                  stroke="currentColor"
-                  strokeWidth="1.33333"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>Mark All as Read</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="bg-[#f8fafc]/50 border-t-[0.8px] border-[#f1f5f9] px-6">
-          <div className="flex items-center gap-2 h-12 overflow-x-auto">
-            {/* Tab 1: All Alerts */}
-            <button
-              type="button"
-              onClick={() => handleTabChange("all")}
-              className={`h-full flex items-center gap-2 px-4 text-[14px] font-semibold whitespace-nowrap transition-colors border-b-[2px] cursor-pointer ${
-                activeTab === "all"
-                  ? "border-[#2563eb] text-[#2563eb]"
-                  : "border-transparent text-[#62748e] hover:text-[#0f172b]"
-              }`}
-            >
-              <span>การแจ้งเตือนทั้งหมด (All Alerts)</span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  activeTab === "all"
-                    ? "bg-[#eff6ff] text-[#2563eb]"
-                    : "bg-[#e2e8f0] text-[#45556c]"
-                }`}
-              >
-                {totalCount}
-              </span>
-            </button>
-
-            {/* Tab 2: Unread Queue */}
-            <button
-              type="button"
-              onClick={() => handleTabChange("unread")}
-              className={`h-full flex items-center gap-2 px-4 text-[14px] font-semibold whitespace-nowrap transition-colors border-b-[2px] cursor-pointer ${
-                activeTab === "unread"
-                  ? "border-[#2563eb] text-[#2563eb]"
-                  : "border-transparent text-[#62748e] hover:text-[#0f172b]"
-              }`}
-            >
-              <span>ยังไม่ได้อ่าน (Unread Queue)</span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  activeTab === "unread"
-                    ? "bg-[#eff6ff] text-[#2563eb]"
-                    : "bg-[#e2e8f0] text-[#45556c]"
-                }`}
-              >
-                {unreadCount}
-              </span>
-            </button>
-
-            {/* Tab 3: High Priority */}
-            <button
-              type="button"
-              onClick={() => handleTabChange("priority")}
-              className={`h-full flex items-center gap-2 px-4 text-[14px] font-semibold whitespace-nowrap transition-colors border-b-[2px] cursor-pointer ${
-                activeTab === "priority" || activeTab === "high_priority"
-                  ? "border-[#2563eb] text-[#2563eb]"
-                  : "border-transparent text-[#62748e] hover:text-[#0f172b]"
-              }`}
-            >
-              <span>เร่งด่วนพิเศษ (High Priority)</span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  activeTab === "priority" || activeTab === "high_priority"
-                    ? "bg-[#eff6ff] text-[#2563eb]"
-                    : "bg-[#e2e8f0] text-[#45556c]"
-                }`}
-              >
-                {highPriorityCount}
-              </span>
-            </button>
-          </div>
-        </div>
-      </header>
+              <path
+                d="M12 4L4.66667 11.3333L1.33333 8"
+                stroke="currentColor"
+                strokeWidth="1.33333"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M14.6667 6.66667L9.66667 11.6667L8.66667 10.6667"
+                stroke="currentColor"
+                strokeWidth="1.33333"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+          onClick: handleMarkAllAsRead,
+        }}
+      />
 
       {/* ─── 2. UNIFIED TABLE & GRID CONTAINER (รวม Search Bar + Table/Grid เป็นผืนเดียวกัน) ─── */}
       <section className="bg-white border-[0.8px] border-[#e2e8f0] rounded-[24px] shadow-[0px_1px_3px_0px_rgba(15,23,42,0.03)] overflow-hidden flex flex-col">

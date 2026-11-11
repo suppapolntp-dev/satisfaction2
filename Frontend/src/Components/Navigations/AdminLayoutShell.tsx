@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AuthProvider } from "@/Context/AuthContext";
 import { SidebarProvider, useSidebar } from "@/Context/SidebarContext";
 import { ApiModeProvider } from "@/Context/ApiModeContext";
 import { ModalProvider } from "@/Context/ModalContext";
@@ -25,7 +26,7 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
         {/* Floating Bento Top App Bar (Navbar - Figma Node 31:2) */}
         <header
           id="mainNavbar"
-          className="shrink-0 z-40 mx-3 mt-3 sm:mx-6 sm:mt-4 h-16 bg-white/95 backdrop-blur-[12px] border border-slate-200/80 rounded-[24px] shadow-figma-navbar px-4 sm:px-6 flex items-center justify-between gap-4 transition-all duration-200 motion-reduce:transition-none"
+          className="shrink-0 relative z-40 mx-3 mt-3 sm:mx-6 sm:mt-4 h-16 bg-white border border-slate-200/80 rounded-[24px] shadow-figma-navbar px-4 sm:px-6 grid grid-cols-[1fr_auto] items-center gap-4 transition-all duration-200 motion-reduce:transition-none"
         >
           {/* Left: Mobile Toggle (sm screens) + Search Bar Pill (Figma Node 31:18) */}
           <div className="flex items-center gap-3 flex-1 max-w-[448px] min-w-0">
@@ -66,12 +67,14 @@ function AdminLayoutInner({ children }: AdminLayoutShellProps) {
 
 export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   return (
-    <ApiModeProvider>
-      <SidebarProvider>
-        <ModalProvider>
-          <AdminLayoutInner>{children}</AdminLayoutInner>
-        </ModalProvider>
-      </SidebarProvider>
-    </ApiModeProvider>
+    <AuthProvider>
+      <ApiModeProvider>
+        <SidebarProvider>
+          <ModalProvider>
+            <AdminLayoutInner>{children}</AdminLayoutInner>
+          </ModalProvider>
+        </SidebarProvider>
+      </ApiModeProvider>
+    </AuthProvider>
   );
 }
